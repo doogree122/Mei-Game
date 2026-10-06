@@ -204,8 +204,133 @@ function drawArmoredBody(ctx, sk, f) {
   drawArmoredArm(ctx, sk, 'F', c, false, blaster);
 }
 
+// ---- Ridge-browed warrior body ----
+
+function drawWarriorLeg(ctx, sk, side, c, back) {
+  const knee = sk['knee' + side];
+  const foot = sk['foot' + side];
+  drawLimb(ctx, sk.hip, knee, 16, back ? c.blackShade : c.black);
+  drawLimb(ctx, knee, foot, 14, back ? c.blackShade : c.black);
+  // Boots with a polished highlight.
+  drawLimb(ctx, lerpPt(knee, foot, 0.72), foot, 14, c.boot);
+  drawLimb(ctx, foot, { x: foot.x + 12, y: foot.y + 1 }, 10, c.boot);
+  if (!back) drawLimb(ctx, { x: foot.x + 3, y: foot.y - 3 }, { x: foot.x + 10, y: foot.y - 2 }, 2, c.bootShine);
+}
+
+function drawWarriorArm(ctx, sk, side, c, back, holdingDevice) {
+  const elbow = sk['elbow' + side];
+  const hand = sk['hand' + side];
+  drawLimb(ctx, sk.shoulder, elbow, 13, back ? c.tunicShade : c.tunic);
+  drawLimb(ctx, elbow, hand, 11, back ? c.tunicShade : c.tunic);
+  fillCircle(ctx, hand.x, hand.y, 6.5, back ? c.skinShade : c.skin);
+  // Black shoulder yoke continues over the top of the arm.
+  fillCircle(ctx, sk.shoulder.x, sk.shoulder.y, 8, back ? c.blackShade : c.black);
+
+  if (holdingDevice) {
+    const dx = hand.x - elbow.x;
+    const dy = hand.y - elbow.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const tip = { x: hand.x + (dx / len) * 13, y: hand.y + (dy / len) * 13 };
+    drawLimb(ctx, hand, tip, 8, c.device);
+    fillCircle(ctx, tip.x, tip.y, 2, c.energy);
+  }
+}
+
+function drawWarriorTorso(ctx, sk, c) {
+  const { hip, neck } = sk;
+  const dx = neck.x - hip.x;
+  const dy = neck.y - hip.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const n = { x: -dy / len, y: dx / len }; // forward
+  const at = (t, side) => ({ x: hip.x + dx * t + n.x * side, y: hip.y + dy * t + n.y * side });
+
+  // Gold tunic body.
+  fillPoly(ctx, [at(0, 15), at(0.8, 18), at(1.02, 7), at(1.02, -9), at(0.8, -16), at(0, -14)], c.tunic);
+  fillPoly(ctx, [at(0.2, -14), at(0.8, -16), at(0.8, -9), at(0.2, -8)], c.tunicShade);
+  // Black waistband and shoulder yoke.
+  fillPoly(ctx, [at(-0.02, 15), at(0.2, 16), at(0.2, -15), at(-0.02, -14)], c.black);
+  fillPoly(ctx, [at(0.76, 18), at(1.02, 7), at(1.02, -9), at(0.76, -16)], c.black);
+  // High collar.
+  drawLimb(ctx, at(1, 1), lerpPt(neck, sk.head, 0.35), 12, c.black);
+
+  // Chain-mail sash, back shoulder to front hip, with link texture.
+  const top = at(0.98, -9);
+  const bottom = at(0.1, 15);
+  drawLimb(ctx, top, bottom, 12, c.sash);
+  ctx.fillStyle = c.sashShade;
+  for (let i = 1; i < 9; i++) {
+    const pt = lerpPt(top, bottom, i / 9);
+    ctx.fillRect(pt.x - 3, pt.y - 1, 2, 2);
+    ctx.fillRect(pt.x + 1, pt.y + 1, 2, 2);
+  }
+  // Clasp plate near the shoulder.
+  const clasp = lerpPt(top, bottom, 0.18);
+  ctx.fillStyle = c.sashShade;
+  ctx.fillRect(clasp.x - 3, clasp.y - 3, 6, 6);
+}
+
+function drawWarriorHead(ctx, sk, c, time) {
+  const h = sk.head;
+  const sway = Math.sin(time * 0.1) * 2;
+
+  // Long hair falling behind the head to the shoulders.
+  fillPoly(ctx, [
+    { x: h.x - 4, y: h.y - 15 },
+    { x: h.x - 20, y: h.y - 6 },
+    { x: h.x - 22 + sway, y: h.y + 22 },
+    { x: h.x - 12 + sway, y: h.y + 28 },
+    { x: h.x - 4, y: h.y + 10 },
+  ], c.hair);
+  // Skull and face.
+  fillCircle(ctx, h.x - 3, h.y - 2, 14.5, c.hair);
+  ctx.fillStyle = c.skin;
+  ctx.beginPath();
+  ctx.ellipse(h.x + 3.5, h.y + 1, 12, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // High forehead: skin over the front of the hair cap.
+  ctx.beginPath();
+  ctx.ellipse(h.x + 2, h.y - 6, 10, 9, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ridged brow: a heavy brow line plus ridges running up the forehead.
+  drawLimb(ctx, { x: h.x + 4, y: h.y - 3 }, { x: h.x + 15, y: h.y - 3 }, 4, c.skinShade);
+  ctx.strokeStyle = c.skinShade;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(h.x + 4 + i * 4, h.y - 5);
+    ctx.quadraticCurveTo(h.x + 1 + i * 4, h.y - 10, h.x + 3 + i * 3, h.y - 15);
+    ctx.stroke();
+  }
+  // Nose, eye, frown.
+  fillCircle(ctx, h.x + 15, h.y + 3, 3, c.skinShade);
+  ctx.fillStyle = '#f2ead8';
+  ctx.fillRect(h.x + 8, h.y - 1, 5, 3);
+  ctx.fillStyle = c.eyes;
+  ctx.fillRect(h.x + 10, h.y - 1, 2.5, 3);
+  // Mustache, goatee and jaw beard.
+  drawLimb(ctx, { x: h.x + 9, y: h.y + 8 }, { x: h.x + 15, y: h.y + 8 }, 2.5, c.hair);
+  fillPoly(ctx, [
+    { x: h.x + 6, y: h.y + 10 }, { x: h.x + 15, y: h.y + 10 },
+    { x: h.x + 13, y: h.y + 19 }, { x: h.x + 6, y: h.y + 17 },
+  ], c.hair);
+  drawLimb(ctx, { x: h.x - 1, y: h.y + 5 }, { x: h.x + 6, y: h.y + 14 }, 3, c.hair);
+}
+
+function drawWarriorBody(ctx, sk, f) {
+  const c = f.char.colors;
+  const device = !!(f.move && f.move.def.projectile);
+  drawWarriorArm(ctx, sk, 'B', c, true, false);
+  drawWarriorLeg(ctx, sk, 'B', c, true);
+  drawWarriorTorso(ctx, sk, c);
+  drawWarriorLeg(ctx, sk, 'F', c, false);
+  drawWarriorHead(ctx, sk, c, f.time);
+  drawWarriorArm(ctx, sk, 'F', c, false, device);
+}
+
 const BODY_STYLES = {
   armored: drawArmoredBody,
+  warrior: drawWarriorBody,
 };
 
 // ---- Sprite pipeline ----
@@ -318,6 +443,27 @@ function drawProjectile(ctx, p, time) {
     const dir = Math.sign(p.vx);
     drawLimb(ctx, { x: p.x - dir * 34, y: p.y }, { x: p.x + dir * 6, y: p.y }, 14, color);
     drawLimb(ctx, { x: p.x - dir * 26, y: p.y }, { x: p.x + dir * 4, y: p.y }, 6, '#fff3d0');
+    return;
+  }
+  if (p.owner.char.projectile === 'pulse') {
+    // Hand-blaster pulse: a short oval of energy with a white-hot core.
+    const dir = Math.sign(p.vx);
+    for (let i = 3; i >= 1; i--) {
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(p.x - dir * i * 10, p.y, 10, 7 - i, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 16, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fffbe6';
+    ctx.beginPath();
+    ctx.ellipse(p.x + dir * 2, p.y, 9, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
     return;
   }
   const pulse = 1 + Math.sin(time * 0.5) * 0.12;

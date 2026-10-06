@@ -23,7 +23,7 @@ class Game {
     this.projectiles = [];
     this.fighters = [
       new Fighter({ char: CHARACTERS.mei, x: WORLD_W / 2 - 180, facing: 1, side: 0 }),
-      new Fighter({ char: CHARACTERS.meiAlt, x: WORLD_W / 2 + 180, facing: -1, side: 1 }),
+      new Fighter({ char: CHARACTERS.korr, x: WORLD_W / 2 + 180, facing: -1, side: 1 }),
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     this.mode = 'title';

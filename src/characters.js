@@ -33,26 +33,33 @@ const CHARACTERS = {
   },
 };
 
-// Builds a recolored copy of a character, used for mirror matches.
-function paletteSwap(base, name, colorOverrides) {
-  return {
-    ...base,
-    name,
-    colors: { ...base.colors, ...colorOverrides },
-    stats: { ...base.stats },
-  };
-}
-
-CHARACTERS.meiAlt = paletteSwap(CHARACTERS.mei, 'MEI (ALT)', {
-  suit: '#3a3a42',
-  suitShade: '#26262c',
-  armor: '#9a2f2f',
-  armorShade: '#661d1d',
-  armorLight: '#d45a5a',
-  accent: '#d9b02a',
-  accentShade: '#9c7c16',
-  accentLight: '#ffe07a',
-  pack: '#6f7480',
-  packShade: '#4a4e57',
-  energy: '#5fd8ff',
-});
+CHARACTERS.korr = {
+  id: 'korr',
+  name: 'KORR',
+  look: 'warrior', // ridge-browed alien officer
+  projectile: 'pulse', // special fires a hand-blaster pulse
+  colors: {
+    skin: '#a8714a',
+    skinShade: '#7a4c30',
+    hair: '#1a0f0a',
+    eyes: '#140c08',
+    tunic: '#e8b72a',
+    tunicShade: '#b88a16',
+    black: '#272a33',
+    blackShade: '#1b1d24',
+    sash: '#b8bdc6',
+    sashShade: '#757b85',
+    boot: '#16171c',
+    bootShine: '#6a6f7a',
+    device: '#5a5f69',
+    energy: '#ffb43a',
+  },
+  // Heavier hitter, a little slower on his feet.
+  stats: {
+    walk: 3.0,
+    backWalk: 2.2,
+    jumpV: 13,
+    jumpVX: 4.2,
+    power: 1.1,
+  },
+};

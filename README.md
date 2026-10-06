@@ -52,7 +52,15 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 The world is drawn at half resolution and scaled up without smoothing, so one art pixel is 2×2 screen pixels.
 Each frame, the fighters are drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
 Mei is an armored jetpack bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, a jetpack whose thrusters fire when airborne, and a blaster.
-The CPU and P2 opponent uses the same model with a red and gold palette.
+
+## Characters
+
+| | Look | Special | Stats |
+|---|---|---|---|
+| **MEI** (P1) | Armored bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, jetpack, slung rifle | Blaster bolt | Baseline |
+| **KORR** (P2 / CPU) | Ridge-browed alien warrior: long hair and beard, gold tunic with black yoke and waistband, chain-mail sash, black trousers and boots | Hand-blaster pulse | Hits 10% harder, walks and jumps a little slower |
+
+Each character picks a body renderer with `look` (`armored`, `warrior`) and a projectile style with `projectile` (`bolt`, `pulse`).
 
 Characters are drawn from a pose skeleton (limb angles), and hitboxes come from the actual limb positions.
 That makes new moves cheap to add: you add a pose plus an entry in `MOVES`.
