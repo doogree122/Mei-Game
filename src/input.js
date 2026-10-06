@@ -18,6 +18,17 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => Keys.down.delete(e.code));
 window.addEventListener('blur', () => Keys.down.clear());
 
+// On-screen controls press keys through these, so everything downstream
+// (menus, fighters) treats touch exactly like the keyboard.
+function virtualKeyDown(code) {
+  if (!Keys.down.has(code)) Keys.pressedThisFrame.add(code);
+  Keys.down.add(code);
+}
+
+function virtualKeyUp(code) {
+  Keys.down.delete(code);
+}
+
 // Call once at the end of every simulation frame.
 function endInputFrame() {
   Keys.pressedThisFrame.clear();

@@ -36,3 +36,140 @@ html, body {
 }
 
 #help b { color: #ffd34d; }
+
+#rotate-hint { display: none; }
+
+/* ---- Touch devices ---- */
+
+body.touch {
+  overflow: hidden;
+  height: 100dvh;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.touch #wrap {
+  height: 100dvh;
+  min-height: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  justify-content: center;
+}
+
+body.touch #game {
+  width: min(100vw, 100dvh * 16 / 9);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.touch #help { display: none; }
+
+#touch {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#touch[hidden] { display: none; }
+
+#stick-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 45vw;
+  height: 60dvh;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#stick {
+  position: absolute;
+  left: calc(env(safe-area-inset-left) + 90px);
+  top: calc(100% - 100px);
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+#stick.active { background: rgba(255, 255, 255, 0.14); }
+
+#stick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translate(-50%, -50%);
+}
+
+#attack-buttons {
+  position: absolute;
+  right: calc(env(safe-area-inset-right) + 14px);
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  width: 200px;
+  height: 160px;
+}
+
+.btn, .sys {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+  font: 800 20px system-ui, sans-serif;
+  border-radius: 50%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn { width: 70px; height: 70px; }
+.btn.down { transform: scale(0.92); filter: brightness(1.4); }
+.btn.punch { left: 0; bottom: 0; background: rgba(230, 70, 70, 0.55); }
+.btn.kick { right: 0; bottom: 18px; background: rgba(70, 130, 230, 0.55); }
+.btn.special { left: 64px; top: 0; background: rgba(240, 170, 40, 0.6); font-size: 17px; }
+
+#system-buttons {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 8px);
+  right: calc(env(safe-area-inset-right) + 8px);
+  display: flex;
+  gap: 8px;
+}
+
+.sys {
+  position: static;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  background: rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.sys[hidden] { display: none; }
+
+/* Portrait: game on top, controls in the space below it. */
+@media (orientation: portrait) {
+  body.touch #wrap { justify-content: flex-start; padding-top: calc(env(safe-area-inset-top) + 56px); }
+  body.touch #rotate-hint { display: block; font-size: 13px; opacity: 0.6; margin: 4px 0 0; }
+}
+
+/* Landscape: the game is letterboxed, so stack system buttons in the side bar. */
+@media (orientation: landscape) {
+  #system-buttons { flex-direction: column; }
+}
+
+/* Landscape on short screens: controls float over the game, a bit smaller. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .btn { width: 60px; height: 60px; font-size: 18px; opacity: 0.85; }
+  #attack-buttons { width: 176px; height: 138px; }
+  .btn.special { left: 56px; }
+}

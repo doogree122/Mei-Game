@@ -452,12 +452,13 @@ class Fighter {
 
   hurtbox() {
     const sk = skeleton(this.pose);
-    const top = Math.min(sk.head.y - BODY.head, sk.handF.y, sk.handB.y);
+    // hurtScale stretches the box for characters drawn taller than the skeleton.
+    const height = (sk.base - Math.min(sk.head.y - BODY.head, sk.handF.y, sk.handB.y)) * (this.char.hurtScale || 1);
     return {
       x: this.x - 22,
-      y: GROUND - this.y - sk.base + top,
+      y: GROUND - this.y - height,
       w: 44,
-      h: sk.base - top,
+      h: height,
     };
   }
 

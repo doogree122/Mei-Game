@@ -1,10 +1,12 @@
 // Drawing: fighters (skeleton-posed art rendered as pixel sprites), projectiles and HUD.
 //
-// The world is drawn at half resolution (PIXEL = 2 screen pixels per art pixel)
-// and scaled up without smoothing. Fighters additionally get hard alpha edges and
-// a dark 1-pixel outline so they read like hand-made sprites.
+// The world is drawn at low resolution (PIXEL screen pixels per art pixel) and
+// scaled up without smoothing. Fighters use the character art in sprites.js when
+// it is available, animated by leaning, lunging and squashing the whole sprite.
+// Otherwise they fall back to the procedural skeleton art, which gets hard edges
+// and a dark 1-pixel outline so it reads like a hand-made sprite.
 
-const PIXEL = 2;
+const PIXEL = 2.5;
 const OUTLINE = [13, 15, 22];
 
 function drawLimb(ctx, a, b, width, color) {
@@ -337,7 +339,7 @@ const BODY_STYLES = {
   warrior: drawWarriorBody,
 };
 
-// ---- Sprite pipeline ----
+// ---- Procedural sprite pipeline ----
 
 // Scratch canvas in art pixels. The fighter's ground point sits at (SPR_OX, SPR_OY).
 const SPR_W = 170;
@@ -354,12 +356,141 @@ function isLying(f) {
   return f.state === 'ko' || f.state === 'down' || (f.hitstun > 0 && f.knockedAirborne);
 }
 
+// ---- Character art sprites ----
+
+const spriteImages = {};
+
+// Returns { img, data } once the character's art has loaded, else null.
+function spriteFor(char) {
+  const data = typeof SPRITE_DATA !== 'undefined' && SPRITE_DATA[char.id];
+  if (!data) return null;
+  let entry = spriteImages[char.id];
+  if (!entry) {
+    const img = new Image();
+    img.src = data.src;
+    entry = spriteImages[char.id] = { img, data };
+  }
+  return entry.img.complete && entry.img.naturalWidth ? entry : null;
+}
+
+// How far each move leans (radians, + = toward the opponent) and lunges (px).
+const MOVE_MOTION = {
+  punch: { rot: 0.12, dx: 16 },
+  kick: { rot: -0.22, dx: 20 },
+  lowPunch: { rot: 0.1, dx: 14 },
+  sweep: { rot: -0.12, dx: 18 },
+  airKick: { rot: 0.5, dx: 8 },
+  special: { rot: -0.08, dx: -8 },
+};
+
+// Target transform for the sprite in the fighter's current state.
+function spriteMotion(f) {
+  const t = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1 };
+  if (f.won) {
+    t.dy = -Math.abs(Math.sin(f.time * 0.12)) * 10;
+    return t;
+  }
+  if (f.hitstun > 0) {
+    t.rot = -0.22;
+    t.dx = -8;
+    return t;
+  }
+  const blocking = f.blockstun > 0 || (f.isFree && f.grounded && f.holdBack && f.nearThreat);
+  const crouched = f.state === 'crouch' || (f.move && f.move.def.crouching) || (blocking && f.holdDown);
+  if (crouched) {
+    t.sy = 0.74;
+    t.sx = 1.08;
+    t.rot = 0.06;
+  }
+  if (blocking) {
+    t.rot -= 0.1;
+    t.dx = -4;
+    return t;
+  }
+  if (f.move) {
+    const { def, frame, name } = f.move;
+    const m = MOVE_MOTION[name];
+    let k;
+    if (frame < def.startup) k = -0.35 * (frame / def.startup); // wind up: lean away
+    else if (frame < def.startup + def.active) k = 1;
+    else k = 1 - (frame - def.startup - def.active) / def.recovery;
+    t.rot += m.rot * k;
+    t.dx += m.dx * k;
+    return t;
+  }
+  if (!f.grounded) {
+    t.rot = f.vy > 0 ? -0.06 : 0.08;
+    t.sy = 1.04;
+    t.sx = 0.97;
+  } else if (f.state === 'walk') {
+    t.dy = -Math.abs(Math.sin(f.walkPhase)) * 3;
+    t.rot = Math.sin(f.walkPhase) * 0.035;
+  } else if (!crouched) {
+    const b = Math.sin(f.time * 0.08);
+    t.sy = 1 + b * 0.012;
+    t.sx = 1 - b * 0.006;
+  }
+  return t;
+}
+
+// White copy of a sprite, drawn over it for the hit flash.
+const flashCache = {};
+function flashSilhouette(id, img) {
+  if (!flashCache[id]) {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0);
+    x.globalCompositeOperation = 'source-in';
+    x.fillStyle = '#fff';
+    x.fillRect(0, 0, c.width, c.height);
+    flashCache[id] = c;
+  }
+  return flashCache[id];
+}
+
+// Draws character art in world coordinates at full screen resolution, so
+// leaning and rotation don't scramble the art pixels.
+function drawArtSprite(ctx, f, entry) {
+  const target = spriteMotion(f);
+  const v = f.vis || (f.vis = { ...target });
+  const k = f.move ? 0.55 : 0.35;
+  for (const key of Object.keys(target)) v[key] += (target[key] - v[key]) * k;
+
+  const { img, data } = entry;
+  const w = data.w * PIXEL;
+  const h = data.h * PIXEL;
+  const ax = data.anchorX * PIXEL;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(f.x, GROUND - f.y);
+  ctx.scale(f.facing, 1);
+  if (isLying(f)) {
+    // Fallen backward: rotate about the feet and rest the body on the floor.
+    ctx.translate(0, -ax);
+    ctx.rotate(-Math.PI / 2);
+  } else {
+    ctx.translate(v.dx, v.dy);
+    ctx.rotate(v.rot);
+    ctx.scale(v.sx, v.sy);
+  }
+  ctx.drawImage(img, -ax, -h, w, h);
+  if (f.flash > 0) {
+    ctx.globalAlpha = Math.min(1, f.flash / 5) * 0.75;
+    ctx.drawImage(flashSilhouette(f.char.id, img), -ax, -h, w, h);
+  }
+  ctx.restore();
+}
+
+// Procedural fallback: skeleton art rendered at art resolution, then given
+// hard edges, the hit flash and a 1-pixel dark outline.
 function renderSprite(f) {
   const ctx = spriteCtx;
-  const sk = skeleton(f.pose);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, SPR_W, SPR_H);
   ctx.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, SPR_OX, SPR_OY);
+  const sk = skeleton(f.pose);
   if (isLying(f)) {
     ctx.translate(0, -12);
     ctx.scale(f.facing, 1);
@@ -370,7 +501,6 @@ function renderSprite(f) {
   }
   (BODY_STYLES[f.char.look] || drawArmoredBody)(ctx, sk, f);
 
-  // Hard alpha edges, optional hit flash, then a 1-pixel dark outline.
   const img = ctx.getImageData(0, 0, SPR_W, SPR_H);
   const d = img.data;
   const flash = f.flash > 0;
@@ -415,29 +545,51 @@ function drawFighterShadow(ctx, f) {
   ctx.fill();
 }
 
-// ctx is the half-resolution world buffer; camPix is the camera offset in art pixels.
-function drawFighter(ctx, f, showBoxes, camPix) {
+// ctx is the full-resolution canvas, already translated into world coordinates.
+function drawFighter(ctx, f) {
+  const art = spriteFor(f.char);
+  if (art) return drawArtSprite(ctx, f, art);
   const sprite = renderSprite(f);
-  const ax = Math.round(f.x / PIXEL) - camPix;
-  const ay = Math.round((GROUND - f.y) / PIXEL);
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(sprite, ax - SPR_OX, ay - SPR_OY);
-  ctx.restore();
+  const ax = Math.round(f.x / PIXEL) * PIXEL;
+  const ay = Math.round((GROUND - f.y) / PIXEL) * PIXEL;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(sprite, ax - SPR_OX * PIXEL, ay - SPR_OY * PIXEL, SPR_W * PIXEL, SPR_H * PIXEL);
+}
 
-  if (showBoxes) {
-    const hb = f.hurtbox();
-    ctx.strokeStyle = 'rgba(80,160,255,0.9)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(hb.x, hb.y, hb.w, hb.h);
-    if (f.attackActive) {
-      const p = f.hitPoint();
-      ctx.strokeStyle = 'rgba(255,60,60,0.95)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, f.move.def.radius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+function drawFighterBoxes(ctx, f) {
+  const hb = f.hurtbox();
+  ctx.strokeStyle = 'rgba(80,160,255,0.9)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(hb.x, hb.y, hb.w, hb.h);
+  if (f.attackActive) {
+    const p = f.hitPoint();
+    ctx.strokeStyle = 'rgba(255,60,60,0.95)';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, f.move.def.radius, 0, Math.PI * 2);
+    ctx.stroke();
   }
+}
+
+// Swoosh arc at the striking limb while an attack is out.
+function drawAttackTrail(ctx, f) {
+  if (!f.move || f.move.def.projectile) return;
+  const { def, frame } = f.move;
+  const since = frame - def.startup;
+  if (since < 0 || since > def.active + 3) return;
+  const p = f.hitPoint();
+  const r = def.radius * 1.5;
+  const mid = f.facing > 0 ? 0 : Math.PI;
+  ctx.save();
+  ctx.globalAlpha = since < def.active ? 0.9 : 0.9 * (1 - (since - def.active) / 4);
+  ctx.lineCap = 'round';
+  for (const [color, width] of [[f.char.colors.energy, 8], ['#ffffff', 3]]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.arc(p.x - f.facing * r * 0.6, p.y, r, mid - 0.9, mid + 0.9);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawProjectile(ctx, p, time) {
@@ -539,7 +691,7 @@ function drawHUD(ctx, game) {
   if (game.training) {
     ctx.font = 'bold 14px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText('TRAINING · Esc for menu', W / 2, H - 16);
+    ctx.fillText(game.touch ? 'TRAINING · ☰ for menu' : 'TRAINING · Esc for menu', W / 2, H - 16);
   }
 }
 

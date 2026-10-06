@@ -6,19 +6,25 @@ const STEP = 1000 / 60;
 const SCREEN_MARGIN = 30; // fighters can't walk past the screen edges
 const MENU = [
   { label: '1 PLAYER  vs  CPU', kind: 'cpu' },
-  { label: '2 PLAYERS', kind: 'versus' },
+  { label: '2 PLAYERS', kind: 'versus', keyboardOnly: true },
   { label: 'TRAINING', kind: 'training' },
 ];
+const MENU_TOP = 250;
+const MENU_STEP = 48;
 
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    // The world renders into a half-resolution buffer that is scaled up crisply.
+    // The stage and effects render into low-res buffers that are scaled up crisply.
     this.buffer = document.createElement('canvas');
     this.buffer.width = W / PIXEL;
     this.buffer.height = H / PIXEL;
     this.bctx = this.buffer.getContext('2d');
+    this.fxBuffer = document.createElement('canvas');
+    this.fxBuffer.width = W / PIXEL;
+    this.fxBuffer.height = H / PIXEL;
+    this.fxctx = this.fxBuffer.getContext('2d');
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
@@ -27,6 +33,9 @@ class Game {
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     this.mode = 'title';
+    this.touch = TOUCH_ENABLED;
+    // Two players need two keyboards' worth of keys, so phones don't offer it.
+    this.menu = MENU.filter((m) => !(this.touch && m.keyboardOnly));
     this.menuIndex = 0;
     this.showBoxes = false;
     this.frame = 0;
@@ -96,6 +105,7 @@ class Game {
     this.projectiles.push({
       owner, x: hand.x + owner.facing * 12, y: hand.y, vx: FIREBALL.speed * owner.facing, dead: false,
     });
+    this.effects.spark(hand.x + owner.facing * 12, hand.y, owner.char.colors.energy, 6, 3);
   }
 
   updateProjectiles() {
@@ -133,7 +143,8 @@ class Game {
 
     if (this.mode === 'title') return this.updateTitle();
     if (this.mode === 'paused') {
-      if (keyPressed('KeyP') || keyPressed('Escape')) this.mode = 'fight';
+      if (keyPressed('KeyP')) this.mode = 'fight';
+      else if (keyPressed('Escape')) this.mode = 'title';
       return;
     }
     if (this.mode === 'matchEnd') {
@@ -198,6 +209,21 @@ class Game {
     if (this.shake < 0.5) this.shake = 0;
   }
 
+  // Canvas taps (touch screens): pick menu items, continue, resume.
+  onTap(x, y) {
+    if (this.mode === 'title') {
+      const i = Math.round((y - MENU_TOP) / MENU_STEP);
+      if (i >= 0 && i < this.menu.length && Math.abs(x - W / 2) < 190) {
+        this.menuIndex = i;
+        virtualKeyDown('Enter');
+        setTimeout(() => virtualKeyUp('Enter'), 50);
+      }
+    } else if (this.mode === 'matchEnd' || this.mode === 'paused') {
+      virtualKeyDown(this.mode === 'paused' ? 'KeyP' : 'Enter');
+      setTimeout(() => { virtualKeyUp('Enter'); virtualKeyUp('KeyP'); }, 50);
+    }
+  }
+
   // In training nobody can be KO'd; health refills once a combo is over.
   refillTrainingHp() {
     for (const f of this.fighters) {
@@ -208,12 +234,12 @@ class Game {
   }
 
   updateTitle() {
-    const n = MENU.length;
+    const n = this.menu.length;
     if (keyPressed('KeyW') || keyPressed('ArrowUp')) this.menuIndex = (this.menuIndex + n - 1) % n;
     if (keyPressed('KeyS') || keyPressed('ArrowDown')) this.menuIndex = (this.menuIndex + 1) % n;
     if (keyPressed('Enter') || keyPressed('Space') || keyPressed('KeyJ')) {
       Sfx.unlock();
-      this.startMatch(MENU[this.menuIndex].kind);
+      this.startMatch(this.menu[this.menuIndex].kind);
       return;
     }
     this.camX = (WORLD_W - W) / 2;
@@ -290,40 +316,54 @@ class Game {
   draw() {
     const ctx = this.ctx;
     const b = this.bctx;
+    const fx = this.fxctx;
     const camPix = Math.round(this.camX / PIXEL);
+    const camX = camPix * PIXEL;
     const title = this.mode === 'title';
-
-    // World layer at half resolution.
-    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, 0, 0);
-    Stage.drawBackground(b, camPix * PIXEL, this.frame);
-    if (title) {
-      b.fillStyle = 'rgba(10,5,20,0.35)';
-      b.fillRect(0, 0, W, H);
-      const [f1, f2] = this.fighters;
-      f1.x = camPix * PIXEL + 250; f2.x = camPix * PIXEL + 710;
-      f1.facing = 1; f2.facing = -1; f1.y = f2.y = 0;
-    }
-    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
-    for (const f of this.fighters) drawFighterShadow(b, f);
-    // The attacking fighter draws on top.
     const order = [...this.fighters].sort((x, y) => (x.move ? 1 : 0) - (y.move ? 1 : 0));
-    for (const f of order) drawFighter(b, f, this.showBoxes && !title, camPix);
-    if (!title) {
-      for (const p of this.projectiles) drawProjectile(b, p, this.frame);
-      this.effects.draw(b);
-    }
 
-    // Scale up with crisp pixels; screen shake moves in whole art pixels.
+    // Screen shake moves everything in whole art pixels.
     let sx = 0;
     let sy = 0;
     if (this.shake > 0) {
       sx = Math.round((Math.random() - 0.5) * this.shake / PIXEL) * PIXEL;
       sy = Math.round((Math.random() - 0.5) * this.shake / PIXEL) * PIXEL;
     }
+
+    // Layer 1, low-res: stage and shadows.
+    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, 0, 0);
+    Stage.drawBackground(b, camX, this.frame);
+    if (title) {
+      b.fillStyle = 'rgba(10,5,20,0.35)';
+      b.fillRect(0, 0, W, H);
+      const [f1, f2] = this.fighters;
+      f1.x = camX + 250; f2.x = camX + 710;
+      f1.facing = 1; f2.facing = -1; f1.y = f2.y = 0;
+    }
+    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
+    for (const f of this.fighters) drawFighterShadow(b, f);
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
     ctx.drawImage(this.buffer, sx, sy, W, H);
+
+    // Layer 2, full-res: fighters (the attacker on top).
+    ctx.save();
+    ctx.translate(sx - camX, sy);
+    for (const f of order) drawFighter(ctx, f);
+    ctx.restore();
+
+    // Layer 3, low-res: attack trails, projectiles, particles, debug boxes.
+    if (!title) {
+      fx.setTransform(1, 0, 0, 1, 0, 0);
+      fx.clearRect(0, 0, this.fxBuffer.width, this.fxBuffer.height);
+      fx.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
+      for (const f of order) drawAttackTrail(fx, f);
+      for (const p of this.projectiles) drawProjectile(fx, p, this.frame);
+      this.effects.draw(fx);
+      if (this.showBoxes) for (const f of this.fighters) drawFighterBoxes(fx, f);
+      ctx.drawImage(this.fxBuffer, sx, sy, W, H);
+    }
 
     if (title) return this.drawTitle();
     drawHUD(ctx, this);
@@ -335,11 +375,12 @@ class Game {
       if (this.modeTime < 80) drawBanner(ctx, this.roundLabel);
       else drawBanner(ctx, this.roundWinner ? `${this.roundWinner.char.name} WINS` : 'DRAW');
     } else if (this.mode === 'matchEnd') {
-      drawBanner(ctx, `${this.champion.char.name} WINS!`, this.modeTime > 60 ? 'Press Enter to continue' : null);
+      const cont = this.touch ? 'Tap to continue' : 'Press Enter to continue';
+      drawBanner(ctx, `${this.champion.char.name} WINS!`, this.modeTime > 60 ? cont : null);
     } else if (this.mode === 'paused') {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(0, 0, W, H);
-      drawBanner(ctx, 'PAUSED', 'Press P to resume');
+      drawBanner(ctx, 'PAUSED', this.touch ? 'Tap to resume · ☰ to quit' : 'P to resume · Esc to quit');
     }
   }
 
@@ -359,11 +400,11 @@ class Game {
 
     ctx.fillStyle = 'rgba(12,16,32,0.78)';
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 190, 215, 380, 220, 14);
+    ctx.roundRect(W / 2 - 190, MENU_TOP - 35, 380, this.menu.length * MENU_STEP + 76, 14);
     ctx.fill();
     ctx.font = 'bold 26px system-ui, sans-serif';
-    MENU.forEach(({ label }, i) => {
-      const y = 250 + i * 48;
+    this.menu.forEach(({ label }, i) => {
+      const y = MENU_TOP + i * MENU_STEP;
       const sel = i === this.menuIndex;
       if (sel) {
         ctx.fillStyle = 'rgba(255,211,77,0.18)';
@@ -375,7 +416,8 @@ class Game {
     if (Math.floor(this.frame / 30) % 2 === 0) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = '#fff';
-      ctx.fillText('W/S to choose · ENTER to start', W / 2, 410);
+      const hint = this.touch ? 'Tap a mode to start' : 'W/S to choose · ENTER to start';
+      ctx.fillText(hint, W / 2, MENU_TOP + this.menu.length * MENU_STEP + 14);
     }
   }
 }
@@ -404,4 +446,5 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+setupTouchControls(game, document.getElementById('game'));
 document.getElementById('game').focus();
