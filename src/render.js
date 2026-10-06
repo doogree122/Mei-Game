@@ -74,10 +74,10 @@ function drawArmoredLeg(ctx, sk, side, c, back) {
     edgeLine(ctx, knee, foot, -4, 2, c.suitShade, 0.2, 0.8);
     // Thigh pouch.
     const pouch = lerpPt(sk.hip, knee, 0.5);
-    fillRoundRect(ctx, pouch.x - 6, pouch.y - 5, 11, 11, 2, c.accent);
-    fillRoundRect(ctx, pouch.x - 6, pouch.y - 5, 11, 3, 1, c.accentShade);
-    ctx.fillStyle = c.accentLight;
-    ctx.fillRect(pouch.x - 4, pouch.y - 1, 3, 3);
+    fillRoundRect(ctx, pouch.x - 6, pouch.y - 5, 11, 11, 2, c.belt);
+    fillRoundRect(ctx, pouch.x - 6, pouch.y - 5, 11, 3, 1, c.beltShade);
+    ctx.fillStyle = c.metalLight;
+    ctx.fillRect(pouch.x - 1, pouch.y - 2, 2, 2);
   }
   // Shin armor plate.
   drawLimb(ctx, lerpPt(knee, foot, 0.12), lerpPt(knee, foot, 0.62), 10, back ? c.armorShade : c.armor);
@@ -86,13 +86,18 @@ function drawArmoredLeg(ctx, sk, side, c, back) {
   drawLimb(ctx, lerpPt(knee, foot, 0.6), foot, 15, c.boot);
   drawLimb(ctx, foot, { x: foot.x + 11, y: foot.y + 1 }, 10, c.boot);
   drawLimb(ctx, { x: foot.x + 7, y: foot.y }, { x: foot.x + 12, y: foot.y + 1 }, 7, back ? c.armorShade : c.armor);
-  // Knee pad with rim shade and highlight.
-  fillCircle(ctx, knee.x + 2, knee.y, 9, back ? c.accentShade : c.accent);
+  // Knee plate: a shaped guard over the knee, aligned with the shin.
+  const shinAng = Math.atan2(foot.y - knee.y, foot.x - knee.x) - Math.PI / 2;
+  ctx.save();
+  ctx.translate(knee.x + 3, knee.y + 2);
+  ctx.rotate(shinAng);
+  fillRoundRect(ctx, -6, -8, 12, 15, 4, back ? c.accentShade : c.accent);
   if (!back) {
-    fillCircle(ctx, knee.x + 3, knee.y + 3, 5, c.accentShade);
-    fillCircle(ctx, knee.x + 2, knee.y - 1, 5.5, c.accent);
-    fillCircle(ctx, knee.x + 4, knee.y - 3, 2.5, c.accentLight);
+    fillRoundRect(ctx, -6, 3, 12, 4, 2, c.accentShade);
+    ctx.fillStyle = c.accentLight;
+    ctx.fillRect(1, -6, 3, 5);
   }
+  ctx.restore();
 }
 
 function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
@@ -104,8 +109,8 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   drawLimb(ctx, elbow, hand, 12, back ? c.armorShade : c.armor);
   if (!back) edgeLine(ctx, elbow, hand, 3, 3, c.armorLight, 0.15, 0.6);
   drawLimb(ctx, lerpPt(elbow, hand, 0.68), lerpPt(elbow, hand, 0.8), 13, back ? c.accentShade : c.accent);
-  fillCircle(ctx, hand.x, hand.y, 7, c.glove);
-  if (!back) fillCircle(ctx, hand.x + 2, hand.y - 2, 2, c.metal);
+  fillCircle(ctx, hand.x, hand.y, 7, back ? c.gloveShade : c.glove);
+  if (!back) fillCircle(ctx, hand.x - 2, hand.y + 2, 3, c.gloveShade);
 
   if (holdingBlaster) {
     const dx = hand.x - elbow.x;
@@ -113,11 +118,16 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
     const len = Math.hypot(dx, dy) || 1;
     const ux = dx / len;
     const uy = dy / len;
-    const tip = { x: hand.x + ux * 22, y: hand.y + uy * 22 };
-    drawLimb(ctx, hand, tip, 7, c.metal);
-    drawLimb(ctx, { x: hand.x + ux * 4 - uy * 4, y: hand.y + uy * 4 + ux * 4 }, { x: tip.x - uy * 4, y: tip.y + ux * 4 }, 2, c.packShade);
-    drawLimb(ctx, hand, { x: hand.x - uy * 9, y: hand.y + ux * 9 }, 5, c.metal);
-    fillCircle(ctx, tip.x, tip.y, 2, c.energy);
+    // Carbine: stock behind the hand, body, scope on top, long barrel.
+    const at = (along, side) => ({ x: hand.x + ux * along - uy * side, y: hand.y + uy * along + ux * side });
+    drawLimb(ctx, at(-14, 1), at(-2, 0), 7, c.metalLight);
+    drawLimb(ctx, at(-4, 0), at(16, 0), 9, c.metal);
+    drawLimb(ctx, at(16, -1), at(34, -1), 4, c.metal);
+    drawLimb(ctx, at(2, -7), at(12, -7), 4, c.metal);
+    drawLimb(ctx, at(4, -8), at(10, -8), 1.5, c.metalLight);
+    drawLimb(ctx, at(6, 3), at(6, 9), 4, c.metal);
+    drawLimb(ctx, at(18, 2), at(30, 2), 1.5, c.metalLight);
+    fillCircle(ctx, at(35, -1).x, at(35, -1).y, 2.2, c.energy);
   }
 
   // Shoulder pauldron: rim, plate, highlight, rivet.
@@ -224,14 +234,18 @@ function drawArmoredTorso(ctx, sk, c) {
     ctx.fillStyle = col;
     ctx.fillRect(pt.x - 1.5, pt.y - 1.5, 3, 3);
   }
-  // Belt with pouches and buckle.
-  drawLimb(ctx, at(0, 15), at(0, -14), 8, c.boot);
-  for (const sd of [11, 1, -9]) {
-    const pt = at(0.02, sd);
-    fillRoundRect(ctx, pt.x - 4, pt.y - 4, 8, 9, 2, c.accent);
-    ctx.fillStyle = c.accentLight;
-    ctx.fillRect(pt.x - 3, pt.y - 3, 3, 2);
+  // Brown ammo belt with dark segments and a buckle.
+  drawLimb(ctx, at(0, 15), at(0, -14), 9, c.belt);
+  for (let sd = -11; sd <= 12; sd += 4.6) {
+    const pt = at(0.01, sd);
+    ctx.fillStyle = c.beltShade;
+    ctx.fillRect(pt.x - 1.4, pt.y - 3.5, 2.8, 7);
   }
+  const buckle = at(0.01, 13);
+  fillRoundRect(ctx, buckle.x - 3, buckle.y - 4, 6, 8, 1, c.metalLight);
+  // Strap across the chest, back shoulder to front ribs.
+  drawLimb(ctx, at(0.95, -10), at(0.5, 17), 5, c.belt);
+  drawLimb(ctx, at(0.93, -9), at(0.52, 16), 1.5, c.beltShade);
   // Collar ring.
   drawLimb(ctx, at(1, 0), lerpPt(neck, sk.head, 0.5), 11, c.suitShade);
   drawLimb(ctx, at(0.98, 5), at(0.98, -6), 4, c.armorShade);
@@ -240,9 +254,10 @@ function drawArmoredTorso(ctx, sk, c) {
 function drawHelmet(ctx, sk, c) {
   const h = sk.head;
   const r = BODY.head + 1.5;
-  // Antenna rising from the side of the helmet.
-  drawLimb(ctx, { x: h.x - 7, y: h.y - 10 }, { x: h.x - 9, y: h.y - 30 }, 2, c.metal);
-  fillCircle(ctx, h.x - 9, h.y - 31, 2, c.accentLight);
+  // Gray antenna stalk rising from the top of the helmet, with a bent tip.
+  drawLimb(ctx, { x: h.x - 6, y: h.y - 12 }, { x: h.x - 7, y: h.y - 34 }, 3, c.suitShade);
+  drawLimb(ctx, { x: h.x - 7, y: h.y - 34 }, { x: h.x - 2, y: h.y - 37 }, 3, c.suitShade);
+  drawLimb(ctx, { x: h.x - 5.5, y: h.y - 14 }, { x: h.x - 6.5, y: h.y - 33 }, 1, c.suitLight);
   // Dome, shaded at the back.
   fillCircle(ctx, h.x, h.y, r, c.armor);
   ctx.fillStyle = c.armorShade;
@@ -259,8 +274,8 @@ function drawHelmet(ctx, sk, c) {
   ctx.fillStyle = c.armorShade;
   ctx.fillRect(h.x + 3, h.y - 12, 2, 2);
   ctx.fillRect(h.x - 4, h.y - 7, 3, 2);
-  // Crest stripe.
-  ctx.strokeStyle = c.accent;
+  // Dark red band across the brow.
+  ctx.strokeStyle = c.visorFrame;
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.arc(h.x, h.y, r - 1, -2.3, -1.2);
@@ -269,10 +284,10 @@ function drawHelmet(ctx, sk, c) {
   fillRoundRect(ctx, h.x - 12, h.y + 3, 27, 13, 4, c.armorShade);
   ctx.fillStyle = c.armor;
   ctx.fillRect(h.x + 4, h.y + 5, 10, 3);
-  // Visor slit with an orange-red frame.
-  fillRoundRect(ctx, h.x - 3, h.y - 7, r + 6, 11, 2, c.accent);
-  ctx.fillStyle = c.accentShade;
-  ctx.fillRect(h.x - 3, h.y + 2, r + 6, 2);
+  // Visor slit with a dark red frame.
+  fillRoundRect(ctx, h.x - 3, h.y - 7, r + 6, 11, 2, c.visorFrame);
+  ctx.fillStyle = c.visorFrameLight;
+  ctx.fillRect(h.x - 2, h.y - 7, r + 4, 1.5);
   ctx.fillStyle = c.visor;
   ctx.fillRect(h.x - 1, h.y - 4, r + 3, 5);
   ctx.fillStyle = 'rgba(160,220,255,0.85)';
@@ -280,7 +295,7 @@ function drawHelmet(ctx, sk, c) {
   // Side comm disc.
   fillCircle(ctx, h.x - 6, h.y + 3, 5.5, c.armorShade);
   fillCircle(ctx, h.x - 6, h.y + 3, 3, c.metal);
-  fillCircle(ctx, h.x - 6, h.y + 3, 1.5, c.accent);
+  fillCircle(ctx, h.x - 6, h.y + 3, 1.5, c.visorFrameLight);
   // Breather grille.
   ctx.fillStyle = c.visor;
   for (let i = 0; i < 3; i++) ctx.fillRect(h.x + 6 + i * 3, h.y + 10, 2, 4);

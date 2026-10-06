@@ -79,7 +79,7 @@ Each frame they're drawn from their skeleton, then given hard edges and a 1-pixe
 
 | | Look | Special | Stats |
 |---|---|---|---|
-| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with an orange-framed visor slit, an antenna and scuffs. Two-part chest plates, shin plates, orange pauldron, wrist bands, knee pads, belt and thigh pouches. Blue flight suit with lavender highlights. Jetpack with a lavender rocket, plus a scoped rifle on the back | Blaster bolt | 1.9× size, baseline stats |
+| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with a dark-red-framed visor slit, a brow band, a gray antenna and scuffs. Green chest plates, gauntlets and shin plates. Yellow shoulder pad, wrist bands and shaped knee plates. Gray flight suit, light-gray gloves and black boots. Brown ammo belt, chest strap and thigh pouch. Green jetpack with a slim rocket, a rifle on the back, and a black carbine for the special | Blaster bolt | 1.9× size, baseline stats |
 | **KORR** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`), a projectile style with `projectile` (`bolt`, `pulse`), and a size with `scale`.
