@@ -87,3 +87,10 @@ class AIController {
     this.plan = plan;
   }
 }
+
+// Training dummy: stands still and never presses anything.
+class DummyController {
+  read() {
+    return emptyInput();
+  }
+}

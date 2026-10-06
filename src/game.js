@@ -3,6 +3,12 @@
 const ROUND_TIME = 99;
 const WINS_NEEDED = 2;
 const STEP = 1000 / 60;
+const SCREEN_MARGIN = 30; // fighters can't walk past the screen edges
+const MENU = [
+  { label: '1 PLAYER  vs  CPU', kind: 'cpu' },
+  { label: '2 PLAYERS', kind: 'versus' },
+  { label: 'TRAINING', kind: 'training' },
+];
 
 class Game {
   constructor(canvas) {
@@ -11,8 +17,8 @@ class Game {
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
-      new Fighter({ char: CHARACTERS.mei, x: 300, facing: 1, side: 0 }),
-      new Fighter({ char: CHARACTERS.meiAlt, x: 660, facing: -1, side: 1 }),
+      new Fighter({ char: CHARACTERS.mei, x: WORLD_W / 2 - 180, facing: 1, side: 0 }),
+      new Fighter({ char: CHARACTERS.meiAlt, x: WORLD_W / 2 + 180, facing: -1, side: 1 }),
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     this.mode = 'title';
@@ -21,15 +27,24 @@ class Game {
     this.frame = 0;
     this.hitstop = 0;
     this.shake = 0;
+    this.training = false;
+    this.camX = (WORLD_W - W) / 2;
   }
 
   // ---- match flow ----
 
-  startMatch(twoPlayer) {
-    this.controllers[1] = twoPlayer ? new KeyboardController(KEYMAPS.p2) : new AIController(0.5);
+  startMatch(kind) {
+    this.training = kind === 'training';
+    this.controllers[1] = kind === 'versus' ? new KeyboardController(KEYMAPS.p2)
+      : kind === 'training' ? new DummyController()
+        : new AIController(0.5);
     for (const f of this.fighters) f.wins = 0;
     this.round = 1;
     this.startRound();
+    if (this.training) {
+      this.timer = Infinity;
+      this.mode = 'fight';
+    }
   }
 
   startRound() {
@@ -41,6 +56,7 @@ class Game {
     this.modeTime = 0;
     this.koFighter = null;
     this.roundResult = '';
+    this.updateCamera(true);
     Sfx.announce();
   }
 
@@ -80,7 +96,7 @@ class Game {
   updateProjectiles() {
     for (const p of this.projectiles) {
       p.x += p.vx;
-      if (p.x < -40 || p.x > W + 40) p.dead = true;
+      if (p.x < this.camX - 40 || p.x > this.camX + W + 40) p.dead = true;
     }
     // Opposing projectiles cancel each other.
     for (const a of this.projectiles) {
@@ -122,6 +138,10 @@ class Game {
       return;
     }
 
+    if (this.mode === 'fight' && this.training && keyPressed('Escape')) {
+      this.mode = 'title';
+      return;
+    }
     if (this.mode === 'fight' && (keyPressed('KeyP') || keyPressed('Escape'))) {
       this.mode = 'paused';
       return;
@@ -142,6 +162,7 @@ class Game {
       }
     } else if (this.mode === 'fight') {
       this.stepFighters(true);
+      if (this.training) this.refillTrainingHp();
       this.timer -= 1 / 60;
       if (this.timer <= 0) {
         this.timer = 0;
@@ -172,13 +193,25 @@ class Game {
     if (this.shake < 0.5) this.shake = 0;
   }
 
+  // In training nobody can be KO'd; health refills once a combo is over.
+  refillTrainingHp() {
+    for (const f of this.fighters) {
+      if (f.hitstun > 0 || f.blockstun > 0 || f.downTime > 0) f.idleFrames = 0;
+      else f.idleFrames = (f.idleFrames || 0) + 1;
+      if (f.idleFrames > 60 && f.hp < MAX_HP) f.hp = Math.min(MAX_HP, f.hp + 2);
+    }
+  }
+
   updateTitle() {
-    if (keyPressed('KeyW') || keyPressed('ArrowUp')) this.menuIndex = 0;
-    if (keyPressed('KeyS') || keyPressed('ArrowDown')) this.menuIndex = 1;
+    const n = MENU.length;
+    if (keyPressed('KeyW') || keyPressed('ArrowUp')) this.menuIndex = (this.menuIndex + n - 1) % n;
+    if (keyPressed('KeyS') || keyPressed('ArrowDown')) this.menuIndex = (this.menuIndex + 1) % n;
     if (keyPressed('Enter') || keyPressed('Space') || keyPressed('KeyJ')) {
       Sfx.unlock();
-      this.startMatch(this.menuIndex === 1);
+      this.startMatch(MENU[this.menuIndex].kind);
+      return;
     }
+    this.camX = (WORLD_W - W) / 2;
     for (const f of this.fighters) {
       f.time++;
       f.updatePose();
@@ -200,6 +233,7 @@ class Game {
     b.update(inputs[1], a, this);
 
     this.resolvePush(a, b);
+    this.updateCamera(false);
     if (acceptInput) {
       this.resolveHits(a, b);
       this.resolveHits(b, a);
@@ -215,6 +249,17 @@ class Game {
     if (circleRect(p.x, p.y, move.def.radius, def.hurtbox())) {
       if (def.takeHit(move.def, att, this, p)) move.hasHit = true;
     }
+  }
+
+  // Camera centers on the fighters, clamped to the stage. Fighters are kept
+  // on screen, which also limits how far apart they can get.
+  updateCamera(snap) {
+    const [a, b] = this.fighters;
+    const target = Math.max(0, Math.min(WORLD_W - W, (a.x + b.x) / 2 - W / 2));
+    const left = target + SCREEN_MARGIN;
+    const right = target + W - SCREEN_MARGIN;
+    for (const f of this.fighters) f.x = Math.max(left, Math.min(right, f.x));
+    this.camX = snap ? target : this.camX + (target - this.camX) * 0.2;
   }
 
   // Keep fighters from overlapping while on the ground.
@@ -243,14 +288,15 @@ class Game {
     if (this.shake > 0) {
       ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
     }
-    drawStage(ctx);
+    Stage.drawBackground(ctx, this.camX, this.frame);
 
     if (this.mode === 'title') {
       ctx.restore();
       return this.drawTitle();
     }
 
-    // Draw the fighter who is attacking on top.
+    // World layer, scrolled by the camera. The attacking fighter draws on top.
+    ctx.translate(-Math.round(this.camX), 0);
     const order = [...this.fighters].sort((x, y) => (x.move ? 1 : 0) - (y.move ? 1 : 0));
     for (const f of order) drawFighter(ctx, f, this.showBoxes);
     for (const p of this.projectiles) drawProjectile(ctx, p, this.frame);
@@ -276,14 +322,17 @@ class Game {
 
   drawTitle() {
     const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(10,5,20,0.45)';
+    ctx.fillStyle = 'rgba(10,5,20,0.35)';
     ctx.fillRect(0, 0, W, H);
 
     // Showcase both fighters.
     const [a, b] = this.fighters;
-    a.x = 250; b.x = 710; a.facing = 1; b.facing = -1; a.y = b.y = 0;
+    a.x = this.camX + 250; b.x = this.camX + 710; a.facing = 1; b.facing = -1; a.y = b.y = 0;
+    ctx.save();
+    ctx.translate(-Math.round(this.camX), 0);
     drawFighter(ctx, a, false);
     drawFighter(ctx, b, false);
+    ctx.restore();
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -297,10 +346,13 @@ class Game {
     ctx.fillStyle = g;
     ctx.fillText('MEI FIGHTER', W / 2, 130);
 
-    const items = ['1 PLAYER  vs  CPU', '2 PLAYERS'];
+    ctx.fillStyle = 'rgba(12,16,32,0.78)';
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - 190, 215, 380, 220, 14);
+    ctx.fill();
     ctx.font = 'bold 26px system-ui, sans-serif';
-    items.forEach((label, i) => {
-      const y = 270 + i * 48;
+    MENU.forEach(({ label }, i) => {
+      const y = 250 + i * 48;
       const sel = i === this.menuIndex;
       if (sel) {
         ctx.fillStyle = 'rgba(255,211,77,0.18)';
@@ -312,7 +364,7 @@ class Game {
     if (Math.floor(this.frame / 30) % 2 === 0) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = '#fff';
-      ctx.fillText('W/S to choose · ENTER to start', W / 2, 400);
+      ctx.fillText('W/S to choose · ENTER to start', W / 2, 410);
     }
   }
 }

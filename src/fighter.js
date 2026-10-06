@@ -3,8 +3,9 @@
 const W = 960;
 const H = 540;
 const GROUND = 468;
-const STAGE_LEFT = 40;
-const STAGE_RIGHT = 920;
+const WORLD_W = 1800; // stage width; the camera scrolls across it
+const STAGE_LEFT = 90;
+const STAGE_RIGHT = WORLD_W - 90;
 const GRAVITY = 0.75;
 const MAX_HP = 100;
 const BUFFER_FRAMES = 6;
@@ -354,7 +355,7 @@ class Fighter {
     }
 
     const damage = Math.round(def.damage * attacker.char.stats.power);
-    this.hp = Math.max(0, this.hp - damage);
+    this.hp = Math.max(game.training ? 1 : 0, this.hp - damage);
     this.move = null;
     this.flash = 6;
     this.vx = dir * def.push;

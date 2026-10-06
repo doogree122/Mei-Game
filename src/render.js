@@ -185,100 +185,6 @@ function drawProjectile(ctx, p, time) {
   ctx.fill();
 }
 
-// Static stage art is painted once to an offscreen canvas.
-let stageCache = null;
-
-function buildStage() {
-  const cv = document.createElement('canvas');
-  cv.width = W;
-  cv.height = H;
-  const ctx = cv.getContext('2d');
-
-  const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
-  sky.addColorStop(0, '#1a1036');
-  sky.addColorStop(0.55, '#5a2a5e');
-  sky.addColorStop(1, '#f08a5d');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, GROUND);
-
-  // Sun.
-  const sun = ctx.createRadialGradient(W * 0.68, 300, 10, W * 0.68, 300, 140);
-  sun.addColorStop(0, 'rgba(255,220,150,0.95)');
-  sun.addColorStop(0.3, 'rgba(255,170,110,0.6)');
-  sun.addColorStop(1, 'rgba(255,140,100,0)');
-  ctx.fillStyle = sun;
-  ctx.fillRect(0, 0, W, GROUND);
-
-  // Stars.
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  let seed = 7;
-  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < 60; i++) ctx.fillRect(rand() * W, rand() * 180, 1.5, 1.5);
-
-  // Mountain layers.
-  const layer = (color, baseY, amp, step, phase) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND);
-    for (let x = 0; x <= W; x += step) {
-      const y = baseY - Math.abs(Math.sin(x * 0.006 + phase)) * amp - Math.sin(x * 0.02 + phase) * amp * 0.2;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W, GROUND);
-    ctx.closePath();
-    ctx.fill();
-  };
-  layer('#6b3a6b', 360, 90, 8, 1.3);
-  layer('#4a2550', 400, 70, 8, 2.7);
-
-  // Pagoda-style silhouettes.
-  ctx.fillStyle = '#2c1636';
-  for (const [px, s] of [[130, 1], [820, 1.2]]) {
-    for (let i = 0; i < 3; i++) {
-      const w = (70 - i * 16) * s;
-      const y = GROUND - 30 - i * 34 * s;
-      ctx.fillRect(px - w * 0.35, y - 24 * s, w * 0.7, 26 * s);
-      ctx.beginPath();
-      ctx.moveTo(px - w / 2 - 10, y - 20 * s);
-      ctx.lineTo(px + w / 2 + 10, y - 20 * s);
-      ctx.lineTo(px + w / 4, y - 34 * s);
-      ctx.lineTo(px - w / 4, y - 34 * s);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-  layer('#2c1636', 440, 30, 10, 0.5);
-
-  // Floor.
-  const floor = ctx.createLinearGradient(0, GROUND, 0, H);
-  floor.addColorStop(0, '#8a5a44');
-  floor.addColorStop(1, '#3d241b');
-  ctx.fillStyle = floor;
-  ctx.fillRect(0, GROUND, W, H - GROUND);
-  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-  ctx.lineWidth = 2;
-  for (let i = -12; i <= 12; i++) {
-    ctx.beginPath();
-    ctx.moveTo(W / 2 + i * 40, GROUND);
-    ctx.lineTo(W / 2 + i * 120, H);
-    ctx.stroke();
-  }
-  for (const y of [GROUND + 20, GROUND + 46]) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(255,220,180,0.35)';
-  ctx.fillRect(0, GROUND, W, 2);
-  return cv;
-}
-
-function drawStage(ctx) {
-  if (!stageCache) stageCache = buildStage();
-  ctx.drawImage(stageCache, 0, 0);
-}
-
 function drawHealthBar(ctx, f, x, y, w, flip) {
   const h = 20;
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -328,7 +234,12 @@ function drawHUD(ctx, game) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = game.timer <= 10 ? '#ff6b6b' : '#fff';
-  ctx.fillText(String(Math.ceil(game.timer)).padStart(2, '0'), W / 2, 40);
+  ctx.fillText(game.training ? '∞' : String(Math.ceil(game.timer)).padStart(2, '0'), W / 2, 40);
+  if (game.training) {
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText('TRAINING · Esc for menu', W / 2, H - 16);
+  }
 }
 
 function drawBanner(ctx, text, sub, alpha = 1) {

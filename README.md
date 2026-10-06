@@ -27,13 +27,22 @@ Low attacks must be blocked crouching, and jump attacks must be blocked standing
 
 Enter starts the game, P pauses and F2 shows hitboxes.
 
+**Modes:** 1P vs CPU, 2 players on one keyboard, and **Training**. Training puts Mei on the stage with a standing dummy.
+It has no timer and no KOs, and health refills between combos. Press Esc to leave.
+
+## Stage
+
+The fight takes place inside a spaceship. The room is about two screens wide (`WORLD_W`), and the camera follows the fighters,
+who can't walk off screen. The view of space through the windows scrolls slower than the room, which gives a sense of depth.
+
 ## Project layout
 
 | File | Purpose |
 |------|---------|
 | `src/characters.js` | Character roster: colors, hair style, movement stats. **Edit this to restyle Mei.** |
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
-| `src/render.js` | Drawing: skeleton-based character art, stage, HUD |
+| `src/render.js` | Drawing: skeleton-based character art, HUD |
+| `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
