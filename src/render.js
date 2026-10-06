@@ -271,21 +271,16 @@ function drawWarriorTorso(ctx, sk, c) {
   }
 }
 
-function drawWarriorHead(ctx, sk, c, time) {
+function drawWarriorHead(ctx, sk, c) {
   const h = sk.head;
-  const sway = Math.sin(time * 0.1);
 
-  // Straight, shoulder-length hair cut level, hanging behind the face.
-  fillPoly(ctx, [
-    { x: h.x - 1, y: h.y - 17 },
-    { x: h.x - 16, y: h.y - 11 },
-    { x: h.x - 19 + sway, y: h.y + 18 },
-    { x: h.x - 1 + sway, y: h.y + 20 },
-    { x: h.x + 3, y: h.y + 4 },
-  ], c.hair);
+  // Short dark hair hugging the back of the skull down to the nape.
   fillCircle(ctx, h.x - 3, h.y - 1, 14.5, c.hair);
-  drawLimb(ctx, { x: h.x - 11, y: h.y - 8 }, { x: h.x - 13 + sway, y: h.y + 15 }, 2, c.hairLight);
-  drawLimb(ctx, { x: h.x - 5, y: h.y - 12 }, { x: h.x - 6 + sway, y: h.y + 16 }, 2, c.hairLight);
+  fillPoly(ctx, [
+    { x: h.x - 15, y: h.y - 2 }, { x: h.x - 13, y: h.y + 12 },
+    { x: h.x - 4, y: h.y + 13 }, { x: h.x - 2, y: h.y },
+  ], c.hair);
+  drawLimb(ctx, { x: h.x - 10, y: h.y - 9 }, { x: h.x - 12, y: h.y + 6 }, 2, c.hairLight);
 
   // Face.
   ctx.fillStyle = c.skin;
@@ -316,10 +311,11 @@ function drawWarriorHead(ctx, sk, c, time) {
   fillCircle(ctx, h.x + 15, h.y + 4, 3.4, c.skin);
   fillCircle(ctx, h.x + 14, h.y + 6, 1.2, c.skinShade);
 
-  // Full beard along the jaw, plus mustache.
+  // Goatee and mustache, with a thin beard line along the jaw.
+  drawLimb(ctx, { x: h.x + 1, y: h.y + 6 }, { x: h.x + 8, y: h.y + 14 }, 2.5, c.beard);
   fillPoly(ctx, [
-    { x: h.x - 1, y: h.y + 4 }, { x: h.x + 7, y: h.y + 10 }, { x: h.x + 16, y: h.y + 10 },
-    { x: h.x + 14, y: h.y + 20 }, { x: h.x + 5, y: h.y + 21 }, { x: h.x - 1, y: h.y + 13 },
+    { x: h.x + 8, y: h.y + 11 }, { x: h.x + 15, y: h.y + 11 },
+    { x: h.x + 13, y: h.y + 20 }, { x: h.x + 7, y: h.y + 18 },
   ], c.beard);
   drawLimb(ctx, { x: h.x + 9, y: h.y + 9 }, { x: h.x + 16, y: h.y + 9 }, 2.5, c.beard);
   drawLimb(ctx, { x: h.x + 10, y: h.y + 12 }, { x: h.x + 14, y: h.y + 12 }, 1.5, c.skinShade);
@@ -332,7 +328,7 @@ function drawWarriorBody(ctx, sk, f) {
   drawWarriorLeg(ctx, sk, 'B', c, true);
   drawWarriorTorso(ctx, sk, c);
   drawWarriorLeg(ctx, sk, 'F', c, false);
-  drawWarriorHead(ctx, sk, c, f.time);
+  drawWarriorHead(ctx, sk, c);
   drawWarriorArm(ctx, sk, 'F', c, false, device);
 }
 
