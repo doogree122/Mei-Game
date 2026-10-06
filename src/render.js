@@ -276,47 +276,55 @@ function drawHelmet(ctx, sk, c) {
   drawLimb(ctx, { x: h.x - 6, y: h.y - 12 }, { x: h.x - 7, y: h.y - 34 }, 3, c.suitShade);
   drawLimb(ctx, { x: h.x - 7, y: h.y - 34 }, { x: h.x - 2, y: h.y - 37 }, 3, c.suitShade);
   drawLimb(ctx, { x: h.x - 5.5, y: h.y - 14 }, { x: h.x - 6.5, y: h.y - 33 }, 1, c.suitLight);
-  // Dome, shaded at the back.
-  fillCircle(ctx, h.x, h.y, r, c.armor);
+
+  // Helmet shell: rounded dome with a flat, squared-off face down to the chin.
+  fillCircle(ctx, h.x, h.y - 1, r, c.armor);
+  fillRoundRect(ctx, h.x - 4, h.y - 6, r + 5, 23, 3, c.armor);
+  fillRoundRect(ctx, h.x - r + 1, h.y - 2, r + 4, 18, 5, c.armor);
+  // Shading on the back of the dome and under the chin.
   ctx.fillStyle = c.armorShade;
   ctx.beginPath();
-  ctx.arc(h.x, h.y, r, Math.PI * 0.55, Math.PI * 1.35);
+  ctx.arc(h.x, h.y - 1, r, Math.PI * 0.62, Math.PI * 1.3);
   ctx.closePath();
   ctx.fill();
-  // Dome highlight and scuffs.
+  ctx.fillRect(h.x - r + 2, h.y + 13, r + 15, 3);
+  // Dome highlight and a couple of scuffs.
   ctx.strokeStyle = c.armorLight;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(h.x + 1, h.y, r - 4, -2.3, -1.5);
+  ctx.arc(h.x + 1, h.y - 1, r - 4, -2.4, -1.5);
   ctx.stroke();
   ctx.fillStyle = c.armorShade;
-  ctx.fillRect(h.x + 3, h.y - 12, 2, 2);
-  ctx.fillRect(h.x - 4, h.y - 7, 3, 2);
+  ctx.fillRect(h.x + 2, h.y - 13, 2, 2);
+  ctx.fillRect(h.x - 9, h.y - 6, 3, 2);
   // Dark red band across the brow.
   ctx.strokeStyle = c.visorFrame;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(h.x, h.y, r - 1, -2.3, -1.2);
+  ctx.arc(h.x, h.y - 1, r - 1.5, -2.25, -1.05);
   ctx.stroke();
-  // Jaw plate.
-  fillRoundRect(ctx, h.x - 12, h.y + 3, 27, 13, 4, c.armorShade);
-  ctx.fillStyle = c.armor;
-  ctx.fillRect(h.x + 4, h.y + 5, 10, 3);
-  // Visor slit with a dark red frame.
-  fillRoundRect(ctx, h.x - 3, h.y - 7, r + 6, 11, 2, c.visorFrame);
+
+  // Cheek plates: darker green below the visor, with a lit front edge.
+  fillPoly(ctx, [
+    { x: h.x - 2, y: h.y + 3 }, { x: h.x + r + 1, y: h.y + 3 },
+    { x: h.x + r, y: h.y + 14 }, { x: h.x + 3, y: h.y + 15 },
+  ], c.armorShade);
+  drawLimb(ctx, { x: h.x + r, y: h.y + 4 }, { x: h.x + r - 0.5, y: h.y + 13 }, 1.5, c.armorLight);
+  drawLimb(ctx, { x: h.x + 2, y: h.y + 5 }, { x: h.x + 4, y: h.y + 14 }, 1.2, c.armor);
+
+  // Visor: a wide dark slit framed in dark red, wrapping round the face.
+  fillRoundRect(ctx, h.x - 3, h.y - 9, r + 6, 14, 2, c.visorFrame);
   ctx.fillStyle = c.visorFrameLight;
-  ctx.fillRect(h.x - 2, h.y - 7, r + 4, 1.5);
+  ctx.fillRect(h.x - 2, h.y - 9, r + 4, 1.5);
   ctx.fillStyle = c.visor;
-  ctx.fillRect(h.x - 1, h.y - 4, r + 3, 5);
-  ctx.fillStyle = 'rgba(160,220,255,0.85)';
-  ctx.fillRect(h.x + 9, h.y - 3, 3, 2);
-  // Side comm disc.
-  fillCircle(ctx, h.x - 6, h.y + 3, 5.5, c.armorShade);
-  fillCircle(ctx, h.x - 6, h.y + 3, 3, c.metal);
-  fillCircle(ctx, h.x - 6, h.y + 3, 1.5, c.visorFrameLight);
-  // Breather grille.
-  ctx.fillStyle = c.visor;
-  for (let i = 0; i < 3; i++) ctx.fillRect(h.x + 6 + i * 3, h.y + 10, 2, 4);
+  ctx.fillRect(h.x - 1, h.y - 6.5, r + 3.5, 9);
+  ctx.fillStyle = 'rgba(160,220,255,0.75)';
+  ctx.fillRect(h.x + 10, h.y - 5, 4, 1.5);
+  ctx.fillRect(h.x + 13, h.y - 3, 1.5, 2);
+
+  // Ear cap on the side of the helmet.
+  fillCircle(ctx, h.x - 7, h.y + 4, 4.5, c.armorShade);
+  fillCircle(ctx, h.x - 7, h.y + 4, 2.2, c.suitShade);
 }
 
 function drawArmoredBody(ctx, sk, f) {
