@@ -72,18 +72,16 @@ Then add `<script src="src/sprites.js"></script>` to `index.html` before `src/to
 ## Art style
 
 The stage and effects are drawn at low resolution and scaled up without smoothing, so one art pixel is 2.5×2.5 screen pixels.
-Each frame, the fighters are drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
+Fighters use a finer grid (1 art pixel = 1.5 screen pixels, `FIGHTER_PIXEL`) so their detail survives.
+Each frame they're drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
 Mei is an armored jetpack bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, a jetpack whose thrusters fire when airborne, and a blaster.
 
 ## Characters
 
 | | Look | Special | Stats |
 |---|---|---|---|
-| **MEI** (P1) | Armored bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, jetpack, slung rifle | Blaster bolt | Baseline |
-| **KORR** (P2 / CPU) | Alien warrior with a ridged forehead crest, short dark hair, goatee and mustache, mustard tunic with black yoke and waistband, wide chain-mail sash with clasps, black trousers and boots; crosses his arms when he wins | Hand-blaster pulse | Hits 10% harder, walks and jumps a little slower |
+| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with an orange-framed visor slit, an antenna and scuffs. Two-part chest plates, shin plates, orange pauldron, wrist bands, knee pads, belt and thigh pouches. Blue flight suit with lavender highlights. Jetpack with a lavender rocket, plus a scoped rifle on the back | Blaster bolt | 1.25× size, baseline stats |
+| **KORR** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 1.32× size (the taller), hits 10% harder, a little slower |
 
-Each character picks a body renderer with `look` (`armored`, `warrior`) and a projectile style with `projectile` (`bolt`, `pulse`).
-
-Characters are drawn from a pose skeleton (limb angles), and hitboxes come from the actual limb positions.
-That makes new moves cheap to add: you add a pose plus an entry in `MOVES`.
-To use hand-drawn sprite sheets later, replace `drawFighter` in `render.js` and keep the rest.
+Each character picks a body renderer with `look` (`armored`, `warrior`), a projectile style with `projectile` (`bolt`, `pulse`), and a size with `scale`.
+Scale grows the drawing along with reach, hit areas and blaster height, so a taller fighter also reaches further.
