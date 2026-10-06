@@ -39,7 +39,6 @@ CHARACTERS.korr = {
   look: 'warrior', // ridge-browed alien officer
   projectile: 'pulse', // special fires a hand-blaster pulse
   victoryPose: 'armsCrossed',
-  hurtScale: 1.2, // his art stands taller than the shared skeleton
   colors: {
     skin: '#9a5f45',
     skinShade: '#6b3c2a',
