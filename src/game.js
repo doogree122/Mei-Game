@@ -14,6 +14,11 @@ class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    // The world renders into a half-resolution buffer that is scaled up crisply.
+    this.buffer = document.createElement('canvas');
+    this.buffer.width = W / PIXEL;
+    this.buffer.height = H / PIXEL;
+    this.bctx = this.buffer.getContext('2d');
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
@@ -284,25 +289,43 @@ class Game {
 
   draw() {
     const ctx = this.ctx;
-    ctx.save();
-    if (this.shake > 0) {
-      ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
-    }
-    Stage.drawBackground(ctx, this.camX, this.frame);
+    const b = this.bctx;
+    const camPix = Math.round(this.camX / PIXEL);
+    const title = this.mode === 'title';
 
-    if (this.mode === 'title') {
-      ctx.restore();
-      return this.drawTitle();
+    // World layer at half resolution.
+    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, 0, 0);
+    Stage.drawBackground(b, camPix * PIXEL, this.frame);
+    if (title) {
+      b.fillStyle = 'rgba(10,5,20,0.35)';
+      b.fillRect(0, 0, W, H);
+      const [f1, f2] = this.fighters;
+      f1.x = camPix * PIXEL + 250; f2.x = camPix * PIXEL + 710;
+      f1.facing = 1; f2.facing = -1; f1.y = f2.y = 0;
     }
-
-    // World layer, scrolled by the camera. The attacking fighter draws on top.
-    ctx.translate(-Math.round(this.camX), 0);
+    b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
+    for (const f of this.fighters) drawFighterShadow(b, f);
+    // The attacking fighter draws on top.
     const order = [...this.fighters].sort((x, y) => (x.move ? 1 : 0) - (y.move ? 1 : 0));
-    for (const f of order) drawFighter(ctx, f, this.showBoxes);
-    for (const p of this.projectiles) drawProjectile(ctx, p, this.frame);
-    this.effects.draw(ctx);
-    ctx.restore();
+    for (const f of order) drawFighter(b, f, this.showBoxes && !title, camPix);
+    if (!title) {
+      for (const p of this.projectiles) drawProjectile(b, p, this.frame);
+      this.effects.draw(b);
+    }
 
+    // Scale up with crisp pixels; screen shake moves in whole art pixels.
+    let sx = 0;
+    let sy = 0;
+    if (this.shake > 0) {
+      sx = Math.round((Math.random() - 0.5) * this.shake / PIXEL) * PIXEL;
+      sy = Math.round((Math.random() - 0.5) * this.shake / PIXEL) * PIXEL;
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(this.buffer, sx, sy, W, H);
+
+    if (title) return this.drawTitle();
     drawHUD(ctx, this);
 
     if (this.mode === 'intro') {
@@ -322,18 +345,6 @@ class Game {
 
   drawTitle() {
     const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(10,5,20,0.35)';
-    ctx.fillRect(0, 0, W, H);
-
-    // Showcase both fighters.
-    const [a, b] = this.fighters;
-    a.x = this.camX + 250; b.x = this.camX + 710; a.facing = 1; b.facing = -1; a.y = b.y = 0;
-    ctx.save();
-    ctx.translate(-Math.round(this.camX), 0);
-    drawFighter(ctx, a, false);
-    drawFighter(ctx, b, false);
-    ctx.restore();
-
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = 'italic 900 88px system-ui, sans-serif';

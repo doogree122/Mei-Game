@@ -19,7 +19,7 @@ npx serve .
 | Crouch  | S        | ↓        |
 | Punch   | J        | , (or Numpad 1) |
 | Kick    | K        | . (or Numpad 2) |
-| Special (energy ball) | L | / (or Numpad 3) |
+| Special (blaster shot) | L | / (or Numpad 3) |
 | Block   | hold away from opponent | same |
 
 Crouch + punch is a low jab and crouch + kick is a sweep (knockdown). Kick or punch in the air is a jump kick.
@@ -39,13 +39,20 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 
 | File | Purpose |
 |------|---------|
-| `src/characters.js` | Character roster: colors, hair style, movement stats. **Edit this to restyle Mei.** |
+| `src/characters.js` | Character roster: body style (`look`), palette, projectile type, movement stats. **Edit this to restyle Mei.** |
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
-| `src/render.js` | Drawing: skeleton-based character art, HUD |
+| `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
+
+## Art style
+
+The world is drawn at half resolution and scaled up without smoothing, so one art pixel is 2×2 screen pixels.
+Each frame, the fighters are drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
+Mei is an armored jetpack bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, a jetpack whose thrusters fire when airborne, and a blaster.
+The CPU and P2 opponent uses the same model with a red and gold palette.
 
 Characters are drawn from a pose skeleton (limb angles), and hitboxes come from the actual limb positions.
 That makes new moves cheap to add: you add a pose plus an entry in `MOVES`.
