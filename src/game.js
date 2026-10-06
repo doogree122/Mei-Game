@@ -277,7 +277,7 @@ class Game {
     if (!att.attackActive) return;
     const move = att.move; // takeHit may end the round and clear att.move
     const p = att.hitPoint();
-    if (circleRect(p.x, p.y, move.def.radius, def.hurtbox())) {
+    if (circleRect(p.x, p.y, move.def.radius * att.scale, def.hurtbox())) {
       if (def.takeHit(move.def, att, this, p)) move.hasHit = true;
     }
   }
@@ -295,7 +295,7 @@ class Game {
 
   // Keep fighters from overlapping while on the ground.
   resolvePush(a, b) {
-    const minDist = 46;
+    const minDist = 23 * (a.scale + b.scale);
     const dx = b.x - a.x;
     const overlap = minDist - Math.abs(dx);
     const vertical = Math.abs(a.y - b.y) < 70;

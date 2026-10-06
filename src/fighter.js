@@ -445,21 +445,32 @@ class Fighter {
     this.pose = lerpPose(this.pose, target, speed);
   }
 
+  // Characters share one skeleton; `scale` makes some taller (with longer reach).
+  get scale() {
+    return this.char.scale || 1;
+  }
+
   // World transform helpers.
   toWorld(pt, sk) {
-    return { x: this.x + pt.x * this.facing, y: GROUND - this.y - sk.base + pt.y };
+    const s = this.scale;
+    return { x: this.x + pt.x * this.facing * s, y: GROUND - this.y - (sk.base - pt.y) * s };
   }
 
   hurtbox() {
     const sk = skeleton(this.pose);
-    // hurtScale stretches the box for characters drawn taller than the skeleton.
-    const height = (sk.base - Math.min(sk.head.y - BODY.head, sk.handF.y, sk.handB.y)) * (this.char.hurtScale || 1);
+    const s = this.scale;
+    const height = (sk.base - Math.min(sk.head.y - BODY.head, sk.handF.y, sk.handB.y)) * s;
     return {
-      x: this.x - 22,
+      x: this.x - 22 * s,
       y: GROUND - this.y - height,
-      w: 44,
+      w: 44 * s,
       h: height,
     };
+  }
+
+  // Hit radius of the current attack, grown with the character.
+  get hitRadius() {
+    return this.move.def.radius * this.scale;
   }
 
   hitPoint() {
