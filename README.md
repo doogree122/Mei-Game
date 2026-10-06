@@ -79,8 +79,8 @@ Each frame they're drawn from their skeleton, then given hard edges and a 1-pixe
 
 | | Look | Special | Stats |
 |---|---|---|---|
-| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with an orange-framed visor slit, an antenna and scuffs. Two-part chest plates, shin plates, orange pauldron, wrist bands, knee pads, belt and thigh pouches. Blue flight suit with lavender highlights. Jetpack with a lavender rocket, plus a scoped rifle on the back | Blaster bolt | 1.25× size, baseline stats |
-| **KORR** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 1.32× size (the taller), hits 10% harder, a little slower |
+| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with an orange-framed visor slit, an antenna and scuffs. Two-part chest plates, shin plates, orange pauldron, wrist bands, knee pads, belt and thigh pouches. Blue flight suit with lavender highlights. Jetpack with a lavender rocket, plus a scoped rifle on the back | Blaster bolt | 1.9× size, baseline stats |
+| **KORR** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`), a projectile style with `projectile` (`bolt`, `pulse`), and a size with `scale`.
-Scale grows the drawing along with reach, hit areas and blaster height, so a taller fighter also reaches further.
+Scale grows the drawing along with reach, hit areas, blaster height and knockback, so a taller fighter also reaches further. Walk and jump speeds are in `stats`.

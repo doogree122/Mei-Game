@@ -22,7 +22,8 @@ class AIController {
 
   replan(self, opp, game) {
     const d = this.difficulty;
-    const dist = Math.abs(opp.x - self.x);
+    // Ranges below are tuned for a 1x fighter; reach grows with scale.
+    const dist = Math.abs(opp.x - self.x) / self.scale;
     const toward = opp.x > self.x ? 'right' : 'left';
     const away = toward === 'right' ? 'left' : 'right';
     const plan = { left: false, right: false, up: false, down: false };

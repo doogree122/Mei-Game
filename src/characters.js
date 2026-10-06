@@ -5,7 +5,7 @@ const CHARACTERS = {
     id: 'mei',
     name: 'MEI',
     look: 'armored', // jetpack bounty hunter
-    scale: 1.25,
+    scale: 1.9,
     projectile: 'bolt', // special fires a blaster bolt
     colors: {
       suit: '#3d4f7a',
@@ -30,10 +30,10 @@ const CHARACTERS = {
       energy: '#ff7a2a',
     },
     stats: {
-      walk: 3.4,
-      backWalk: 2.5,
-      jumpV: 13.5,
-      jumpVX: 4.4,
+      walk: 5.0,
+      backWalk: 3.7,
+      jumpV: 15.5,
+      jumpVX: 6.2,
       power: 1,
     },
   },
@@ -43,7 +43,7 @@ CHARACTERS.korr = {
   id: 'korr',
   name: 'KORR',
   look: 'warrior', // ridge-browed alien officer
-  scale: 1.32, // the taller of the two
+  scale: 2.0, // the taller of the two
   projectile: 'pulse', // special fires a hand-blaster pulse
   victoryPose: 'armsCrossed',
   colors: {
@@ -76,10 +76,10 @@ CHARACTERS.korr = {
   },
   // Heavier hitter, a little slower on his feet.
   stats: {
-    walk: 3.0,
-    backWalk: 2.2,
-    jumpV: 13,
-    jumpVX: 4.2,
+    walk: 4.5,
+    backWalk: 3.3,
+    jumpV: 15,
+    jumpVX: 5.8,
     power: 1.1,
   },
 };

@@ -122,6 +122,11 @@ function skeleton(p) {
   return { hip, neck, shoulder, head, kneeF, footF, kneeB, footB, elbowF, handF, elbowB, handB, base };
 }
 
+// Knockback multiplier: bigger attackers shove further so spacing still resets.
+function pushScale(attacker) {
+  return Math.max(1, attacker.scale * 0.75);
+}
+
 class Fighter {
   constructor({ char, x, facing, side }) {
     this.char = char;
@@ -347,7 +352,7 @@ class Fighter {
     if (this.canBlock(def.height)) {
       this.hp = Math.max(1, this.hp - (def.chip || 0));
       this.blockstun = def.blockstun;
-      this.vx = dir * def.push * 0.8;
+      this.vx = dir * def.push * 0.8 * pushScale(attacker);
       this.state = 'block';
       game.effects.spark(hitPoint.x, hitPoint.y, '#bfe9ff', 6, 4);
       game.hitstop = 4;
@@ -359,7 +364,7 @@ class Fighter {
     this.hp = Math.max(game.training ? 1 : 0, this.hp - damage);
     this.move = null;
     this.flash = 6;
-    this.vx = dir * def.push;
+    this.vx = dir * def.push * pushScale(attacker);
     game.effects.spark(hitPoint.x, hitPoint.y, def.sound === 'heavy' ? '#ffcf4d' : '#ffffff', 14, 7);
     game.hitstop = def.sound === 'heavy' ? 8 : 5;
     game.shake = def.sound === 'heavy' ? 8 : 4;

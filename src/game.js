@@ -3,7 +3,7 @@
 const ROUND_TIME = 99;
 const WINS_NEEDED = 2;
 const STEP = 1000 / 60;
-const SCREEN_MARGIN = 30; // fighters can't walk past the screen edges
+const SCREEN_MARGIN = 60; // fighters can't walk past the screen edges
 const MENU = [
   { label: '1 PLAYER  vs  CPU', kind: 'cpu' },
   { label: '2 PLAYERS', kind: 'versus', keyboardOnly: true },
@@ -28,8 +28,8 @@ class Game {
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
-      new Fighter({ char: CHARACTERS.mei, x: WORLD_W / 2 - 180, facing: 1, side: 0 }),
-      new Fighter({ char: CHARACTERS.korr, x: WORLD_W / 2 + 180, facing: -1, side: 1 }),
+      new Fighter({ char: CHARACTERS.mei, x: WORLD_W / 2 - 230, facing: 1, side: 0 }),
+      new Fighter({ char: CHARACTERS.korr, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     this.mode = 'title';
@@ -337,7 +337,7 @@ class Game {
       b.fillStyle = 'rgba(10,5,20,0.35)';
       b.fillRect(0, 0, W, H);
       const [f1, f2] = this.fighters;
-      f1.x = camX + 250; f2.x = camX + 710;
+      f1.x = camX + 165; f2.x = camX + 800;
       f1.facing = 1; f2.facing = -1; f1.y = f2.y = 0;
     }
     b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);

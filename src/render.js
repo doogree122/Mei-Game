@@ -484,10 +484,10 @@ const BODY_STYLES = {
 // ---- Procedural sprite pipeline ----
 
 // Scratch canvas in fighter art pixels. The fighter's ground point sits at (SPR_OX, SPR_OY).
-const SPR_W = 340;
-const SPR_H = 290;
-const SPR_OX = 170;
-const SPR_OY = 265;
+const SPR_W = 540;
+const SPR_H = 330;
+const SPR_OX = 270;
+const SPR_OY = 300;
 const spriteCanvas = document.createElement('canvas');
 spriteCanvas.width = SPR_W;
 spriteCanvas.height = SPR_H;
