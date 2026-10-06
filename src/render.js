@@ -297,30 +297,33 @@ function drawHelmet(ctx, sk, c) {
   ctx.fillStyle = c.armorShade;
   ctx.fillRect(h.x + 2, h.y - 13, 2, 2);
   ctx.fillRect(h.x - 9, h.y - 6, 3, 2);
-  // Dark red band across the brow.
-  ctx.strokeStyle = c.visorFrame;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(h.x, h.y - 1, r - 1.5, -2.25, -1.05);
-  ctx.stroke();
+  // Gray dents on the dome.
+  ctx.fillStyle = c.suitLight;
+  ctx.fillRect(h.x - 3, h.y - 15, 4, 2);
+  ctx.fillRect(h.x + 6, h.y - 12, 2, 3);
+  ctx.fillRect(h.x - 11, h.y - 2, 2, 3);
 
-  // Cheek plates: darker green below the visor, with a lit front edge.
+  // Cheek plates behind and in front of the visor slot.
   fillPoly(ctx, [
-    { x: h.x - 2, y: h.y + 3 }, { x: h.x + r + 1, y: h.y + 3 },
-    { x: h.x + r, y: h.y + 14 }, { x: h.x + 3, y: h.y + 15 },
+    { x: h.x - 3, y: h.y }, { x: h.x + r + 1, y: h.y },
+    { x: h.x + r, y: h.y + 14 }, { x: h.x + 2, y: h.y + 15 },
   ], c.armorShade);
-  drawLimb(ctx, { x: h.x + r, y: h.y + 4 }, { x: h.x + r - 0.5, y: h.y + 13 }, 1.5, c.armorLight);
-  drawLimb(ctx, { x: h.x + 2, y: h.y + 5 }, { x: h.x + 4, y: h.y + 14 }, 1.2, c.armor);
+  drawLimb(ctx, { x: h.x + r, y: h.y + 2 }, { x: h.x + r - 0.5, y: h.y + 13 }, 1.5, c.armorLight);
 
-  // Visor: a wide dark slit framed in dark red, wrapping round the face.
-  fillRoundRect(ctx, h.x - 3, h.y - 9, r + 6, 14, 2, c.visorFrame);
-  ctx.fillStyle = c.visorFrameLight;
-  ctx.fillRect(h.x - 2, h.y - 9, r + 4, 1.5);
+  // T-shaped visor: a dark band across the eyes and a slot down the front.
   ctx.fillStyle = c.visor;
-  ctx.fillRect(h.x - 1, h.y - 6.5, r + 3.5, 9);
+  ctx.fillRect(h.x - 3, h.y - 7, r + 5, 7);
+  ctx.fillRect(h.x + 7, h.y - 1, 6, 15);
+  // Dark red trim along the top of the band and down the back of the slot.
+  ctx.fillStyle = c.visorFrame;
+  ctx.fillRect(h.x - 4, h.y - 10, r + 6, 3);
+  ctx.fillRect(h.x + 4.5, h.y - 1, 2.5, 13);
+  ctx.fillStyle = c.visorFrameLight;
+  ctx.fillRect(h.x - 3, h.y - 10, r + 4, 1);
+  // Glint on the visor.
   ctx.fillStyle = 'rgba(160,220,255,0.75)';
-  ctx.fillRect(h.x + 10, h.y - 5, 4, 1.5);
-  ctx.fillRect(h.x + 13, h.y - 3, 1.5, 2);
+  ctx.fillRect(h.x + 11, h.y - 6, 4, 1.5);
+  ctx.fillRect(h.x + 10, h.y + 1, 1.5, 3);
 
   // Ear cap on the side of the helmet.
   fillCircle(ctx, h.x - 7, h.y + 4, 4.5, c.armorShade);
