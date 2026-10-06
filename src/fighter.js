@@ -67,6 +67,7 @@ const POSES = {
   hit: { torso: -0.45, head: -0.4, uaF: 0.2, faF: 1.3, uaB: -0.5, faB: 0.5, thF: 0.3, shF: 0.1, thB: -0.2, shB: 0 },
   lying: { torso: 0, head: 0.1, uaF: 0.25, faF: 0.4, uaB: -0.2, faB: -0.1, thF: 0.06, shF: 0.04, thB: -0.06, shB: -0.04 },
   victory: { torso: -0.05, head: -0.25, uaF: 2.7, faF: 3.05, uaB: 0.3, faB: 1.9, ...STANCE },
+  armsCrossed: { torso: -0.06, head: -0.12, uaF: 0.2, faF: 1.75, uaB: 0.12, faB: 1.85, ...STANCE },
 
   punch_windup: { torso: 0.05, head: 0, uaF: 0.4, faF: 2.6, uaB: 0.5, faB: 2.4, ...STANCE },
   punch: { torso: 0.28, head: -0.2, uaF: 1.62, faF: 1.58, uaB: 0.5, faB: 2.5, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
@@ -386,7 +387,7 @@ class Fighter {
 
   targetPose() {
     if (this.state === 'ko' || this.state === 'down') return POSES.lying;
-    if (this.won) return POSES.victory;
+    if (this.won) return POSES[this.char.victoryPose] || POSES.victory;
     if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : POSES.hit;
     if (this.blockstun > 0 || (this.state !== 'attack' && this.isFree && this.grounded && this.holdBack && this.nearThreat)) {
       return this.holdDown ? POSES.crouchBlock : POSES.block;

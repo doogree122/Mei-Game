@@ -256,65 +256,73 @@ function drawWarriorTorso(ctx, sk, c) {
   // Chain-mail sash, back shoulder to front hip, with link texture.
   const top = at(0.98, -9);
   const bottom = at(0.1, 15);
-  drawLimb(ctx, top, bottom, 12, c.sash);
+  drawLimb(ctx, top, bottom, 14, c.sash);
   ctx.fillStyle = c.sashShade;
   for (let i = 1; i < 9; i++) {
     const pt = lerpPt(top, bottom, i / 9);
     ctx.fillRect(pt.x - 3, pt.y - 1, 2, 2);
     ctx.fillRect(pt.x + 1, pt.y + 1, 2, 2);
   }
-  // Clasp plate near the shoulder.
-  const clasp = lerpPt(top, bottom, 0.18);
-  ctx.fillStyle = c.sashShade;
-  ctx.fillRect(clasp.x - 3, clasp.y - 3, 6, 6);
+  // Two round clasps near the shoulder.
+  for (const t of [0.14, 0.26]) {
+    const clasp = lerpPt(top, bottom, t);
+    fillCircle(ctx, clasp.x, clasp.y, 3.5, c.sashShade);
+    fillCircle(ctx, clasp.x - 0.5, clasp.y - 0.5, 1.5, c.sashLight);
+  }
 }
 
 function drawWarriorHead(ctx, sk, c, time) {
   const h = sk.head;
-  const sway = Math.sin(time * 0.1) * 2;
+  const sway = Math.sin(time * 0.1);
 
-  // Long hair falling behind the head to the shoulders.
+  // Straight, shoulder-length hair cut level, hanging behind the face.
   fillPoly(ctx, [
-    { x: h.x - 4, y: h.y - 15 },
-    { x: h.x - 20, y: h.y - 6 },
-    { x: h.x - 22 + sway, y: h.y + 22 },
-    { x: h.x - 12 + sway, y: h.y + 28 },
-    { x: h.x - 4, y: h.y + 10 },
+    { x: h.x - 1, y: h.y - 17 },
+    { x: h.x - 16, y: h.y - 11 },
+    { x: h.x - 19 + sway, y: h.y + 18 },
+    { x: h.x - 1 + sway, y: h.y + 20 },
+    { x: h.x + 3, y: h.y + 4 },
   ], c.hair);
-  // Skull and face.
-  fillCircle(ctx, h.x - 3, h.y - 2, 14.5, c.hair);
+  fillCircle(ctx, h.x - 3, h.y - 1, 14.5, c.hair);
+  drawLimb(ctx, { x: h.x - 11, y: h.y - 8 }, { x: h.x - 13 + sway, y: h.y + 15 }, 2, c.hairLight);
+  drawLimb(ctx, { x: h.x - 5, y: h.y - 12 }, { x: h.x - 6 + sway, y: h.y + 16 }, 2, c.hairLight);
+
+  // Face.
   ctx.fillStyle = c.skin;
   ctx.beginPath();
-  ctx.ellipse(h.x + 3.5, h.y + 1, 12, 14, 0, 0, Math.PI * 2);
+  ctx.ellipse(h.x + 4, h.y + 2, 11.5, 13, 0, 0, Math.PI * 2);
   ctx.fill();
-  // High forehead: skin over the front of the hair cap.
+  // Large forehead crest rising from the brow over the hairline.
   ctx.beginPath();
-  ctx.ellipse(h.x + 2, h.y - 6, 10, 9, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(h.x + 3, h.y - 9, 12, 10, -0.35, 0, Math.PI * 2);
   ctx.fill();
-
-  // Ridged brow: a heavy brow line plus ridges running up the forehead.
-  drawLimb(ctx, { x: h.x + 4, y: h.y - 3 }, { x: h.x + 15, y: h.y - 3 }, 4, c.skinShade);
-  ctx.strokeStyle = c.skinShade;
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 3; i++) {
-    ctx.beginPath();
-    ctx.moveTo(h.x + 4 + i * 4, h.y - 5);
-    ctx.quadraticCurveTo(h.x + 1 + i * 4, h.y - 10, h.x + 3 + i * 3, h.y - 15);
-    ctx.stroke();
+  // Stacked ridges: a shadow line with a lit edge above each one.
+  for (let i = 0; i < 4; i++) {
+    const y = h.y - 5 - i * 3.6;
+    const x0 = h.x + 1 + i * 0.5;
+    const x1 = h.x + 14 - i * 2;
+    drawLimb(ctx, { x: x0, y }, { x: x1, y: y - 1 }, 2, c.skinShade);
+    drawLimb(ctx, { x: x0 + 1, y: y - 1.6 }, { x: x1 - 1, y: y - 2.6 }, 1.2, c.skinLight);
   }
-  // Nose, eye, frown.
-  fillCircle(ctx, h.x + 15, h.y + 3, 3, c.skinShade);
+  // Heavy brow.
+  drawLimb(ctx, { x: h.x + 5, y: h.y - 2 }, { x: h.x + 16, y: h.y - 2 }, 4.5, c.skinShade);
+
+  // Eye under the brow.
   ctx.fillStyle = '#f2ead8';
-  ctx.fillRect(h.x + 8, h.y - 1, 5, 3);
+  ctx.fillRect(h.x + 8, h.y, 5, 3);
   ctx.fillStyle = c.eyes;
-  ctx.fillRect(h.x + 10, h.y - 1, 2.5, 3);
-  // Mustache, goatee and jaw beard.
-  drawLimb(ctx, { x: h.x + 9, y: h.y + 8 }, { x: h.x + 15, y: h.y + 8 }, 2.5, c.hair);
+  ctx.fillRect(h.x + 10, h.y, 2.5, 3);
+  // Broad nose.
+  fillCircle(ctx, h.x + 15, h.y + 4, 3.4, c.skin);
+  fillCircle(ctx, h.x + 14, h.y + 6, 1.2, c.skinShade);
+
+  // Full beard along the jaw, plus mustache.
   fillPoly(ctx, [
-    { x: h.x + 6, y: h.y + 10 }, { x: h.x + 15, y: h.y + 10 },
-    { x: h.x + 13, y: h.y + 19 }, { x: h.x + 6, y: h.y + 17 },
-  ], c.hair);
-  drawLimb(ctx, { x: h.x - 1, y: h.y + 5 }, { x: h.x + 6, y: h.y + 14 }, 3, c.hair);
+    { x: h.x - 1, y: h.y + 4 }, { x: h.x + 7, y: h.y + 10 }, { x: h.x + 16, y: h.y + 10 },
+    { x: h.x + 14, y: h.y + 20 }, { x: h.x + 5, y: h.y + 21 }, { x: h.x - 1, y: h.y + 13 },
+  ], c.beard);
+  drawLimb(ctx, { x: h.x + 9, y: h.y + 9 }, { x: h.x + 16, y: h.y + 9 }, 2.5, c.beard);
+  drawLimb(ctx, { x: h.x + 10, y: h.y + 12 }, { x: h.x + 14, y: h.y + 12 }, 1.5, c.skinShade);
 }
 
 function drawWarriorBody(ctx, sk, f) {

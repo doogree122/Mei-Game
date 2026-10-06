@@ -58,7 +58,7 @@ Mei is an armored jetpack bounty hunter: green helmet and chest plate, blue flig
 | | Look | Special | Stats |
 |---|---|---|---|
 | **MEI** (P1) | Armored bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, jetpack, slung rifle | Blaster bolt | Baseline |
-| **KORR** (P2 / CPU) | Ridge-browed alien warrior: long hair and beard, gold tunic with black yoke and waistband, chain-mail sash, black trousers and boots | Hand-blaster pulse | Hits 10% harder, walks and jumps a little slower |
+| **KORR** (P2 / CPU) | Alien warrior with a ridged forehead crest, shoulder-length brown hair, full beard, mustard tunic with black yoke and waistband, wide chain-mail sash with clasps, black trousers and boots; crosses his arms when he wins | Hand-blaster pulse | Hits 10% harder, walks and jumps a little slower |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`) and a projectile style with `projectile` (`bolt`, `pulse`).
 
