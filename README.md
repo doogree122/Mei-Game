@@ -74,7 +74,6 @@ Then add `<script src="src/sprites.js"></script>` to `index.html` before `src/to
 The stage and effects are drawn at low resolution and scaled up without smoothing, so one art pixel is 2.5×2.5 screen pixels.
 Fighters use a finer grid (1 art pixel = 1.5 screen pixels, `FIGHTER_PIXEL`) so their detail survives.
 Each frame they're drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
-Mei is an armored jetpack bounty hunter: green helmet and chest plate, blue flight suit, orange-red pads, a jetpack whose thrusters fire when airborne, and a blaster.
 
 ## Characters
 
