@@ -54,6 +54,24 @@ function edgeLine(ctx, a, b, offset, width, color, t0 = 0.1, t1 = 0.9) {
     { x: a.x + dx * t1 + ox, y: a.y + dy * t1 + oy }, width, color);
 }
 
+// A clenched fist at the end of the forearm: finger creases running along the
+// fist, a thumb wrapped across them, and a lit knuckle edge.
+function drawFist(ctx, elbow, hand, r, color, crease, light) {
+  const dx = hand.x - elbow.x;
+  const dy = hand.y - elbow.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const at = (along, side) => ({ x: hand.x + ux * along * r - uy * side * r, y: hand.y + uy * along * r + ux * side * r });
+  fillCircle(ctx, hand.x, hand.y, r, color);
+  // Knuckles: a lit arc along the front of the fist.
+  drawLimb(ctx, at(0.75, -0.45), at(0.75, 0.45), 1.6, light);
+  // Finger creases between the four curled fingers.
+  for (const side of [-0.42, 0, 0.42]) drawLimb(ctx, at(0.05, side), at(0.85, side), 1.5, crease);
+  // Thumb folded across the fingers.
+  drawLimb(ctx, at(-0.35, 0.8), at(0.3, 0.15), 1.8, crease);
+}
+
 function fillRoundRect(ctx, x, y, w, h, r, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -109,8 +127,8 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   drawLimb(ctx, elbow, hand, 12, back ? c.armorShade : c.armor);
   if (!back) edgeLine(ctx, elbow, hand, 3, 3, c.armorLight, 0.15, 0.6);
   drawLimb(ctx, lerpPt(elbow, hand, 0.68), lerpPt(elbow, hand, 0.8), 13, back ? c.accentShade : c.accent);
-  fillCircle(ctx, hand.x, hand.y, 7, back ? c.gloveShade : c.glove);
-  if (!back) fillCircle(ctx, hand.x - 2, hand.y + 2, 3, c.gloveShade);
+  if (back) drawFist(ctx, elbow, hand, 7, c.gloveShade, c.metal, c.glove);
+  else drawFist(ctx, elbow, hand, 7.5, c.glove, c.suitShade, '#ffffff');
 
   if (holdingBlaster) {
     const dx = hand.x - elbow.x;
@@ -348,8 +366,8 @@ function drawWarriorArm(ctx, sk, side, c, back, holdingDevice) {
   }
   // Cuff and hand with knuckle shading.
   drawLimb(ctx, lerpPt(elbow, hand, 0.88), lerpPt(elbow, hand, 0.95), 12, back ? c.tunicShade : c.tunicShade);
-  fillCircle(ctx, hand.x, hand.y, 6.5, back ? c.skinShade : c.skin);
-  if (!back) fillCircle(ctx, hand.x + 2, hand.y + 2, 2.5, c.skinShade);
+  if (back) drawFist(ctx, elbow, hand, 6.5, c.skinShade, c.skinDark, c.skin);
+  else drawFist(ctx, elbow, hand, 7, c.skin, c.skinDark, c.skinLight);
   // Black shoulder yoke continues over the top of the arm.
   fillCircle(ctx, sk.shoulder.x, sk.shoulder.y, 8.5, back ? c.blackShade : c.black);
   if (!back) fillCircle(ctx, sk.shoulder.x + 1, sk.shoulder.y - 3, 3, c.blackLight);
