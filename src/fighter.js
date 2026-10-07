@@ -450,7 +450,8 @@ class Fighter {
     const lying = pose === POSES.lying;
     const punching = this.move && /punch/i.test(this.move.name);
     if (!hold || lying || this.hitstun > 0 || this.won || punching) return pose;
-    return { ...pose, ...hold };
+    const aiming = this.move && this.move.def.projectile && this.char.aimPose;
+    return { ...pose, ...(aiming ? this.char.aimPose : hold) };
   }
 
   basePose() {
