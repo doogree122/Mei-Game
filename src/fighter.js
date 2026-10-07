@@ -89,6 +89,16 @@ const POSES = {
 
   special_windup: { torso: -0.1, head: 0, uaF: -0.5, faF: 0.2, uaB: -0.7, faB: 0, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
   special: { torso: 0.3, head: -0.2, uaF: 1.5, faF: 1.55, uaB: 1.35, faB: 1.5, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
+
+  // Saber swing: raised over the shoulder, then slashed down and forward.
+  saberSwing_windup: { torso: -0.15, head: 0.05, uaF: 2.9, faF: 3.5, uaB: 0.5, faB: 2.3, ...STANCE },
+  saberSwing: { torso: 0.3, head: -0.2, uaF: 1.5, faF: 1.1, uaB: 0.4, faB: 2.2, thF: 0.6, shF: -0.05, thB: -0.5, shB: -0.1 },
+  // Force lightning: the free (back) hand thrusts forward; the saber hangs low.
+  forceLightning_windup: { torso: -0.1, head: 0, uaF: 0.4, faF: 0.9, uaB: -0.5, faB: 0.2, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  forceLightning: { torso: 0.25, head: -0.15, uaF: 0.5, faF: 1.0, uaB: 1.55, faB: 1.6, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
+  // Very high kick: the foot rises to head height.
+  highKick_windup: { torso: -0.2, head: 0.1, ...GUARD, thF: 1.9, shF: 0.6, thB: -0.1, shB: 0 },
+  highKick: { torso: -0.75, head: 0.4, uaF: 0.9, faF: 2.2, uaB: -0.6, faB: 0.2, thF: 2.3, shF: 2.35, thB: -0.15, shB: 0 },
 };
 
 const POSE_KEYS = Object.keys(POSES.idle);
@@ -128,6 +138,17 @@ function skeleton(p) {
 // Knockback multiplier: bigger attackers shove further so spacing still resets.
 function pushScale(attacker) {
   return Math.max(1, attacker.scale * 0.75);
+}
+
+// A lightsaber held in the front hand points along the forearm, tipped a
+// little further over; SABER_LENGTH is in skeleton units.
+const SABER_LENGTH = 46;
+function saberAngle(sk) {
+  return Math.atan2(sk.handF.y - sk.elbowF.y, sk.handF.x - sk.elbowF.x) - 0.35;
+}
+function saberTip(sk) {
+  const a = saberAngle(sk);
+  return { x: sk.handF.x + Math.cos(a) * SABER_LENGTH, y: sk.handF.y + Math.sin(a) * SABER_LENGTH };
 }
 
 class Fighter {
@@ -295,13 +316,24 @@ class Fighter {
     return false;
   }
 
+  // A move's data: the shared MOVES entry with this character's overrides
+  // (e.g. a saber swing in place of a punch) merged on top.
+  moveDef(name) {
+    const own = this.char.moves && this.char.moves[name];
+    return own ? { ...MOVES[name], ...own } : MOVES[name];
+  }
+
+  // This character's projectile: FIREBALL with its own tuning merged on top.
+  get shotDef() {
+    return this.char.shot ? { ...FIREBALL, ...this.char.shot } : FIREBALL;
+  }
+
   startMove(name) {
-    const def = MOVES[name];
+    const def = this.moveDef(name);
     this.move = { name, def, frame: 0, hasHit: false };
     this.state = 'attack';
-    if (!def.air) this.vx = 0;
-    if (def.projectile) Sfx.special();
-    else Sfx.whiff();
+    if (!def.air) this.vx = (def.lunge || 0) * this.facing;
+    Sfx[def.sfx || (def.projectile ? 'special' : 'whiff')]();
   }
 
   updateMove(game) {
@@ -513,6 +545,7 @@ class Fighter {
 
   hitPoint() {
     const sk = skeleton(this.hitPose());
-    return this.toWorld(sk[this.move.def.limb], sk);
+    const limb = this.move.def.limb;
+    return this.toWorld(limb === 'saberTip' ? saberTip(sk) : sk[limb], sk);
   }
 }

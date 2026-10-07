@@ -249,3 +249,7 @@ body.touch.tall #game { width: 100vw; height: 100dvh; aspect-ratio: auto; }
 .music-toggle:focus-visible { outline: 2px solid #ffd34d; outline-offset: 2px; }
 .music-toggle.off { color: inherit; border-color: rgba(255, 255, 255, 0.25); }
 .sys.off { opacity: 0.45; text-decoration: line-through; }
+
+/* Fight controls are hidden on menus so taps reach the menu underneath. */
+body.in-menu #stick-zone,
+body.in-menu #attack-buttons { visibility: hidden; pointer-events: none; }

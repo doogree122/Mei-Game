@@ -4,8 +4,8 @@
 // capability; elsewhere `window.claude` is absent and the ONLINE menu item
 // never appears. Everything travels as room *presence* (anyone viewing may set
 // it, about 30 updates a second):
-//   - lobby:  a host advertises { host: code, open: true }
-//   - guest:  { join: code, in: { l, r, u, d, c: [punches, kicks, specials, shields] } }
+//   - lobby:  a host advertises { host: code, open: true, char }
+//   - guest:  { join: code, char, in: { l, r, u, d, c: [punches, kicks, specials, shields] } }
 //   - host:   { host: code, guest: <guest peer>, s: <game snapshot> }
 // The host runs the only simulation; the guest sends its controls and draws
 // the host's snapshots. Button presses travel as counters so none are lost
@@ -67,6 +67,8 @@ function onRoomPeers(game, peers) {
       Online.opponent = guest.peer;
       setPresence({ open: false, guest: guest.peer });
       hideLobby();
+      const theirs = ROSTER.includes(guest.presence.char) ? guest.presence.char : 'worf';
+      game.setFighters(game.lobbyChar, theirs);
       game.startMatch('online');
     } else if (!guest && Online.opponent) {
       leaveOnline(game, 'Your opponent left.');
@@ -101,7 +103,7 @@ function hostGame(game) {
   Online.opponent = null;
   Online.remoteIn = null;
   Online.message = '';
-  setPresence({ host: Online.code, open: true, guest: null, s: null, join: null, in: null });
+  setPresence({ host: Online.code, open: true, char: game.lobbyChar, guest: null, s: null, join: null, in: null });
   renderLobby(game);
 }
 
@@ -115,7 +117,7 @@ function joinGame(game, hostPeer) {
   Online.message = '';
   guestInput.counts = [0, 0, 0, 0];
   guestInput.sent = '';
-  setPresence({ join: Online.code, in: { l: 0, r: 0, u: 0, d: 0, c: [0, 0, 0, 0] }, host: null, open: null, s: null });
+  setPresence({ join: Online.code, char: game.lobbyChar, in: { l: 0, r: 0, u: 0, d: 0, c: [0, 0, 0, 0] }, host: null, open: null, s: null });
   renderLobby(game);
 }
 
@@ -167,6 +169,7 @@ const r1 = (v) => Math.round(v * 10) / 10;
 
 function snapshotGame(game) {
   return {
+    cs: game.fighters.map((f) => f.char.id),
     m: game.mode,
     mt: game.modeTime,
     r: game.round,
@@ -216,6 +219,11 @@ function sendGuestInput() {
 function applySnapshot(game) {
   const s = Online.snap;
   if (!s || !Array.isArray(s.f) || s.f.length !== 2) return;
+  // Build the same two fighters the host is running.
+  if (Array.isArray(s.cs) && s.cs.every((id) => ROSTER.includes(id))
+    && (game.fighters[0].char.id !== s.cs[0] || game.fighters[1].char.id !== s.cs[1])) {
+    game.setFighters(s.cs[0], s.cs[1]);
+  }
 
   if (s.m !== game.mode) {
     if (s.m === 'intro') {
@@ -247,8 +255,8 @@ function applySnapshot(game) {
       Sfx.block();
     }
     if (sf.mv && (!f.move || f.move.name !== sf.mv) && MOVES[sf.mv]) {
-      if (MOVES[sf.mv].projectile) Sfx.special();
-      else Sfx.whiff();
+      const def = f.moveDef(sf.mv);
+      Sfx[def.sfx || (def.projectile ? 'special' : 'whiff')]();
     }
     // Ease toward the host's position so 30 updates a second look smooth.
     const nx = Number(sf.x) || f.x;
@@ -260,7 +268,7 @@ function applySnapshot(game) {
     f.facing = sf.fc === -1 ? -1 : 1;
     f.hp = Number(sf.hp);
     f.state = String(sf.st);
-    f.move = sf.mv && MOVES[sf.mv] ? { name: sf.mv, def: MOVES[sf.mv], frame: Number(sf.mf) || 0, hasHit: true } : null;
+    f.move = sf.mv && MOVES[sf.mv] ? { name: sf.mv, def: f.moveDef(sf.mv), frame: Number(sf.mf) || 0, hasHit: true } : null;
     f.hitstun = Number(sf.hs) || 0;
     f.blockstun = Number(sf.bs) || 0;
     f.downTime = Number(sf.dt) || 0;
@@ -302,7 +310,7 @@ function applySnapshot(game) {
   }
   game.projectiles = after
     .filter((p) => Array.isArray(p) && owners[p[3]])
-    .map((p) => ({ x: Number(p[0]), y: Number(p[1]), vx: Number(p[2]), owner: owners[p[3]], dead: false }));
+    .map((p) => ({ x: Number(p[0]), y: Number(p[1]), vx: Number(p[2]), owner: owners[p[3]], def: owners[p[3]].shotDef, dead: false }));
 }
 
 // ---- lobby panel (HTML over the canvas) ----
@@ -332,10 +340,10 @@ function renderLobby(game) {
     return;
   }
   if (Online.role === 'host') {
-    status.textContent = `Hosting game ${Online.code.toUpperCase()} as B. FETT. Waiting for someone to join…`;
+    status.textContent = `Hosting game ${Online.code.toUpperCase()} as ${CHARACTERS[game.lobbyChar].name}. Waiting for someone to join…`;
     hostBtn.hidden = true;
   } else if (Online.role === 'guest') {
-    status.textContent = `Joining game ${Online.code.toUpperCase()} as WORF…`;
+    status.textContent = `Joining game ${Online.code.toUpperCase()} as ${CHARACTERS[game.lobbyChar].name}…`;
     hostBtn.hidden = true;
   } else {
     const games = openGames();
@@ -345,7 +353,8 @@ function renderLobby(game) {
     for (const g of games) {
       const btn = document.createElement('button');
       btn.className = 'online-join';
-      btn.textContent = `Join game ${String(g.presence.host).toUpperCase()} as WORF`;
+      const hostChar = CHARACTERS[g.presence.char] ? CHARACTERS[g.presence.char].name : 'a fighter';
+      btn.textContent = `Join game ${String(g.presence.host).toUpperCase()} (host plays ${hostChar})`;
       btn.addEventListener('click', () => joinGame(game, g.peer));
       list.append(btn);
     }

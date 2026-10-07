@@ -530,9 +530,267 @@ function drawWarriorBody(ctx, sk, f) {
   drawWarriorArm(ctx, sk, 'F', c, false, device);
 }
 
+// ---- Caped saber wielder ----
+
+function drawSithCape(ctx, sk, f, c) {
+  const sway = Math.sin(f.time * 0.08) * 3 - Math.max(-8, Math.min(8, f.vx * f.facing)) * 1.2;
+  const sh = sk.shoulder;
+  const ground = sk.base - 3;
+  fillPoly(ctx, [
+    { x: sk.neck.x - 3, y: sk.neck.y + 4 },
+    { x: sh.x - 20, y: sh.y + 2 },
+    { x: sk.hip.x - 38 - sway, y: ground },
+    { x: sk.hip.x + 14 - sway * 0.4, y: ground },
+    { x: sk.hip.x + 6, y: sk.hip.y - 6 },
+    { x: sh.x + 6, y: sh.y + 4 },
+  ], c.cape);
+  // Fold lines.
+  for (const t of [0.3, 0.55, 0.8]) {
+    drawLimb(ctx, { x: sh.x - 18 * t, y: sh.y + 10 }, { x: sk.hip.x - 38 * t - sway, y: ground - 4 }, 2, c.capeLight);
+  }
+}
+
+function drawSithLimbs(ctx, sk, side, c, back) {
+  const knee = sk['knee' + side];
+  const foot = sk['foot' + side];
+  drawLimb(ctx, sk.hip, knee, 16, back ? c.blackShade : c.black);
+  drawLimb(ctx, knee, foot, 14, back ? c.blackShade : c.black);
+  drawLimb(ctx, lerpPt(knee, foot, 0.55), foot, 16, back ? c.blackShade : c.black);
+  drawLimb(ctx, foot, { x: foot.x + 12, y: foot.y + 1 }, 11, c.blackShade);
+  if (!back) {
+    edgeLine(ctx, sk.hip, knee, 4, 2, c.blackLight, 0.2, 0.8);
+    edgeLine(ctx, knee, foot, 4, 2, c.blackLight, 0.55, 0.92);
+  }
+}
+
+function drawSithArm(ctx, sk, side, c, back) {
+  const elbow = sk['elbow' + side];
+  const hand = sk['hand' + side];
+  drawLimb(ctx, sk.shoulder, elbow, 13, back ? c.blackShade : c.black);
+  drawLimb(ctx, elbow, hand, 12, back ? c.blackShade : c.black);
+  if (!back) edgeLine(ctx, sk.shoulder, elbow, 4, 2, c.blackLight, 0.3, 0.9);
+  drawFist(ctx, elbow, hand, 7, back ? c.blackShade : c.black, c.blackLight, c.helmetLight);
+  // Shoulder armor.
+  fillCircle(ctx, sk.shoulder.x, sk.shoulder.y + 2, 9, back ? c.blackShade : c.black);
+  if (!back) fillCircle(ctx, sk.shoulder.x + 1, sk.shoulder.y - 1, 3.5, c.blackLight);
+}
+
+function drawSaber(ctx, sk, c) {
+  const a = saberAngle(sk);
+  const ux = Math.cos(a);
+  const uy = Math.sin(a);
+  const h = sk.handF;
+  const at = (d) => ({ x: h.x + ux * d, y: h.y + uy * d });
+  // Blade: wide glow, then the hot core.
+  drawLimb(ctx, at(6), at(SABER_LENGTH), 7, c.saber);
+  drawLimb(ctx, at(7), at(SABER_LENGTH - 2), 2.5, c.saberCore);
+  // Hilt through the fist.
+  drawLimb(ctx, at(-7), at(7), 5, c.hilt);
+  drawLimb(ctx, at(-2), at(2), 6, c.blackLight);
+}
+
+function drawSithTorso(ctx, sk, c) {
+  const { hip, neck } = sk;
+  const dx = neck.x - hip.x;
+  const dy = neck.y - hip.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const n = { x: -dy / len, y: dx / len };
+  const at = (t, side) => ({ x: hip.x + dx * t + n.x * side, y: hip.y + dy * t + n.y * side });
+  fillPoly(ctx, [at(-0.05, 16), at(0.8, 19), at(1.03, 8), at(1.03, -10), at(0.8, -17), at(-0.05, -15)], c.black);
+  // Shoulder mantle edge and ribbed collar.
+  drawLimb(ctx, at(0.78, 18), at(0.84, -16), 2, c.blackLight);
+  for (const sd of [-4, 1, 6, 11]) {
+    const p0 = at(0.86, sd);
+    ctx.fillStyle = c.armorGray;
+    ctx.fillRect(p0.x - 1.5, p0.y - 3, 3, 6);
+  }
+  // Chest control box with lights.
+  const box = at(0.6, 9);
+  fillRoundRect(ctx, box.x - 5, box.y - 5, 11, 10, 1.5, c.chestBox);
+  for (const [ox, oy, col] of [[-3, -3, '#ff4d4d'], [1, -3, '#4dff88'], [-3, 1, '#4dc3ff'], [1, 1, c.armorGrayLight]]) {
+    ctx.fillStyle = col;
+    ctx.fillRect(box.x + ox, box.y + oy, 2.5, 2.5);
+  }
+  // Belt with silver boxes.
+  drawLimb(ctx, at(0.04, 16), at(0.04, -15), 8, c.blackShade);
+  for (const sd of [5, 12]) {
+    const b = at(0.04, sd);
+    fillRoundRect(ctx, b.x - 3, b.y - 3.5, 6, 7, 1, c.armorGray);
+    ctx.fillStyle = c.armorGrayLight;
+    ctx.fillRect(b.x - 2, b.y - 2.5, 2, 2);
+  }
+  // Collar under the helmet.
+  drawLimb(ctx, at(1, 0), lerpPt(neck, sk.head, 0.4), 13, c.black);
+}
+
+function drawSithHelmet(ctx, sk, c) {
+  const h = sk.head;
+  // Flared skirt sweeping down at the back.
+  fillPoly(ctx, [
+    { x: h.x - 15, y: h.y - 4 }, { x: h.x - 22, y: h.y + 17 },
+    { x: h.x + 2, y: h.y + 19 }, { x: h.x + 6, y: h.y + 6 },
+  ], c.black);
+  drawLimb(ctx, { x: h.x - 21, y: h.y + 16 }, { x: h.x + 1, y: h.y + 18 }, 2, c.blackLight);
+  // Dome.
+  fillCircle(ctx, h.x, h.y - 2, 16, c.black);
+  ctx.strokeStyle = c.helmetLight;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(h.x + 1, h.y - 2, 12, -2.3, -1.4);
+  ctx.stroke();
+  // Angled faceplate.
+  fillPoly(ctx, [
+    { x: h.x + 4, y: h.y - 7 }, { x: h.x + 17, y: h.y - 3 },
+    { x: h.x + 16, y: h.y + 10 }, { x: h.x + 8, y: h.y + 17 }, { x: h.x + 3, y: h.y + 6 },
+  ], c.blackShade);
+  drawLimb(ctx, { x: h.x + 5, y: h.y - 7 }, { x: h.x + 17, y: h.y - 3 }, 2, c.helmetLight);
+  // Eye lens with a pale rim.
+  ctx.fillStyle = c.helmetLight;
+  ctx.beginPath();
+  ctx.ellipse(h.x + 11, h.y - 0.5, 4.5, 3.2, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = c.lens;
+  ctx.beginPath();
+  ctx.ellipse(h.x + 11, h.y - 0.5, 3.2, 2.2, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  // Nose ridge and triangular mouth grille.
+  drawLimb(ctx, { x: h.x + 15, y: h.y + 1 }, { x: h.x + 14, y: h.y + 6 }, 2, c.helmetLight);
+  fillPoly(ctx, [{ x: h.x + 9, y: h.y + 7 }, { x: h.x + 16, y: h.y + 7 }, { x: h.x + 13, y: h.y + 15 }], c.grille);
+  ctx.fillStyle = c.blackShade;
+  for (let i = 0; i < 3; i++) ctx.fillRect(h.x + 10.5 + i * 1.8, h.y + 8, 0.9, 4.5 - i);
+}
+
+function drawSithBody(ctx, sk, f) {
+  const c = f.char.colors;
+  drawSithCape(ctx, sk, f, c);
+  drawSithArm(ctx, sk, 'B', c, true);
+  drawSithLimbs(ctx, sk, 'B', c, true);
+  drawSithTorso(ctx, sk, c);
+  drawSithLimbs(ctx, sk, 'F', c, false);
+  drawSithHelmet(ctx, sk, c);
+  drawSithArm(ctx, sk, 'F', c, false);
+  drawSaber(ctx, sk, c);
+}
+
+// ---- Catsuited officer ----
+
+function drawAgentLeg(ctx, sk, side, c, back) {
+  const knee = sk['knee' + side];
+  const foot = sk['foot' + side];
+  drawLimb(ctx, sk.hip, knee, 13, back ? c.suitShade : c.suit);
+  drawLimb(ctx, knee, foot, 11, back ? c.suitShade : c.suit);
+  if (!back) {
+    edgeLine(ctx, sk.hip, knee, 4.5, 2, c.rimCyan, 0.1, 0.9);
+    edgeLine(ctx, sk.hip, knee, -4.5, 2, c.rimPink, 0.1, 0.9);
+    edgeLine(ctx, knee, foot, 3.5, 2, c.rimCyan, 0.05, 0.85);
+    edgeLine(ctx, knee, foot, -3.5, 2, c.rimPink, 0.05, 0.85);
+  }
+  // Heeled ankle boot.
+  drawLimb(ctx, lerpPt(knee, foot, 0.8), foot, 11, c.boot);
+  drawLimb(ctx, foot, { x: foot.x + 11, y: foot.y + 2 }, 7, c.boot);
+  drawLimb(ctx, { x: foot.x - 2, y: foot.y + 1 }, { x: foot.x - 2, y: foot.y + 6 }, 3, c.boot);
+  if (!back) drawLimb(ctx, { x: foot.x + 3, y: foot.y - 1 }, { x: foot.x + 9, y: foot.y }, 1.5, c.bootShine);
+}
+
+function drawAgentArm(ctx, sk, side, c, back, rifle) {
+  const elbow = sk['elbow' + side];
+  const hand = sk['hand' + side];
+  drawLimb(ctx, sk.shoulder, elbow, 10, back ? c.suitShade : c.suit);
+  drawLimb(ctx, elbow, hand, 9, back ? c.suitShade : c.suit);
+  if (!back) {
+    edgeLine(ctx, sk.shoulder, elbow, 3.5, 1.8, c.rimCyan, 0.2, 0.95);
+    edgeLine(ctx, elbow, hand, -3, 1.8, c.rimPink, 0.05, 0.9);
+  }
+  if (back) drawFist(ctx, elbow, hand, 5.5, c.skinShade, c.skinDark, c.skin);
+  else drawFist(ctx, elbow, hand, 6, c.skin, c.skinDark, c.skinLight);
+  if (rifle) {
+    const dx = hand.x - elbow.x;
+    const dy = hand.y - elbow.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const at = (along, s) => ({ x: hand.x + ux * along - uy * s, y: hand.y + uy * along + ux * s });
+    drawLimb(ctx, at(-12, 2), at(0, 0), 7, c.rifle);
+    drawLimb(ctx, at(0, -1), at(24, -1), 9, c.rifle);
+    drawLimb(ctx, at(24, -1), at(36, -1), 4, c.rifle);
+    drawLimb(ctx, at(4, -5), at(20, -5), 2, c.rifleLight);
+    drawLimb(ctx, at(6, 3), at(6, 10), 4, c.rifle);
+    fillCircle(ctx, at(37, -1).x, at(37, -1).y, 2.2, c.energy);
+  }
+}
+
+function drawAgentTorso(ctx, sk, c) {
+  const { hip, neck } = sk;
+  const dx = neck.x - hip.x;
+  const dy = neck.y - hip.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const n = { x: -dy / len, y: dx / len };
+  const at = (t, side) => ({ x: hip.x + dx * t + n.x * side, y: hip.y + dy * t + n.y * side });
+  fillPoly(ctx, [at(-0.05, 12), at(0.45, 10), at(0.78, 14), at(1.02, 5), at(1.02, -6), at(0.78, -12), at(0.45, -9), at(-0.05, -12)], c.suit);
+  // Rim lights: cyan on the front, magenta on the back.
+  drawLimb(ctx, at(0.05, 12), at(0.45, 10), 2, c.rimCyan);
+  drawLimb(ctx, at(0.45, 10), at(0.78, 14), 2, c.rimCyan);
+  drawLimb(ctx, at(0.05, -12), at(0.75, -12), 2, c.rimPink);
+  drawLimb(ctx, at(0.55, 5), at(0.7, 9), 1.5, c.suitLight);
+  // Neck.
+  drawLimb(ctx, at(1, 0), lerpPt(neck, sk.head, 0.5), 7, c.skinShade);
+}
+
+function drawAgentHead(ctx, sk, c) {
+  const h = sk.head;
+  // Short hair: a full cap, swept up and back into volume on top.
+  fillCircle(ctx, h.x - 2, h.y - 3, 14.5, c.hair);
+  fillPoly(ctx, [
+    { x: h.x - 12, y: h.y - 10 }, { x: h.x - 3, y: h.y - 21 }, { x: h.x + 9, y: h.y - 19 },
+    { x: h.x + 14, y: h.y - 10 }, { x: h.x + 3, y: h.y - 9 },
+  ], c.hair);
+  fillPoly(ctx, [{ x: h.x - 15, y: h.y - 4 }, { x: h.x - 15, y: h.y + 7 }, { x: h.x - 8, y: h.y + 9 }, { x: h.x - 7, y: h.y }], c.hairShade);
+  for (const [x0, y0, x1, y1] of [[-8, -16, 6, -18], [-11, -9, 2, -14], [-13, -2, -6, -12]]) {
+    drawLimb(ctx, { x: h.x + x0, y: h.y + y0 }, { x: h.x + x1, y: h.y + y1 }, 1.6, c.hairLight);
+  }
+  // Face and ear.
+  ctx.fillStyle = c.skin;
+  ctx.beginPath();
+  ctx.ellipse(h.x + 4.5, h.y + 3, 9.5, 11, 0, 0, Math.PI * 2);
+  ctx.fill();
+  fillCircle(ctx, h.x - 2, h.y + 3, 2.6, c.skinShade);
+  // Brow and eye.
+  drawLimb(ctx, { x: h.x + 8, y: h.y - 3 }, { x: h.x + 13, y: h.y - 3 }, 1.4, c.hairShade);
+  ctx.fillStyle = '#f5efe6';
+  ctx.fillRect(h.x + 8.5, h.y - 1, 4, 2.5);
+  ctx.fillStyle = c.eyes;
+  ctx.fillRect(h.x + 10.5, h.y - 1, 2, 2.5);
+  // Silver implant curving round the outer brow to the temple.
+  ctx.strokeStyle = c.implant;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(h.x + 10, h.y + 0.5, 6, Math.PI * 0.95, Math.PI * 1.5);
+  ctx.stroke();
+  drawLimb(ctx, { x: h.x + 4.5, y: h.y + 1 }, { x: h.x + 3, y: h.y + 5 }, 1.4, c.implant);
+  ctx.fillStyle = c.implantDark;
+  ctx.fillRect(h.x + 5, h.y - 3, 1.5, 1.5);
+  // Nose, lips and jaw shading.
+  fillCircle(ctx, h.x + 14, h.y + 4, 1.8, c.skinShade);
+  drawLimb(ctx, { x: h.x + 10, y: h.y + 9.5 }, { x: h.x + 13, y: h.y + 9.5 }, 2, c.lips);
+  drawLimb(ctx, { x: h.x - 0.5, y: h.y + 8 }, { x: h.x + 6, y: h.y + 14 }, 1.4, c.skinShade);
+}
+
+function drawAgentBody(ctx, sk, f) {
+  const c = f.char.colors;
+  const rifle = !!(f.move && f.move.def.projectile);
+  drawAgentArm(ctx, sk, 'B', c, true, false);
+  drawAgentLeg(ctx, sk, 'B', c, true);
+  drawAgentTorso(ctx, sk, c);
+  drawAgentLeg(ctx, sk, 'F', c, false);
+  drawAgentHead(ctx, sk, c);
+  drawAgentArm(ctx, sk, 'F', c, false, rifle);
+}
+
 const BODY_STYLES = {
   armored: drawArmoredBody,
   warrior: drawWarriorBody,
+  sith: drawSithBody,
+  agent: drawAgentBody,
 };
 
 // ---- Procedural sprite pipeline ----
@@ -867,6 +1125,40 @@ function drawProjectile(ctx, p, time) {
     drawLimb(ctx, { x: p.x - dir * 26, y: p.y }, { x: p.x + dir * 4, y: p.y }, 6, '#fff3d0');
     return;
   }
+  if (p.owner.char.projectile === 'lightning') {
+    // Crackling bolt: a jagged streak trailing back toward the hand, redrawn
+    // with new kinks every frame, around a white-hot head.
+    const dir = Math.sign(p.vx);
+    for (const [stroke, width, spread] of [[color, 7, 14], ['#ffffff', 2.5, 10]]) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      for (let i = 1; i <= 6; i++) ctx.lineTo(p.x - dir * i * 16, p.y + (Math.random() - 0.5) * spread);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + dir * (6 + Math.random() * 12), p.y + (Math.random() - 0.5) * 30);
+      ctx.stroke();
+    }
+    fillCircle(ctx, p.x, p.y, p.def.radius * 0.6, color);
+    fillCircle(ctx, p.x, p.y, p.def.radius * 0.3, '#ffffff');
+    return;
+  }
+  if (p.owner.char.projectile === 'laser') {
+    // Big red laser blast: a long glowing slug with a white core.
+    const dir = Math.sign(p.vx);
+    drawLimb(ctx, { x: p.x - dir * 110, y: p.y }, { x: p.x + dir * 12, y: p.y }, 44, 'rgba(255,58,58,0.3)');
+    drawLimb(ctx, { x: p.x - dir * 100, y: p.y }, { x: p.x + dir * 10, y: p.y }, 28, color);
+    drawLimb(ctx, { x: p.x - dir * 88, y: p.y }, { x: p.x + dir * 6, y: p.y }, 11, '#fff0f0');
+    fillCircle(ctx, p.x + dir * 6, p.y, 17, 'rgba(255,200,200,0.55)');
+    return;
+  }
   if (p.owner.char.projectile === 'pulse') {
     // Hand-blaster pulse: a short oval of energy with a white-hot core.
     const dir = Math.sign(p.vx);
@@ -891,16 +1183,16 @@ function drawProjectile(ctx, p, time) {
   const pulse = 1 + Math.sin(time * 0.5) * 0.12;
   for (let i = 1; i <= 4; i++) {
     ctx.globalAlpha = 0.18 * (5 - i) / 4;
-    fillCircle(ctx, p.x - p.vx * i * 2.2, p.y, FIREBALL.radius * (1 - i * 0.12), color);
+    fillCircle(ctx, p.x - p.vx * i * 2.2, p.y, p.def.radius * (1 - i * 0.12), color);
   }
   ctx.globalAlpha = 1;
-  const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, FIREBALL.radius * 1.6 * pulse);
+  const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.def.radius * 1.6 * pulse);
   g.addColorStop(0, '#ffffff');
   g.addColorStop(0.35, color);
   g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.arc(p.x, p.y, FIREBALL.radius * 1.6 * pulse, 0, Math.PI * 2);
+  ctx.arc(p.x, p.y, p.def.radius * 1.6 * pulse, 0, Math.PI * 2);
   ctx.fill();
 }
 
