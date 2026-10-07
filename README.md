@@ -73,7 +73,7 @@ git checkout gh-pages && git merge claude/fighting-game-prototype && git push &&
 Three tracks, all made with Suno, in `assets/music/` (MP3, 64 kbps stereo at 32 kHz to keep downloads small; about 1.3 MB each):
 
 - **"Hyperspace Jump"** loops on the start screen, title, character select and online lobby.
-- **"Arcade March"** and **"Arcade March 2"** play during fights, taking turns. Each new fight starts the other song from the top, and a fight that outlasts one song rolls on into the other.
+- **"Arcade March"** and **"Arcade March 2"** play during fights, taking turns. Each new round starts the other song from the top, and a round that outlasts one song rolls on into the other.
 
 Going back to the menus resumes "Hyperspace Jump" where it left off.
 
@@ -81,7 +81,7 @@ The game tries to start the music as soon as the page loads. Most browsers block
 The music gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
 
 **Win and lose jingles:** when a round's winner is announced you hear a bright rising arpeggio if you won and a falling minor phrase if you lost.
-The round that decides the match gets the full versions instead: a fanfare for the winner, a sad trombone for the loser. The music stops when the first jingle plays and starts again when you return to the menu.
+The round that decides the match gets the full versions instead: a fanfare for the winner, a sad trombone for the loser. The music stops while they play: the next round starts a fresh fight song, and after the match it stays quiet until you return to the menu.
 "You" is player 1 against the CPU and your own fighter online. With 2 players on one keyboard, the winner's fanfare plays.
 
 ## Stage

@@ -229,6 +229,7 @@ function applySnapshot(game) {
     if (s.m === 'intro') {
       for (const f of game.fighters) f.reset();
       game.effects = new Effects();
+      Music.newRound();
       Sfx.announce();
     }
     if (s.m === 'roundEnd' && s.rl === 'K.O.') Sfx.ko();

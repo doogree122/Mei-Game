@@ -1,11 +1,11 @@
 // Background music:
 //   menu   - "Hyperspace Jump", looping: start screen, title, character select, lobby
-//   fights - "Arcade March" and "Arcade March 2", alternating: each new fight
-//            starts the other song from the top, and a fight that outlasts one
+//   fights - "Arcade March" and "Arcade March 2", alternating: each new round
+//            starts the other song from the top, and a round that outlasts one
 //            song rolls on into the other.
 // Returning to the menus resumes the menu track where it left off.
-// The music stops when a win or lose jingle plays and stays off until the
-// player is back on the menus.
+// The music stops when a win or lose jingle plays, until the next round
+// starts or the player is back on the menus.
 //
 // Browsers only allow sound after the player interacts, so music starts on the
 // first key press or tap (or right away where autoplay is allowed). It plays
@@ -144,7 +144,12 @@ const Music = (() => {
       paused = value;
       if (tracks[current]) tracks[current].volume = volume();
     },
-    // Stop for a win or lose jingle; setTrack('menu') starts it again.
+    // A new round: the next fight song, from the top.
+    newRound() {
+      stopped = false;
+      nextFightSong();
+    },
+    // Stop for a win or lose jingle; newRound() or setTrack('menu') starts it again.
     stop() {
       stopped = true;
       for (const a of Object.values(tracks)) a.pause();

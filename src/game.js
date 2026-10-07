@@ -261,6 +261,7 @@ class Game {
   }
 
   startRound() {
+    Music.newRound();
     for (const f of this.fighters) f.reset();
     this.projectiles = [];
     this.effects = new Effects();
@@ -482,7 +483,7 @@ class Game {
   }
 
   // Win or lose jingle as the round's winner is announced; the full version
-  // when that round decides the match. The music stops until the menus.
+  // when that round decides the match. The music stops until the next round.
   playResult() {
     const w = this.roundWinner;
     if (!w || this.training) return;
