@@ -58,8 +58,13 @@ class AIController {
         plan[away] = true;
       }
     } else if (opp.move && dist < 150 && r < 0.3 + d * 0.55) {
-      plan[away] = true;
-      plan.down = opp.move.def.height === 'low';
+      // Duck under standing punches and kicks about half the time; otherwise block.
+      if (opp.move.def.duckable && Math.random() < 0.5) {
+        plan.down = true;
+      } else {
+        plan[away] = true;
+        plan.down = opp.move.def.height === 'low';
+      }
       this.planTimer = 16;
     } else if (dist > 300) {
       if (r < 0.25 + d * 0.15 && !game.hasProjectile(self)) this.queued = 'special';

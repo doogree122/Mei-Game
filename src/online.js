@@ -279,7 +279,18 @@ function applySnapshot(game) {
   });
 
   const owners = game.fighters;
-  game.projectiles = (Array.isArray(s.p) ? s.p : [])
+  const before = game.projectiles;
+  const after = Array.isArray(s.p) ? s.p : [];
+  // A shot that vanished next to a raised force field fizzled against it.
+  for (const old of before) {
+    const target = owners.find((f) => f !== old.owner);
+    const gone = !after.some((p) => Array.isArray(p) && owners[p[3]] === old.owner);
+    if (gone && target.shield > 0 && Math.abs(old.x - target.x) < 260) {
+      game.effects.spark(old.x, old.y, SHIELD_COLOR, 16, 6);
+      Sfx.shieldHit();
+    }
+  }
+  game.projectiles = after
     .filter((p) => Array.isArray(p) && owners[p[3]])
     .map((p) => ({ x: Number(p[0]), y: Number(p[1]), vx: Number(p[2]), owner: owners[p[3]], dead: false }));
 }

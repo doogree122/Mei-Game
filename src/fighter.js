@@ -22,12 +22,12 @@ const MOVES = {
   punch: {
     pose: 'punch', startup: 4, active: 3, recovery: 9,
     damage: 6, hitstun: 14, blockstun: 9, push: 5,
-    limb: 'handF', radius: 14, height: 'mid', sound: 'light',
+    limb: 'handF', radius: 14, height: 'mid', sound: 'light', duckable: true,
   },
   kick: {
     pose: 'kick', startup: 7, active: 4, recovery: 15,
     damage: 10, hitstun: 18, blockstun: 11, push: 8,
-    limb: 'footF', radius: 22, height: 'mid', sound: 'heavy', // high kick: wide foot zone keeps its reach
+    limb: 'footF', radius: 22, height: 'mid', sound: 'heavy', duckable: true, // high kick: wide foot zone keeps its reach
   },
   lowPunch: {
     pose: 'lowPunch', startup: 4, active: 3, recovery: 9,
@@ -491,6 +491,13 @@ class Fighter {
       w: 44 * s,
       h: height,
     };
+  }
+
+  // Crouched on the ground: standing punches and kicks pass overhead.
+  get isDucking() {
+    if (!this.grounded || this.state === 'ko' || this.downTime > 0) return false;
+    return this.state === 'crouch' || !!(this.move && this.move.def.crouching)
+      || (this.blockstun > 0 && this.holdDown);
   }
 
   // The force field bubble around the body, in world coordinates.

@@ -26,8 +26,9 @@ npx serve .
 Crouch + punch is a low jab and crouch + kick is a sweep (knockdown). Kick or punch in the air is a jump kick.
 Low attacks must be blocked crouching, and jump attacks must be blocked standing.
 The standing kick is a high kick that lands at chest height.
+**Ducking:** crouching makes standing punches and kicks whiff over your head. Low attacks (crouch punch, sweep), jump kicks and blaster shots still hit.
 
-**Force field:** press it to raise an energy bubble for about ¾ of a second. Blaster shots that touch it fizzle out, but punches and kicks go straight through.
+**Force field:** press it to raise an energy bubble for about ¾ of a second. Blaster shots that touch it fizzle out with a zap, but punches and kicks go straight through. It hums while it's up.
 You can move and jump inside it but can't attack, and it takes about 1½ seconds to recharge. The meter under each health bar shows when it's ready.
 
 Enter starts the game, P pauses (Esc while paused quits to the menu) and F2 shows hitboxes.

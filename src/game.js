@@ -350,6 +350,8 @@ class Game {
 
   resolveHits(att, def) {
     if (!att.attackActive) return;
+    // Ducking makes standing punches and kicks whiff overhead.
+    if (att.move.def.duckable && def.isDucking) return;
     const move = att.move; // takeHit may end the round and clear att.move
     const p = att.hitPoint();
     if (circleRect(p.x, p.y, move.def.radius * att.scale, def.hurtbox())) {
