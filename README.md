@@ -1,4 +1,4 @@
-# Mei Fighter
+# Wars vs. Trek
 
 A browser-based, side-view 2D fighting game. Plain HTML5 Canvas + JavaScript, no build step.
 
@@ -125,7 +125,7 @@ Each frame they're drawn from their skeleton, then given hard edges and a 1-pixe
 | **B. FETT** | Armored jetpack bounty hunter. Green helmet with a flat face, a T-shaped dark visor with dark-red trim, dark-green cheek plates, gray dents, an ear cap and a gray antenna. Green chest plates, gauntlets and shin plates. Yellow shoulder pad, wrist bands and shaped knee plates. Gray flight suit, light-gray gloves and black boots. Brown ammo belt, chest strap and thigh pouch. Green jetpack with a slim rocket, a rifle on the back, and a black carbine for the special | Blaster bolt | 1.9× size, baseline stats |
 | **WORF** | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
 | **VADER** | Black armor, flared helmet with a triangular grille and dark lenses, ribbed collar, chest control box, belt boxes, and a flowing cape. Holds a red lightsaber | Force lightning from his free hand. His punch is a long-reach saber swing | 2.05× size, hits 15% harder, slow |
-| **SEVEN** | Blue catsuit with magenta and cyan edge lighting, short swept-back hair, a silver implant at the brow, heeled boots, and a gray phaser rifle resting on her shoulder, brought down two-handed to fire | Big red laser blast. Her kick goes up to head height | 1.85× size, quickest on her feet |
+| **SEVEN** | Blue catsuit with magenta and cyan edge lighting, short swept-back hair, a silver implant at the brow, heeled boots, and a gray phaser rifle resting across her shoulders behind her neck, brought down two-handed to fire | Big red laser blast. Her kick goes up to head height | 1.85× size, quickest on her feet |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`, `sith`, `agent`), a projectile style with `projectile` (`bolt`, `pulse`, `lightning`, `laser`), and a size with `scale`.
 `moves` overrides individual moves (Vader's saber punch, Seven's high kick), `shot` tunes the projectile's speed, size and damage, and `altColors` is the mirror-match palette. `ROSTER` sets the select-screen order.

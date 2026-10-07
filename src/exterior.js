@@ -211,7 +211,7 @@ const Exterior = (() => {
       ctx.textAlign = 'left';
       each(camX, 900, 520, (x) => {
         ctx.fillStyle = 'rgba(20,30,60,0.75)';
-        ctx.fillText('MEI-1', x, py + 75);
+        ctx.fillText('USS HOOD', x, py + 75);
       });
     }
     if (room <= subH + ph) return;

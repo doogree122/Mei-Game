@@ -21,7 +21,7 @@ js = f"const MUSIC_DATA = 'data:audio/mpeg;base64,{music}';\n"
 js += '\n'.join(f'// ---- {p} ----\n' + open(p).read() for p in scripts)
 assert '</script' not in js
 with open(out, 'w') as f:
-    f.write(f'''<title>Mei Fighter</title>
+    f.write(f'''<title>Wars vs. Trek</title>
 <style>
 :root {{ color-scheme: dark; }}
 {css}

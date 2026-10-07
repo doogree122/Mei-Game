@@ -736,12 +736,12 @@ class Game {
     ctx.font = 'italic 900 88px system-ui, sans-serif';
     ctx.lineWidth = 10;
     ctx.strokeStyle = '#1a0b22';
-    ctx.strokeText('MEI FIGHTER', W / 2, 130);
+    ctx.strokeText('WARS VS. TREK', W / 2, 130);
     const g = ctx.createLinearGradient(0, 90, 0, 170);
     g.addColorStop(0, '#fff3b0');
     g.addColorStop(1, '#ff5d8f');
     ctx.fillStyle = g;
-    ctx.fillText('MEI FIGHTER', W / 2, 130);
+    ctx.fillText('WARS VS. TREK', W / 2, 130);
 
     if (this.mode === 'splash') {
       ctx.fillStyle = 'rgba(12,16,32,0.78)';
