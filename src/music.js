@@ -1,16 +1,30 @@
-// Background music: "Hyperspace Jump", looping.
+// Background music:
+//   menu   - "Hyperspace Jump", looping: start screen, title, character select, lobby
+//   fights - "Arcade March" and "Arcade March 2", alternating: each new fight
+//            starts the other song from the top, and a fight that outlasts one
+//            song rolls on into the other.
+// Returning to the menus resumes the menu track where it left off.
 //
-// Browsers only allow sound after the player interacts, so it starts on the
-// first key press or tap. It plays quieter while paused, stops while the tab is
-// hidden, and the on/off choice is remembered in this browser. The single-file
-// build sets MUSIC_DATA to the track as a data URI; otherwise it loads the file.
+// Browsers only allow sound after the player interacts, so music starts on the
+// first key press or tap (or right away where autoplay is allowed). It plays
+// quieter while paused, stops while the tab is hidden, and the on/off choice is
+// remembered in this browser. The single-file build sets MUSIC_DATA to the
+// tracks as data URIs; otherwise they load from assets/music/.
 
 const Music = (() => {
   const VOLUME = 0.45;
   const PAUSED_VOLUME = 0.15;
-  const src = typeof MUSIC_DATA !== 'undefined' ? MUSIC_DATA : 'assets/music/hyperspace_jump.mp3';
-  let audio = null;
+  const SOURCES = typeof MUSIC_DATA !== 'undefined' ? MUSIC_DATA : {
+    menu: 'assets/music/hyperspace_jump.mp3',
+    fight1: 'assets/music/arcade_march.mp3',
+    fight2: 'assets/music/arcade_march_2.mp3',
+  };
+  const FIGHT_SONGS = ['fight1', 'fight2'];
+  const tracks = {};
+  let current = 'menu';
+  let fightIndex = -1; // which fight song played last
   let started = false;
+  let paused = false;
   let ducking = false;
   let duckTimer = 0;
   let on = true;
@@ -20,18 +34,38 @@ const Music = (() => {
     // Storage blocked: default to on.
   }
 
-  function element() {
-    if (!audio) {
-      audio = new Audio(src);
-      audio.loop = true;
-      audio.volume = VOLUME;
+  function element(name) {
+    if (!tracks[name]) {
+      const a = new Audio(SOURCES[name]);
+      // The menu song loops; a fight song hands over to the other when it ends.
+      a.loop = !FIGHT_SONGS.includes(name);
+      a.volume = VOLUME;
+      if (!a.loop) a.addEventListener('ended', () => {
+        if (current === name) nextFightSong();
+      });
+      tracks[name] = a;
     }
-    return audio;
+    return tracks[name];
+  }
+
+  // Start the other fight song from the top.
+  function nextFightSong() {
+    if (tracks[current]) tracks[current].pause();
+    fightIndex = (fightIndex + 1) % FIGHT_SONGS.length;
+    current = FIGHT_SONGS[fightIndex];
+    element(current).currentTime = 0;
+    if (started) play();
+  }
+
+  function volume() {
+    return paused || ducking ? PAUSED_VOLUME : VOLUME;
   }
 
   function play() {
     if (!on || document.hidden) return;
-    element().play().catch(() => {
+    const a = element(current);
+    a.volume = volume();
+    a.play().catch(() => {
       // Not allowed yet (no gesture) or unsupported; the next gesture retries.
       started = false;
     });
@@ -53,8 +87,8 @@ const Music = (() => {
     if (on) {
       started = true;
       play();
-    } else if (audio) {
-      audio.pause();
+    } else {
+      for (const a of Object.values(tracks)) a.pause();
     }
     updateButtons();
   }
@@ -70,9 +104,11 @@ const Music = (() => {
   window.addEventListener('keydown', start);
   window.addEventListener('pointerdown', start);
   document.addEventListener('visibilitychange', () => {
-    if (!audio) return;
-    if (document.hidden) audio.pause();
-    else if (on && started) play();
+    if (document.hidden) {
+      for (const a of Object.values(tracks)) a.pause();
+    } else if (on && started) {
+      play();
+    }
   });
 
   return {
@@ -84,18 +120,33 @@ const Music = (() => {
       }
       updateButtons();
     },
+    // 'menu' resumes the menu song; 'fight' starts the next fight song.
+    setTrack(name) {
+      const inFight = FIGHT_SONGS.includes(current);
+      if (name === 'fight') {
+        if (!inFight) nextFightSong();
+        return;
+      }
+      if (name !== 'menu' || current === 'menu') return;
+      if (tracks[current]) tracks[current].pause();
+      current = 'menu';
+      if (started) play();
+    },
+    get track() {
+      return current;
+    },
     // Duck the music under the pause screen, or briefly under a jingle.
-    setPaused(paused) {
-      if (audio && !ducking) audio.volume = paused ? PAUSED_VOLUME : VOLUME;
+    setPaused(value) {
+      paused = value;
+      if (tracks[current]) tracks[current].volume = volume();
     },
     duck(ms) {
-      if (!audio) return;
       ducking = true;
-      audio.volume = PAUSED_VOLUME;
+      if (tracks[current]) tracks[current].volume = volume();
       clearTimeout(duckTimer);
       duckTimer = setTimeout(() => {
         ducking = false;
-        audio.volume = VOLUME;
+        if (tracks[current]) tracks[current].volume = volume();
       }, ms);
     },
     toggle: () => setOn(!on),
@@ -103,7 +154,7 @@ const Music = (() => {
     // switched off), false when the browser wants a tap or key press first.
     tryAutoplay() {
       if (!on) return Promise.resolve(true);
-      return element().play().then(() => {
+      return element(current).play().then(() => {
         started = true;
         return true;
       }, () => false);

@@ -69,8 +69,15 @@ git checkout gh-pages && git merge claude/fighting-game-prototype && git push &&
 
 ## Music
 
-"Hyperspace Jump" (`assets/music/hyperspace_jump.mp3`, made with Suno) loops in the background. The game tries to start it as soon as the page loads. Most browsers block sound until you interact, so in that case a **start screen** ("PRESS ANY KEY" / "TAP TO START") appears first, and that first press starts the music and opens the menu.
-It gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
+Three tracks, all made with Suno, in `assets/music/`:
+
+- **"Hyperspace Jump"** loops on the start screen, title, character select and online lobby.
+- **"Arcade March"** and **"Arcade March 2"** play during fights, taking turns. Each new fight starts the other song from the top, and a fight that outlasts one song rolls on into the other.
+
+Going back to the menus resumes "Hyperspace Jump" where it left off.
+
+The game tries to start the music as soon as the page loads. Most browsers block sound until you interact, so in that case a **start screen** ("PRESS ANY KEY" / "TAP TO START") appears first, and that first press starts the music and opens the menu.
+The music gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
 
 **Win and lose jingles:** when a round's winner is announced you hear a bright rising arpeggio if you won and a falling minor phrase if you lost.
 The round that decides the match gets the full versions instead: a fanfare for the winner, a sad trombone for the loser. The music dips while they play.
@@ -94,7 +101,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |
 | `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the artifact room |
-| `src/music.js` | Background music: start on first input, loop, pause ducking, on/off |
+| `src/music.js` | Music: menu track, alternating fight tracks, start on first input, pause ducking, on/off |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
 | `tools/build_single.py` | Bundles everything (music included) into one HTML page for the claude.ai artifact |
 
