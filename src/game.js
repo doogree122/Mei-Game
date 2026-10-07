@@ -249,6 +249,7 @@ class Game {
       }
     } else if (this.mode === 'roundEnd') {
       this.stepFighters(false);
+      if (this.modeTime === 80) this.playResult();
       if (this.modeTime === 70 && this.roundWinner) {
         this.roundWinner.won = true;
         this.roundWinner.vx = 0;
@@ -288,6 +289,27 @@ class Game {
     this.effects.update();
     if (this.shake > 0) this.shake *= 0.85;
     if (this.shake < 0.5) this.shake = 0;
+  }
+
+  // Which fighter this screen's player controls: 0 or 1, or null when two
+  // people share the keyboard.
+  playerIndex() {
+    if (this.online === 'guest') return 1;
+    if (this.online === 'host') return 0;
+    return this.controllers[1] instanceof KeyboardController ? null : 0;
+  }
+
+  // Win or lose jingle as the round's winner is announced; the full version
+  // when that round decides the match.
+  playResult() {
+    const w = this.roundWinner;
+    if (!w || this.training) return;
+    const matchOver = w.wins >= WINS_NEEDED;
+    const you = this.playerIndex();
+    const won = you === null || this.fighters.indexOf(w) === you;
+    if (won) Sfx.win(matchOver);
+    else Sfx.lose(matchOver);
+    Music.duck(matchOver ? 2600 : 1300);
   }
 
   // Canvas taps (touch screens): pick menu items, continue, resume.

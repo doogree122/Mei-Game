@@ -70,6 +70,10 @@ git checkout gh-pages && git merge claude/fighting-game-prototype && git push &&
 "Hyperspace Jump" (`assets/music/hyperspace_jump.mp3`, made with Suno) loops in the background. Browsers only allow sound after you interact, so it starts on your first key press or tap.
 It gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
 
+**Win and lose jingles:** when a round's winner is announced you hear a bright rising arpeggio if you won and a falling minor phrase if you lost.
+The round that decides the match gets the full versions instead: a fanfare for the winner, a sad trombone for the loser. The music dips while they play.
+"You" is player 1 against the CPU and your own fighter online. With 2 players on one keyboard, the winner's fanfare plays.
+
 ## Stage
 
 The fight takes place inside a spaceship. The room is about two screens wide (`WORLD_W`), and the camera follows the fighters,

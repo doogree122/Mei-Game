@@ -11,6 +11,8 @@ const Music = (() => {
   const src = typeof MUSIC_DATA !== 'undefined' ? MUSIC_DATA : 'assets/music/hyperspace_jump.mp3';
   let audio = null;
   let started = false;
+  let ducking = false;
+  let duckTimer = 0;
   let on = true;
   try {
     on = localStorage.getItem('meiFighter.music') !== 'off';
@@ -82,9 +84,19 @@ const Music = (() => {
       }
       updateButtons();
     },
-    // Duck the music under the pause screen.
+    // Duck the music under the pause screen, or briefly under a jingle.
     setPaused(paused) {
-      if (audio) audio.volume = paused ? PAUSED_VOLUME : VOLUME;
+      if (audio && !ducking) audio.volume = paused ? PAUSED_VOLUME : VOLUME;
+    },
+    duck(ms) {
+      if (!audio) return;
+      ducking = true;
+      audio.volume = PAUSED_VOLUME;
+      clearTimeout(duckTimer);
+      duckTimer = setTimeout(() => {
+        ducking = false;
+        audio.volume = VOLUME;
+      }, ms);
     },
     toggle: () => setOn(!on),
   };

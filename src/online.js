@@ -278,6 +278,16 @@ function applySnapshot(game) {
     f.shieldCooldown = Number(sf.sc) || 0;
   });
 
+  // The round's winner is announced: play this player's win or lose jingle once.
+  if (game.mode === 'roundEnd' && game.modeTime >= 80) {
+    if (!game.resultPlayed) {
+      game.resultPlayed = true;
+      game.playResult();
+    }
+  } else {
+    game.resultPlayed = false;
+  }
+
   const owners = game.fighters;
   const before = game.projectiles;
   const after = Array.isArray(s.p) ? s.p : [];

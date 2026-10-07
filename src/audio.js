@@ -45,6 +45,46 @@ const Sfx = (() => {
     osc.stop(ac.currentTime + duration);
   }
 
+  // One scheduled note, `start` seconds from now, with optional vibrato and a
+  // low-pass filter (for brassy tones).
+  function note(type, freq, start, dur, gain, { vibrato = 0, cutoff = 0, slideTo = 0 } = {}) {
+    const ac = ensure();
+    if (!ac) return;
+    const t = ac.currentTime + start;
+    const osc = ac.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.02);
+    g.gain.setValueAtTime(gain, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let out = osc;
+    if (cutoff) {
+      const f = ac.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = cutoff;
+      osc.connect(f);
+      out = f;
+    }
+    out.connect(g).connect(ac.destination);
+    if (vibrato) {
+      const lfo = ac.createOscillator();
+      lfo.frequency.value = 6;
+      const depth = ac.createGain();
+      depth.gain.value = vibrato;
+      lfo.connect(depth).connect(osc.frequency);
+      lfo.start(t);
+      lfo.stop(t + dur);
+    }
+    osc.start(t);
+    osc.stop(t + dur);
+  }
+
+  // Note frequencies used by the jingles.
+  const N = { C3: 130.8, E3: 164.8, F3: 174.6, Fs3: 185, G3: 196, C4: 261.6, Eb4: 311.1, E4: 329.6, G4: 392, C5: 523.3, E5: 659.3, G5: 784, C6: 1046.5 };
+
   // Force field hum: a buzzing chord with a fast wobble, held for `duration` seconds.
   function hum(duration) {
     const ac = ensure();
@@ -94,6 +134,34 @@ const Sfx = (() => {
       tone('triangle', 270, 1350, 0.25, 0.07);
       noise(0.25, 4000, 0.12);
       hum(SHIELD_FRAMES / 60);
+    },
+    // Winning: a bright rising arpeggio for a round; a fanfare for the match.
+    win: (match) => {
+      if (!match) {
+        [N.C5, N.E5, N.G5, N.C6].forEach((f, i) => note('square', f, i * 0.09, i === 3 ? 0.4 : 0.12, 0.07));
+        [N.C4, N.G4].forEach((f, i) => note('triangle', f, i * 0.18, 0.3, 0.1));
+        return;
+      }
+      [N.G4, N.C5, N.E5, N.G5].forEach((f, i) => note('square', f, i * 0.1, 0.12, 0.07));
+      note('square', N.C6, 0.42, 0.25, 0.06);
+      note('square', N.G5, 0.62, 0.12, 0.06);
+      // Held major chord with a shimmer on top.
+      for (const f of [N.C5, N.E5, N.G5, N.C6]) note('sawtooth', f, 0.78, 1.0, 0.035, { cutoff: 3000, vibrato: 3 });
+      note('triangle', N.C3, 0.78, 1.0, 0.16);
+      [N.C6 * 1.5, N.C6 * 2, N.C6 * 2.5].forEach((f, i) => note('sine', f, 0.8 + i * 0.12, 0.25, 0.03));
+    },
+    // Losing: a falling minor phrase for a round; a sad trombone for the match.
+    lose: (match) => {
+      if (!match) {
+        [N.G4, N.Eb4, N.C4].forEach((f, i) => note('triangle', f, i * 0.16, i === 2 ? 0.5 : 0.18, 0.12));
+        note('sawtooth', N.C3, 0.32, 0.5, 0.05, { cutoff: 600 });
+        return;
+      }
+      const brass = { cutoff: 900 };
+      note('sawtooth', N.G3, 0, 0.42, 0.11, brass);
+      note('sawtooth', N.Fs3, 0.45, 0.42, 0.11, brass);
+      note('sawtooth', N.F3, 0.9, 0.42, 0.11, brass);
+      note('sawtooth', N.E3, 1.35, 1.1, 0.12, { cutoff: 900, vibrato: 5, slideTo: N.E3 * 0.94 });
     },
     // A shot fizzling against the force field: crackling zap plus a low thump.
     shieldHit: () => {
