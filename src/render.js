@@ -705,39 +705,54 @@ function drawAgentArm(ctx, sk, side, c, back) {
   else drawFist(ctx, elbow, hand, 6, c.skin, c.skinDark, c.skinLight);
 }
 
-// Large phaser rifle, gripped in the front hand. Held level (aimed slightly
-// up) normally; thrust along the forearm during a punch.
+// Phaser rifle, gripped in the front hand: resting over the shoulder (barrel
+// angled up behind the head), level when aiming, thrust along the forearm
+// during a punch.
+function rifleMode(f) {
+  if (f.move && /punch/i.test(f.move.name)) return 'thrust';
+  if (f.move && f.move.def.projectile) return 'aim';
+  return 'rest';
+}
+
 function drawPhaserRifle(ctx, sk, f, c) {
   const h = sk.handF;
-  const punching = f.move && /punch/i.test(f.move.name);
-  const a = punching ? Math.atan2(h.y - sk.elbowF.y, h.x - sk.elbowF.x) : -0.12;
+  const mode = rifleMode(f);
+  const a = mode === 'thrust' ? Math.atan2(h.y - sk.elbowF.y, h.x - sk.elbowF.x)
+    : mode === 'aim' ? -0.12 : -2.3;
   const ux = Math.cos(a);
   const uy = Math.sin(a);
-  const k = 1.35; // a big two-handed rifle
+  const k = 1.15;
+  // Resting, the hand holds it low near the stock so the body lies on the
+  // shoulder and the barrel points up behind the head.
+  const shift = mode === 'rest' ? 22 : 0;
   // along = distance down the barrel from the grip, side = + below, - above.
-  const at = (along, side) => ({ x: h.x + (ux * along - uy * side) * k, y: h.y + (uy * along + ux * side) * k });
+  const at = (along, side) => {
+    const d = along + shift;
+    return { x: h.x + (ux * d - uy * side) * k, y: h.y + (uy * d + ux * side) * k };
+  };
   // Shoulder stock.
-  fillPoly(ctx, [at(-30, -6), at(-12, -6), at(-12, 5), at(-30, 9)], c.rifleLight);
-  drawLimb(ctx, at(-29, -5), at(-14, -5), 1.5, '#d8dce4');
-  // Main body with a gray side panel and vents.
+  fillPoly(ctx, [at(-30, -6), at(-12, -6), at(-12, 5), at(-30, 9)], c.rifleDark);
+  drawLimb(ctx, at(-29, -5), at(-14, -5), 1.5, c.rifle);
+  // Main body with a pale side panel and vents.
   fillPoly(ctx, [at(-13, -8), at(26, -8), at(28, -2), at(26, 5), at(-13, 5)], c.rifle);
   fillPoly(ctx, [at(-4, -5), at(18, -5), at(18, 1), at(-4, 1)], c.rifleLight);
-  ctx.fillStyle = c.rifle;
+  ctx.fillStyle = c.rifleDark;
   for (let i = 0; i < 4; i++) {
     const v = at(1 + i * 4, -2);
     ctx.fillRect(v.x - 0.8, v.y - 1.5, 1.6, 3);
   }
+  drawLimb(ctx, at(-13, 5), at(26, 5), 1.5, c.rifleDark);
   // Top carry handle.
-  drawLimb(ctx, at(-2, -9), at(-2, -15), 3.5, c.rifle);
-  drawLimb(ctx, at(12, -9), at(12, -15), 3.5, c.rifle);
-  drawLimb(ctx, at(-2, -15), at(12, -15), 4, c.rifle);
-  // Front grip for the supporting hand, and the trigger guard.
-  drawLimb(ctx, at(22, 5), at(22, 12), 5.5, c.rifle);
-  drawLimb(ctx, at(-2, 5), at(4, 9), 2.5, c.rifle);
+  drawLimb(ctx, at(-2, -9), at(-2, -15), 3, c.rifleDark);
+  drawLimb(ctx, at(12, -9), at(12, -15), 3, c.rifleDark);
+  drawLimb(ctx, at(-2, -15), at(12, -15), 3.5, c.rifle);
+  // Front grip and trigger guard.
+  drawLimb(ctx, at(22, 5), at(22, 12), 4.5, c.rifleDark);
+  drawLimb(ctx, at(-2, 5), at(4, 9), 2, c.rifleDark);
   // Barrel and glowing emitter.
-  drawLimb(ctx, at(27, -2), at(44, -2), 7, c.rifle);
-  drawLimb(ctx, at(44, -2), at(49, -2), 9, c.rifleLight);
-  fillCircle(ctx, at(50, -2).x, at(50, -2).y, 3.4, c.energy);
+  drawLimb(ctx, at(27, -2), at(44, -2), 6, c.rifle);
+  drawLimb(ctx, at(44, -2), at(49, -2), 8, c.rifleDark);
+  fillCircle(ctx, at(50, -2).x, at(50, -2).y, 3, c.energy);
 }
 
 function drawAgentTorso(ctx, sk, c) {
@@ -802,10 +817,15 @@ function drawAgentBody(ctx, sk, f) {
   drawAgentLeg(ctx, sk, 'B', c, true);
   drawAgentTorso(ctx, sk, c);
   drawAgentLeg(ctx, sk, 'F', c, false);
+  // Resting on the shoulder, the barrel passes behind her head.
+  const mode = rifleMode(f);
+  if (mode === 'rest') drawPhaserRifle(ctx, sk, f, c);
   drawAgentHead(ctx, sk, c);
-  drawPhaserRifle(ctx, sk, f, c);
-  // The supporting hand sits on top of the rifle's front grip.
-  drawFist(ctx, sk.elbowB, sk.handB, 5.5, c.skin, c.skinDark, c.skinLight);
+  if (mode !== 'rest') {
+    drawPhaserRifle(ctx, sk, f, c);
+    // Aiming two-handed: the supporting hand sits on the front grip.
+    if (mode === 'aim') drawFist(ctx, sk.elbowB, sk.handB, 5.5, c.skin, c.skinDark, c.skinLight);
+  }
   drawAgentArm(ctx, sk, 'F', c, false);
 }
 
