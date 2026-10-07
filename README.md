@@ -69,7 +69,7 @@ git checkout gh-pages && git merge claude/fighting-game-prototype && git push &&
 
 ## Music
 
-Three tracks, all made with Suno, in `assets/music/`:
+Three tracks, all made with Suno, in `assets/music/` (MP3, 64 kbps stereo at 32 kHz to keep downloads small; about 1.3 MB each):
 
 - **"Hyperspace Jump"** loops on the start screen, title, character select and online lobby.
 - **"Arcade March"** and **"Arcade March 2"** play during fights, taking turns. Each new fight starts the other song from the top, and a fight that outlasts one song rolls on into the other.
