@@ -20,6 +20,16 @@
     </section>
     <p id="rotate-hint">Turn your phone sideways for a bigger view</p>
   </main>
+  <section id="online" hidden aria-label="Online play">
+    <h2>Online</h2>
+    <p id="online-status"></p>
+    <div id="online-games"></div>
+    <div class="online-actions">
+      <button id="online-host">Host a game as B. FETT</button>
+      <button id="online-back">Back</button>
+    </div>
+    <p class="online-note">Both players open this same page. The other player joins your game from this list.</p>
+  </section>
   <div id="touch" hidden>
     <div id="stick-zone" aria-label="Move: drag">
       <div id="stick"><div id="stick-knob"></div></div>
@@ -44,6 +54,7 @@
   <script src="src/stage.js"></script>
   <script src="src/ai.js"></script>
   <script src="src/touch.js"></script>
+  <script src="src/online.js"></script>
   <script src="src/game.js"></script>
 </body>
 </html>

@@ -34,8 +34,17 @@ On touch screens, on-screen controls appear: drag anywhere on the left side to m
 It works in landscape (recommended) and portrait. 2 Players is keyboard-only, so phones don't offer it.
 To try the touch UI on a desktop, open `index.html?touch=1`.
 
-**Modes:** 1P vs CPU, 2 players on one keyboard, and **Training**. Training puts Mei on the stage with a standing dummy.
+**Modes:** 1P vs CPU, 2 players on one keyboard, **Training**, and **Online**. Training puts B. Fett on the stage with a standing dummy.
 It has no timer and no KOs, and health refills between combos. Press Esc to leave.
+
+### Online
+
+When the game runs as a claude.ai artifact, an **ONLINE** option appears on the menu.
+Two people open the same page at the same time. One picks **Host a game** and plays B. Fett.
+The other sees that game in the list and joins as Worf. Both people need access to the artifact (use its Share menu).
+The host's browser runs the fight, and the other player's controls and the fight travel through the artifact's live room about 30 times a second.
+Expect a little input delay for the joining player. Esc (or ☰ on phones) leaves the match.
+Opened from disk or another website, the game has no ONLINE option.
 
 ## Stage
 
@@ -46,13 +55,14 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 
 | File | Purpose |
 |------|---------|
-| `src/characters.js` | Character roster: body style (`look`), palette, projectile type, movement stats. **Edit this to restyle Mei.** |
+| `src/characters.js` | Character roster: body style (`look`), palette, projectile type, movement stats. **Edit this to restyle the fighters.** |
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
 | `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |
+| `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the artifact room |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
 
 ## Adding sprite art (optional)
@@ -79,8 +89,8 @@ Each frame they're drawn from their skeleton, then given hard edges and a 1-pixe
 
 | | Look | Special | Stats |
 |---|---|---|---|
-| **MEI** (P1) | Armored jetpack bounty hunter. Green helmet with a flat face, a T-shaped dark visor with dark-red trim, dark-green cheek plates, gray dents, an ear cap and a gray antenna. Green chest plates, gauntlets and shin plates. Yellow shoulder pad, wrist bands and shaped knee plates. Gray flight suit, light-gray gloves and black boots. Brown ammo belt, chest strap and thigh pouch. Green jetpack with a slim rocket, a rifle on the back, and a black carbine for the special | Blaster bolt | 1.9× size, baseline stats |
-| **KORR** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
+| **B. FETT** (P1) | Armored jetpack bounty hunter. Green helmet with a flat face, a T-shaped dark visor with dark-red trim, dark-green cheek plates, gray dents, an ear cap and a gray antenna. Green chest plates, gauntlets and shin plates. Yellow shoulder pad, wrist bands and shaped knee plates. Gray flight suit, light-gray gloves and black boots. Brown ammo belt, chest strap and thigh pouch. Green jetpack with a slim rocket, a rifle on the back, and a black carbine for the special | Blaster bolt | 1.9× size, baseline stats |
+| **WORF** (P2 / CPU) | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`), a projectile style with `projectile` (`bolt`, `pulse`), and a size with `scale`.
 Scale grows the drawing along with reach, hit areas, blaster height and knockback, so a taller fighter also reaches further. Walk and jump speeds are in `stats`.

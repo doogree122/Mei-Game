@@ -851,7 +851,7 @@ function drawProjectile(ctx, p, time) {
   ctx.fill();
 }
 
-function drawHealthBar(ctx, f, x, y, w, flip) {
+function drawHealthBar(ctx, f, x, y, w, flip, you) {
   const h = 20;
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
@@ -875,6 +875,11 @@ function drawHealthBar(ctx, f, x, y, w, flip) {
   ctx.fillStyle = '#fff';
   ctx.textAlign = flip ? 'right' : 'left';
   ctx.fillText(f.char.name, flip ? x + w : x, y + h + 8);
+  if (you) {
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillText('YOU', flip ? x + w : x, y + h + 30);
+  }
 
   // Round wins.
   for (let i = 0; i < 2; i++) {
@@ -891,8 +896,10 @@ function drawHealthBar(ctx, f, x, y, w, flip) {
 
 function drawHUD(ctx, game) {
   const [a, b] = game.fighters;
-  drawHealthBar(ctx, a, 30, 24, 380, false);
-  drawHealthBar(ctx, b, W - 410, 24, 380, true);
+  // In an online match, mark which fighter is this player's.
+  const you = game.online === 'host' ? 0 : game.online === 'guest' ? 1 : -1;
+  drawHealthBar(ctx, a, 30, 24, 380, false, you === 0);
+  drawHealthBar(ctx, b, W - 410, 24, 380, true, you === 1);
 
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(W / 2 - 34, 14, 68, 50);

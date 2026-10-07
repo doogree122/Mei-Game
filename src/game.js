@@ -8,6 +8,7 @@ const MENU = [
   { label: '1 PLAYER  vs  CPU', kind: 'cpu' },
   { label: '2 PLAYERS', kind: 'versus', keyboardOnly: true },
   { label: 'TRAINING', kind: 'training' },
+  { label: 'ONLINE', kind: 'lobby', needsRoom: true },
 ];
 const MENU_TOP = 250;
 const MENU_STEP = 48;
@@ -28,15 +29,15 @@ class Game {
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
-      new Fighter({ char: CHARACTERS.mei, x: WORLD_W / 2 - 230, facing: 1, side: 0 }),
-      new Fighter({ char: CHARACTERS.korr, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
+      new Fighter({ char: CHARACTERS.fett, x: WORLD_W / 2 - 230, facing: 1, side: 0 }),
+      new Fighter({ char: CHARACTERS.worf, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     this.mode = 'title';
     this.touch = TOUCH_ENABLED;
-    // Two players need two keyboards' worth of keys, so phones don't offer it.
-    this.menu = MENU.filter((m) => !(this.touch && m.keyboardOnly));
+    this.online = null; // 'host' | 'guest' during an online match
     this.menuIndex = 0;
+    this.refreshMenu();
     this.showBoxes = false;
     this.frame = 0;
     this.hitstop = 0;
@@ -45,13 +46,43 @@ class Game {
     this.camX = (WORLD_W - W) / 2;
   }
 
+  // Two players need two keyboards' worth of keys, so phones don't offer it;
+  // ONLINE appears once the page can reach the room.
+  refreshMenu() {
+    this.menu = MENU.filter((m) => !(this.touch && m.keyboardOnly) && !(m.needsRoom && !Online.room));
+    this.menuIndex = Math.min(this.menuIndex, this.menu.length - 1);
+  }
+
   // ---- match flow ----
 
+  showLobby() {
+    this.mode = 'lobby';
+    this.online = null;
+    renderLobby(this);
+  }
+
+  // Guest: the host's snapshots drive everything from here.
+  beginGuest() {
+    this.online = 'guest';
+    this.training = false;
+    for (const f of this.fighters) {
+      f.wins = 0;
+      f.reset();
+    }
+    this.projectiles = [];
+    this.effects = new Effects();
+    this.mode = 'intro';
+    this.updateCamera(true);
+  }
+
   startMatch(kind) {
+    if (kind === 'lobby') return this.showLobby();
     this.training = kind === 'training';
+    this.online = kind === 'online' ? 'host' : null;
     this.controllers[1] = kind === 'versus' ? new KeyboardController(KEYMAPS.p2)
       : kind === 'training' ? new DummyController()
-        : new AIController(0.5);
+        : kind === 'online' ? new RemoteController()
+          : new AIController(0.5);
     for (const f of this.fighters) f.wins = 0;
     this.round = 1;
     this.startRound();
@@ -142,6 +173,15 @@ class Game {
     if (keyPressed('F2')) this.showBoxes = !this.showBoxes;
 
     if (this.mode === 'title') return this.updateTitle();
+    if (this.mode === 'lobby') {
+      if (keyPressed('Escape')) lobbyBack(this);
+      return;
+    }
+    if (this.online === 'guest') return this.updateGuest();
+    if (this.online === 'host' && keyPressed('Escape')) {
+      leaveOnline(this, 'You left the match.');
+      return;
+    }
     if (this.mode === 'paused') {
       if (keyPressed('KeyP')) this.mode = 'fight';
       else if (keyPressed('Escape')) this.mode = 'title';
@@ -150,7 +190,10 @@ class Game {
     if (this.mode === 'matchEnd') {
       this.modeTime++;
       this.stepFighters(false);
-      if (this.modeTime > 60 && keyPressed('Enter')) this.mode = 'title';
+      if (this.modeTime > 60 && keyPressed('Enter')) {
+        if (this.online === 'host') this.startMatch('online');
+        else this.mode = 'title';
+      }
       return;
     }
 
@@ -158,7 +201,7 @@ class Game {
       this.mode = 'title';
       return;
     }
-    if (this.mode === 'fight' && (keyPressed('KeyP') || keyPressed('Escape'))) {
+    if (this.mode === 'fight' && !this.online && (keyPressed('KeyP') || keyPressed('Escape'))) {
       this.mode = 'paused';
       return;
     }
@@ -205,6 +248,26 @@ class Game {
       }
     }
 
+    if (this.shake > 0) this.shake *= 0.85;
+    if (this.shake < 0.5) this.shake = 0;
+  }
+
+  // Online guest: send controls, show the host's latest snapshot.
+  updateGuest() {
+    if (keyPressed('Escape')) {
+      leaveOnline(this, 'You left the match.');
+      return;
+    }
+    sendGuestInput();
+    applySnapshot(this);
+    for (const f of this.fighters) {
+      f.time++;
+      if (f.flash > 0) f.flash--;
+      f.displayHp += (f.hp - f.displayHp) * 0.08;
+      f.updatePose();
+    }
+    this.updateCamera(false);
+    this.effects.update();
     if (this.shake > 0) this.shake *= 0.85;
     if (this.shake < 0.5) this.shake = 0;
   }
@@ -375,7 +438,9 @@ class Game {
       if (this.modeTime < 80) drawBanner(ctx, this.roundLabel);
       else drawBanner(ctx, this.roundWinner ? `${this.roundWinner.char.name} WINS` : 'DRAW');
     } else if (this.mode === 'matchEnd') {
-      const cont = this.touch ? 'Tap to continue' : 'Press Enter to continue';
+      const cont = this.online === 'guest' ? 'Waiting for the host · Esc to leave'
+        : this.online === 'host' ? (this.touch ? 'Tap for a rematch · ☰ to leave' : 'Enter for a rematch · Esc to leave')
+          : this.touch ? 'Tap to continue' : 'Press Enter to continue';
       drawBanner(ctx, `${this.champion.char.name} WINS!`, this.modeTime > 60 ? cont : null);
     } else if (this.mode === 'paused') {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -439,6 +504,7 @@ function loop(now) {
   last = now;
   while (acc >= STEP) {
     game.update();
+    sendSnapshot(game);
     endInputFrame();
     acc -= STEP;
   }
@@ -447,4 +513,6 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 setupTouchControls(game, document.getElementById('game'));
+setupLobbyPanel(game);
+initOnline(game);
 document.getElementById('game').focus();

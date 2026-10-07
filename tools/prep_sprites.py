@@ -101,7 +101,7 @@ pal = korr.convert('RGB').quantize(colors=18, method=Image.Quantize.MEDIANCUT)
 korr_small = korr_small.convert('RGB').quantize(palette=pal, dither=Image.Dither.NONE).convert('RGBA')
 korr_small.putalpha(alpha)
 
-for cid, full, small in (('mei', mei_full, mei_small), ('korr', korr_full, korr_small)):
+for cid, full, small in (('fett', mei_full, mei_small), ('worf', korr_full, korr_small)):
     full.save(f'{repo}/art/{cid}.png')
     small = trim(small)
     small.save(f'{repo}/assets/sprites/{cid}.png')
@@ -111,7 +111,7 @@ for cid, full, small in (('mei', mei_full, mei_small), ('korr', korr_full, korr_
 # the canvas and block the per-pixel sprite pass; data URIs don't.
 import base64, io, json
 entries = {}
-for cid in ('mei', 'korr'):
+for cid in ('fett', 'worf'):
     img = Image.open(f'{repo}/assets/sprites/{cid}.png')
     buf = io.BytesIO()
     img.save(buf, 'PNG', optimize=True)

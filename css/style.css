@@ -173,3 +173,64 @@ body.touch #help { display: none; }
   #attack-buttons { width: 176px; height: 138px; }
   .btn.special { left: 56px; }
 }
+
+/* ---- Online lobby panel ---- */
+
+#online {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(12, 16, 32, 0.94);
+  border: 1px solid rgba(255, 211, 77, 0.35);
+  color: #e8e8f2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+#online[hidden] { display: none; }
+
+#online h2 {
+  margin: 0;
+  font: italic 900 30px system-ui, sans-serif;
+  color: #ffd34d;
+  letter-spacing: 0.04em;
+}
+
+#online p { margin: 0; line-height: 1.45; }
+
+#online-games, .online-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#online button {
+  font: 700 16px system-ui, sans-serif;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#online button:focus-visible { outline: 2px solid #ffd34d; outline-offset: 2px; }
+
+#online-host, .online-join {
+  background: rgba(255, 211, 77, 0.2) !important;
+  border-color: rgba(255, 211, 77, 0.6) !important;
+}
+
+#online-back[hidden], #online-host[hidden] { display: none; }
+
+.online-note { font-size: 13px; opacity: 0.7; }

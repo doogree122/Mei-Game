@@ -1,9 +1,9 @@
 // Character roster. Appearance is data-driven: `look` picks the body renderer in
 // render.js and `colors` is its palette, so variants are just new color sets.
 const CHARACTERS = {
-  mei: {
-    id: 'mei',
-    name: 'MEI',
+  fett: {
+    id: 'fett',
+    name: 'B. FETT',
     look: 'armored', // jetpack bounty hunter
     scale: 1.9,
     projectile: 'bolt', // special fires a blaster bolt
@@ -45,9 +45,9 @@ const CHARACTERS = {
   },
 };
 
-CHARACTERS.korr = {
-  id: 'korr',
-  name: 'KORR',
+CHARACTERS.worf = {
+  id: 'worf',
+  name: 'WORF',
   look: 'warrior', // ridge-browed alien officer
   scale: 2.0, // the taller of the two
   projectile: 'pulse', // special fires a hand-blaster pulse
