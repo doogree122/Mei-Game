@@ -482,7 +482,7 @@ class Game {
   }
 
   // Win or lose jingle as the round's winner is announced; the full version
-  // when that round decides the match.
+  // when that round decides the match. The music stops until the menus.
   playResult() {
     const w = this.roundWinner;
     if (!w || this.training) return;
@@ -491,7 +491,7 @@ class Game {
     const won = you === null || this.fighters.indexOf(w) === you;
     if (won) Sfx.win(matchOver);
     else Sfx.lose(matchOver);
-    Music.duck(matchOver ? 2600 : 1300);
+    Music.stop();
   }
 
   // Canvas taps (touch screens): pick menu items, continue, resume.

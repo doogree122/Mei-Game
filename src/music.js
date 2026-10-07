@@ -4,6 +4,8 @@
 //            starts the other song from the top, and a fight that outlasts one
 //            song rolls on into the other.
 // Returning to the menus resumes the menu track where it left off.
+// The music stops when a win or lose jingle plays and stays off until the
+// player is back on the menus.
 //
 // Browsers only allow sound after the player interacts, so music starts on the
 // first key press or tap (or right away where autoplay is allowed). It plays
@@ -25,8 +27,7 @@ const Music = (() => {
   let fightIndex = -1; // which fight song played last
   let started = false;
   let paused = false;
-  let ducking = false;
-  let duckTimer = 0;
+  let stopped = false; // silenced by a jingle until the next menu
   let on = true;
   try {
     on = localStorage.getItem('meiFighter.music') !== 'off';
@@ -58,11 +59,11 @@ const Music = (() => {
   }
 
   function volume() {
-    return paused || ducking ? PAUSED_VOLUME : VOLUME;
+    return paused ? PAUSED_VOLUME : VOLUME;
   }
 
   function play() {
-    if (!on || document.hidden) return;
+    if (!on || stopped || document.hidden) return;
     const a = element(current);
     a.volume = volume();
     a.play().catch(() => {
@@ -107,7 +108,7 @@ const Music = (() => {
     if (document.hidden) {
       for (const a of Object.values(tracks)) a.pause();
     } else if (on && started) {
-      play();
+      play(); // does nothing while stopped
     }
   });
 
@@ -127,7 +128,10 @@ const Music = (() => {
         if (!inFight) nextFightSong();
         return;
       }
-      if (name !== 'menu' || current === 'menu') return;
+      if (name !== 'menu') return;
+      const wasStopped = stopped;
+      stopped = false;
+      if (current === 'menu' && !wasStopped) return;
       if (tracks[current]) tracks[current].pause();
       current = 'menu';
       if (started) play();
@@ -135,19 +139,15 @@ const Music = (() => {
     get track() {
       return current;
     },
-    // Duck the music under the pause screen, or briefly under a jingle.
+    // Quieter under the pause screen.
     setPaused(value) {
       paused = value;
       if (tracks[current]) tracks[current].volume = volume();
     },
-    duck(ms) {
-      ducking = true;
-      if (tracks[current]) tracks[current].volume = volume();
-      clearTimeout(duckTimer);
-      duckTimer = setTimeout(() => {
-        ducking = false;
-        if (tracks[current]) tracks[current].volume = volume();
-      }, ms);
+    // Stop for a win or lose jingle; setTrack('menu') starts it again.
+    stop() {
+      stopped = true;
+      for (const a of Object.values(tracks)) a.pause();
     },
     toggle: () => setOn(!on),
     // Try to start right away. Resolves true when the music is playing (or is
