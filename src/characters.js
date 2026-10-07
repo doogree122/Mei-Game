@@ -126,6 +126,7 @@ CHARACTERS.vader = {
   moves: {
     punch: { pose: 'saberSwing', limb: 'saberTip', radius: 18, damage: 8, startup: 6, active: 4, recovery: 13, sound: 'heavy', sfx: 'saber' },
     special: { pose: 'forceLightning', spawnLimb: 'handB', sfx: 'lightning' },
+    uppercut: { radius: 22, sfx: 'saber' }, // a rising saber slash
   },
   shot: { speed: 10, radius: 20, damage: 11, hitstun: 22 },
   // Slow and heavy.

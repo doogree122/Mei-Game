@@ -27,6 +27,7 @@ npx serve .
 | Block   | hold away from opponent | same |
 
 Crouch + punch is a low jab and crouch + kick is a sweep (knockdown). Kick or punch in the air is a jump kick.
+**Uppercut:** crouch, then press punch just as you stand back up (within about ⅙ of a second of letting go of crouch). It hits crouching opponents too and launches them into a knockdown. Vader's is a rising saber slash.
 Low attacks must be blocked crouching, and jump attacks must be blocked standing.
 The standing kick is a high kick that lands at chest height.
 **Ducking:** crouching makes standing punches and kicks whiff over your head. Low attacks (crouch punch, sweep), jump kicks and blaster shots still hit.

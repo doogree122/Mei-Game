@@ -709,7 +709,7 @@ function drawAgentArm(ctx, sk, side, c, back) {
 // angled up behind the head), level when aiming, thrust along the forearm
 // during a punch.
 function rifleMode(f) {
-  if (f.move && /punch/i.test(f.move.name)) return 'thrust';
+  if (f.move && /punch|uppercut/i.test(f.move.name)) return 'thrust';
   if (f.move && f.move.def.projectile) return 'aim';
   return 'rest';
 }
@@ -877,6 +877,7 @@ const MOVE_MOTION = {
   kick: { rot: -0.22, dx: 20 },
   lowPunch: { rot: 0.1, dx: 14 },
   sweep: { rot: -0.12, dx: 18 },
+  uppercut: { rot: -0.1, dx: 12 },
   airKick: { rot: 0.5, dx: 8 },
   special: { rot: -0.08, dx: -8 },
 };
@@ -1259,15 +1260,19 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
 
-  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.font = 'italic 900 32px system-ui, sans-serif';
   ctx.textBaseline = 'top';
-  ctx.fillStyle = '#fff';
   ctx.textAlign = flip ? 'right' : 'left';
-  ctx.fillText(f.char.name, flip ? x + w : x, y + h + 8);
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+  ctx.strokeText(f.char.name, flip ? x + w : x, y + h + 7);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(f.char.name, flip ? x + w : x, y + h + 7);
   if (you) {
-    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.font = 'bold 15px system-ui, sans-serif';
     ctx.fillStyle = '#ffd34d';
-    ctx.fillText('YOU', flip ? x + w : x, y + h + 30);
+    ctx.fillText('YOU', flip ? x + w : x, y + h + 44);
   }
 
   // Force field meter: full and bright when ready or active, refilling while it recharges.
@@ -1286,7 +1291,7 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
 
   // Round wins.
   for (let i = 0; i < 2; i++) {
-    const cx = flip ? x + w - 110 - i * 22 : x + 110 + i * 22;
+    const cx = flip ? x + w - 175 - i * 22 : x + 175 + i * 22;
     ctx.beginPath();
     ctx.arc(cx, y + h + 17, 7, 0, Math.PI * 2);
     ctx.fillStyle = i < f.wins ? '#ffd34d' : 'rgba(255,255,255,0.15)';

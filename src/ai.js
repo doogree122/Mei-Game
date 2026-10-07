@@ -29,6 +29,15 @@ class AIController {
     const plan = { left: false, right: false, up: false, down: false };
     const r = Math.random();
 
+    // Uppercut: stand up from the crouch and punch on the same frame.
+    if (this.uppercutNext) {
+      this.uppercutNext = false;
+      this.queued = 'punch';
+      this.plan = plan;
+      this.planTimer = 12;
+      return;
+    }
+
     // Airborne: drift and kick near the top of the jump.
     if (!self.grounded) {
       if (this.queuedAfterJump && self.vy < 3) {
@@ -89,7 +98,8 @@ class AIController {
       else if (roll < 0.5 + d * 0.15) this.queued = 'kick';
       else if (roll < 0.62) { plan.down = true; this.queued = 'punch'; }
       else if (roll < 0.72) { plan.down = true; this.queued = 'kick'; }
-      else if (roll < 0.86) plan[away] = true;
+      else if (roll < 0.8 + d * 0.06) { plan.down = true; this.uppercutNext = true; this.planTimer = 6; this.plan = plan; return; }
+      else if (roll < 0.9) plan[away] = true;
       else plan.down = true;
       this.planTimer = 8 + Math.round(Math.random() * 8);
     }
