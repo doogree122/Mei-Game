@@ -783,6 +783,49 @@ function drawFighterBoxes(ctx, f) {
   }
 }
 
+const SHIELD_COLOR = '#6fd8ff';
+
+// Force field bubble: a translucent shell with a bright rim and hex shimmer;
+// it flickers in its last moments.
+function drawShield(ctx, f, frame) {
+  if (f.shield <= 0) return;
+  if (f.shield < 12 && f.shield % 4 < 2) return;
+  const e = f.shieldEllipse();
+  const pulse = 1 + Math.sin(frame * 0.3) * 0.03;
+  ctx.save();
+  ctx.translate(e.cx, e.cy);
+  ctx.scale(pulse, pulse);
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = SHIELD_COLOR;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, e.rx, e.ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = SHIELD_COLOR;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, e.rx - 6, e.ry - 6, 0, -2.4, -1.2);
+  ctx.stroke();
+  // Hex shimmer drifting up the shell.
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = SHIELD_COLOR;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 6; i++) {
+    const t = ((frame * 0.02 + i / 6) % 1) * 2 - 1;
+    const y = t * e.ry * 0.85;
+    const half = e.rx * Math.sqrt(Math.max(0, 1 - (y / e.ry) ** 2)) * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-half, y);
+    ctx.lineTo(half, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // Swoosh arc at the striking limb while an attack is out.
 function drawAttackTrail(ctx, f) {
   if (!f.move || f.move.def.projectile) return;
@@ -880,6 +923,20 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
     ctx.fillStyle = '#ffd34d';
     ctx.fillText('YOU', flip ? x + w : x, y + h + 30);
   }
+
+  // Force field meter: full and bright when ready or active, refilling while it recharges.
+  const mw = 130;
+  const mx = flip ? x : x + w - mw;
+  const my = y + h + 10;
+  const ready = f.shield > 0 ? f.shield / SHIELD_FRAMES : f.shieldCooldown > 0 ? 1 - f.shieldCooldown / SHIELD_COOLDOWN : 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(mx, my, mw, 8);
+  ctx.fillStyle = f.shieldCooldown > 0 ? 'rgba(111,216,255,0.45)' : SHIELD_COLOR;
+  ctx.fillRect(flip ? mx + mw * (1 - ready) : mx, my, mw * ready, 8);
+  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.fillStyle = SHIELD_COLOR;
+  ctx.textAlign = flip ? 'left' : 'right';
+  ctx.fillText('FORCE FIELD', flip ? mx : mx + mw, my + 11);
 
   // Round wins.
   for (let i = 0; i < 2; i++) {

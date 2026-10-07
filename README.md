@@ -20,17 +20,22 @@ npx serve .
 | Punch   | J        | , (or Numpad 1) |
 | Kick    | K        | . (or Numpad 2) |
 | Special (blaster shot) | L | / (or Numpad 3) |
+| Force field | H | M (or Numpad 4) |
 | Block   | hold away from opponent | same |
 
 Crouch + punch is a low jab and crouch + kick is a sweep (knockdown). Kick or punch in the air is a jump kick.
 Low attacks must be blocked crouching, and jump attacks must be blocked standing.
+The standing kick is a high kick that lands at chest height.
+
+**Force field:** press it to raise an energy bubble for about ¾ of a second. Blaster shots that touch it fizzle out, but punches and kicks go straight through.
+You can move and jump inside it but can't attack, and it takes about 1½ seconds to recharge. The meter under each health bar shows when it's ready.
 
 Enter starts the game, P pauses (Esc while paused quits to the menu) and F2 shows hitboxes.
 
 ### Phones and tablets
 
 On touch screens, on-screen controls appear: drag anywhere on the left side to move (up = jump, down = crouch/low attacks),
-**P** punch, **K** kick, **SP** special, plus pause, menu and fullscreen buttons. Tap the menu to choose a mode.
+**P** punch, **K** kick, **SP** blaster, **FF** force field, plus pause, menu and fullscreen buttons. Tap the menu to choose a mode.
 It works in landscape (recommended) and portrait. 2 Players is keyboard-only, so phones don't offer it.
 To try the touch UI on a desktop, open `index.html?touch=1`.
 

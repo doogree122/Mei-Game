@@ -5,7 +5,7 @@
 // never appears. Everything travels as room *presence* (anyone viewing may set
 // it, about 30 updates a second):
 //   - lobby:  a host advertises { host: code, open: true }
-//   - guest:  { join: code, in: { l, r, u, d, c: [punches, kicks, specials] } }
+//   - guest:  { join: code, in: { l, r, u, d, c: [punches, kicks, specials, shields] } }
 //   - host:   { host: code, guest: <guest peer>, s: <game snapshot> }
 // The host runs the only simulation; the guest sends its controls and draws
 // the host's snapshots. Button presses travel as counters so none are lost
@@ -113,9 +113,9 @@ function joinGame(game, hostPeer) {
   Online.opponent = host.peer;
   Online.snap = null;
   Online.message = '';
-  guestInput.counts = [0, 0, 0];
+  guestInput.counts = [0, 0, 0, 0];
   guestInput.sent = '';
-  setPresence({ join: Online.code, in: { l: 0, r: 0, u: 0, d: 0, c: [0, 0, 0] }, host: null, open: null, s: null });
+  setPresence({ join: Online.code, in: { l: 0, r: 0, u: 0, d: 0, c: [0, 0, 0, 0] }, host: null, open: null, s: null });
   renderLobby(game);
 }
 
@@ -142,7 +142,7 @@ function leaveOnline(game, message, toTitle = false) {
 // The guest's controls, read like any other controller.
 class RemoteController {
   constructor() {
-    this.seen = [0, 0, 0];
+    this.seen = [0, 0, 0, 0];
   }
 
   read() {
@@ -152,8 +152,8 @@ class RemoteController {
     out.right = !!s.r;
     out.up = !!s.u;
     out.down = !!s.d;
-    const c = Array.isArray(s.c) ? s.c : [0, 0, 0];
-    ['punch', 'kick', 'special'].forEach((name, i) => {
+    const c = Array.isArray(s.c) ? s.c : [];
+    ['punch', 'kick', 'special', 'shield'].forEach((name, i) => {
       const n = Number(c[i]) || 0;
       if (n > this.seen[i]) out.pressed[name] = true;
       this.seen[i] = n;
@@ -181,7 +181,7 @@ function snapshotGame(game) {
       hs: f.hitstun, bs: f.blockstun, dt: f.downTime, fl: f.flash,
       w: f.wins, won: f.won ? 1 : 0, ka: f.knockedAirborne ? 1 : 0,
       hb: f.holdBack ? 1 : 0, hd: f.holdDown ? 1 : 0, nt: f.nearThreat ? 1 : 0,
-      wp: r1(f.walkPhase),
+      wp: r1(f.walkPhase), sh: f.shield, sc: f.shieldCooldown,
     })),
     p: game.projectiles.map((p) => [r1(p.x), r1(p.y), p.vx, game.fighters.indexOf(p.owner)]),
   };
@@ -196,11 +196,11 @@ function sendSnapshot(game) {
 
 // ---- guest side ----
 
-const guestInput = { counts: [0, 0, 0], sent: '', keys: new KeyboardController(KEYMAPS.p1) };
+const guestInput = { counts: [0, 0, 0, 0], sent: '', keys: new KeyboardController(KEYMAPS.p1) };
 
 function sendGuestInput() {
   const inp = guestInput.keys.read();
-  ['punch', 'kick', 'special'].forEach((name, i) => {
+  ['punch', 'kick', 'special', 'shield'].forEach((name, i) => {
     if (inp.pressed[name]) guestInput.counts[i]++;
   });
   const state = { l: +inp.left, r: +inp.right, u: +inp.up, d: +inp.down, c: guestInput.counts.slice() };
@@ -272,6 +272,10 @@ function applySnapshot(game) {
     f.holdDown = !!sf.hd;
     f.nearThreat = !!sf.nt;
     f.walkPhase = Number(sf.wp) || 0;
+    const shield = Number(sf.sh) || 0;
+    if (shield > f.shield + 1) Sfx.shield();
+    f.shield = shield;
+    f.shieldCooldown = Number(sf.sc) || 0;
   });
 
   const owners = game.fighters;

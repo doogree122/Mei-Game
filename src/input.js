@@ -1,5 +1,5 @@
 // Keyboard handling plus controllers that produce a uniform per-frame input
-// shape for fighters: { left, right, up, down, pressed: { up, punch, kick, special } }.
+// shape for fighters: { left, right, up, down, pressed: { up, punch, kick, special, shield } }.
 
 const Keys = {
   down: new Set(),
@@ -41,11 +41,11 @@ function keyPressed(code) {
 const KEYMAPS = {
   p1: {
     left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'],
-    punch: ['KeyJ'], kick: ['KeyK'], special: ['KeyL'],
+    punch: ['KeyJ'], kick: ['KeyK'], special: ['KeyL'], shield: ['KeyH'],
   },
   p2: {
     left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'],
-    punch: ['Comma', 'Numpad1'], kick: ['Period', 'Numpad2'], special: ['Slash', 'Numpad3'],
+    punch: ['Comma', 'Numpad1'], kick: ['Period', 'Numpad2'], special: ['Slash', 'Numpad3'], shield: ['KeyM', 'Numpad4'],
   },
 };
 
@@ -67,6 +67,7 @@ class KeyboardController {
         punch: pressed('punch'),
         kick: pressed('kick'),
         special: pressed('special'),
+        shield: pressed('shield'),
       },
     };
   }
@@ -75,6 +76,6 @@ class KeyboardController {
 function emptyInput() {
   return {
     left: false, right: false, up: false, down: false,
-    pressed: { up: false, punch: false, kick: false, special: false },
+    pressed: { up: false, punch: false, kick: false, special: false, shield: false },
   };
 }

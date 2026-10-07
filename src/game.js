@@ -158,6 +158,17 @@ class Game {
     for (const p of this.projectiles) {
       if (p.dead) continue;
       const target = this.fighters.find((f) => f !== p.owner);
+      // A force field swallows the shot before it reaches the body.
+      if (target.shield > 0) {
+        const e = target.shieldEllipse();
+        const r = FIREBALL.radius;
+        if (((p.x - e.cx) / (e.rx + r)) ** 2 + ((p.y - e.cy) / (e.ry + r)) ** 2 <= 1) {
+          p.dead = true;
+          this.effects.spark(p.x, p.y, SHIELD_COLOR, 16, 6);
+          Sfx.shieldHit();
+          continue;
+        }
+      }
       const hb = target.hurtbox();
       if (circleRect(p.x, p.y, FIREBALL.radius, hb)) {
         if (target.takeHit(FIREBALL, p.owner, this, { x: p.x, y: p.y })) p.dead = true;
@@ -422,6 +433,7 @@ class Game {
       fx.clearRect(0, 0, this.fxBuffer.width, this.fxBuffer.height);
       fx.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
       for (const f of order) drawAttackTrail(fx, f);
+      for (const f of this.fighters) drawShield(fx, f, this.frame);
       for (const p of this.projectiles) drawProjectile(fx, p, this.frame);
       this.effects.draw(fx);
       if (this.showBoxes) for (const f of this.fighters) drawFighterBoxes(fx, f);

@@ -115,8 +115,8 @@ body.touch #help { display: none; }
   position: absolute;
   right: calc(env(safe-area-inset-right) + 14px);
   bottom: calc(env(safe-area-inset-bottom) + 14px);
-  width: 200px;
-  height: 160px;
+  width: 210px;
+  height: 210px;
 }
 
 .btn, .sys {
@@ -133,9 +133,10 @@ body.touch #help { display: none; }
 
 .btn { width: 70px; height: 70px; }
 .btn.down { transform: scale(0.92); filter: brightness(1.4); }
-.btn.punch { left: 0; bottom: 0; background: rgba(230, 70, 70, 0.55); }
-.btn.kick { right: 0; bottom: 18px; background: rgba(70, 130, 230, 0.55); }
-.btn.special { left: 64px; top: 0; background: rgba(240, 170, 40, 0.6); font-size: 17px; }
+.btn.special { left: 70px; top: 0; background: rgba(240, 170, 40, 0.6); font-size: 17px; }
+.btn.punch { left: 0; top: 70px; background: rgba(230, 70, 70, 0.55); }
+.btn.kick { right: 0; top: 70px; background: rgba(70, 130, 230, 0.55); }
+.btn.shield { left: 70px; bottom: 0; background: rgba(111, 216, 255, 0.45); font-size: 17px; }
 
 #system-buttons {
   position: absolute;
@@ -170,8 +171,9 @@ body.touch #help { display: none; }
 /* Landscape on short screens: controls float over the game, a bit smaller. */
 @media (orientation: landscape) and (max-height: 500px) {
   .btn { width: 60px; height: 60px; font-size: 18px; opacity: 0.85; }
-  #attack-buttons { width: 176px; height: 138px; }
-  .btn.special { left: 56px; }
+  #attack-buttons { width: 180px; height: 180px; }
+  .btn.special, .btn.shield { left: 60px; }
+  .btn.punch, .btn.kick { top: 60px; }
 }
 
 /* ---- Online lobby panel ---- */

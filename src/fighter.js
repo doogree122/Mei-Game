@@ -9,6 +9,9 @@ const STAGE_RIGHT = WORLD_W - 90;
 const GRAVITY = 0.75;
 const MAX_HP = 100;
 const BUFFER_FRAMES = 6;
+// Force field: stops blaster shots (not punches or kicks) for a moment, then recharges.
+const SHIELD_FRAMES = 45;
+const SHIELD_COOLDOWN = 90;
 
 // Limb lengths in pixels.
 const BODY = { thigh: 34, shin: 34, torso: 48, neck: 6, ua: 25, fa: 25, head: 15 };
@@ -24,7 +27,7 @@ const MOVES = {
   kick: {
     pose: 'kick', startup: 7, active: 4, recovery: 15,
     damage: 10, hitstun: 18, blockstun: 11, push: 8,
-    limb: 'footF', radius: 16, height: 'mid', sound: 'heavy',
+    limb: 'footF', radius: 22, height: 'mid', sound: 'heavy', // high kick: wide foot zone keeps its reach
   },
   lowPunch: {
     pose: 'lowPunch', startup: 4, active: 3, recovery: 9,
@@ -72,8 +75,8 @@ const POSES = {
   punch_windup: { torso: 0.05, head: 0, uaF: 0.4, faF: 2.6, uaB: 0.5, faB: 2.4, ...STANCE },
   punch: { torso: 0.28, head: -0.2, uaF: 1.62, faF: 1.58, uaB: 0.5, faB: 2.5, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
 
-  kick_windup: { torso: -0.1, head: 0.1, ...GUARD, thF: 1.1, shF: -0.5, thB: -0.1, shB: 0 },
-  kick: { torso: -0.4, head: 0.3, uaF: 0.6, faF: 2.4, uaB: -0.3, faB: 0.6, thF: 1.68, shF: 1.62, thB: -0.08, shB: 0 },
+  kick_windup: { torso: -0.15, head: 0.1, ...GUARD, thF: 1.45, shF: -0.3, thB: -0.1, shB: 0 },
+  kick: { torso: -0.5, head: 0.3, uaF: 0.6, faF: 2.4, uaB: -0.3, faB: 0.6, thF: 2.05, shF: 2.1, thB: -0.12, shB: 0 },
 
   lowPunch_windup: { torso: 0.4, head: -0.3, uaF: 0.5, faF: 2.4, uaB: 0.45, faB: 2.35, ...CROUCH_LEGS },
   lowPunch: { torso: 0.55, head: -0.45, uaF: 1.62, faF: 1.6, uaB: 0.45, faB: 2.35, ...CROUCH_LEGS },
@@ -156,7 +159,9 @@ class Fighter {
     this.holdDown = false;
     this.nearThreat = false;
     this.knockedAirborne = false;
-    this.buffer = { punch: 0, kick: 0, special: 0 };
+    this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
+    this.shield = 0; // frames of force field left
+    this.shieldCooldown = 0; // frames until it can be used again
     this.time = 0;
     this.walkPhase = 0;
     this.flash = 0;
@@ -185,6 +190,17 @@ class Fighter {
     for (const k of Object.keys(this.buffer)) {
       if (input.pressed[k]) this.buffer[k] = BUFFER_FRAMES;
       else if (this.buffer[k] > 0) this.buffer[k]--;
+    }
+
+    if (this.shield > 0) {
+      this.shield--;
+      if (this.shield === 0) this.shieldCooldown = SHIELD_COOLDOWN;
+    } else if (this.shieldCooldown > 0) {
+      this.shieldCooldown--;
+    }
+    if (this.isFree && this.shield === 0 && this.shieldCooldown === 0 && this.consume('shield')) {
+      this.shield = SHIELD_FRAMES;
+      Sfx.shield();
     }
 
     const back = this.facing === 1 ? input.left : input.right;
@@ -234,17 +250,21 @@ class Fighter {
         return;
       }
 
+      // No attacking from inside the force field.
+      const canAttack = this.shield === 0;
       if (input.down) {
         this.vx = 0;
         this.state = 'crouch';
-        if (this.consume('kick')) return this.startMove('sweep');
-        if (this.consume('punch')) return this.startMove('lowPunch');
+        if (canAttack && this.consume('kick')) return this.startMove('sweep');
+        if (canAttack && this.consume('punch')) return this.startMove('lowPunch');
         return;
       }
 
-      if (this.consume('special') && !game.hasProjectile(this)) return this.startMove('special');
-      if (this.consume('kick')) return this.startMove('kick');
-      if (this.consume('punch')) return this.startMove('punch');
+      if (canAttack) {
+        if (this.consume('special') && !game.hasProjectile(this)) return this.startMove('special');
+        if (this.consume('kick')) return this.startMove('kick');
+        if (this.consume('punch')) return this.startMove('punch');
+      }
 
       if (fwd) {
         this.vx = s.walk * this.facing;
@@ -260,7 +280,7 @@ class Fighter {
       }
     } else {
       this.state = 'jump';
-      if (!this.airAttackUsed && (this.consume('kick') || this.consume('punch'))) {
+      if (this.shield === 0 && !this.airAttackUsed && (this.consume('kick') || this.consume('punch'))) {
         this.airAttackUsed = true;
         this.startMove('airKick');
       }
@@ -471,6 +491,12 @@ class Fighter {
       w: 44 * s,
       h: height,
     };
+  }
+
+  // The force field bubble around the body, in world coordinates.
+  shieldEllipse() {
+    const hb = this.hurtbox();
+    return { cx: this.x, cy: hb.y + hb.h / 2, rx: hb.w / 2 + 34 * this.scale, ry: hb.h / 2 + 14 * this.scale };
   }
 
   // Hit radius of the current attack, grown with the character.

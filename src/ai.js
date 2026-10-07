@@ -45,7 +45,11 @@ class AIController {
 
     this.planTimer = Math.round(14 - d * 8 + Math.random() * 8);
 
-    if (incoming && r < 0.4 + d * 0.5) {
+    if (incoming && self.shield === 0 && self.shieldCooldown === 0 && Math.abs(self.x - incoming.x) < 220
+      && r < 0.35 + d * 0.3) {
+      this.queued = 'shield';
+      this.planTimer = 6;
+    } else if (incoming && r < 0.4 + d * 0.5) {
       if (Math.random() < 0.5) {
         plan.up = true;
         plan[toward] = true;

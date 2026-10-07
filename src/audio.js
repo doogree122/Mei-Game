@@ -55,5 +55,7 @@ const Sfx = (() => {
     jump: () => tone('sine', 300, 500, 0.08, 0.05),
     ko: () => { noise(0.5, 600, 0.5); tone('sawtooth', 200, 40, 0.8, 0.15); },
     announce: () => tone('square', 440, 880, 0.2, 0.06),
+    shield: () => { tone('sine', 220, 660, 0.25, 0.1); tone('triangle', 330, 990, 0.2, 0.05); },
+    shieldHit: () => { tone('sine', 1200, 300, 0.18, 0.12); noise(0.08, 3000, 0.15); },
   };
 })();
