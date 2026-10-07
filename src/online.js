@@ -1,9 +1,9 @@
 // Online play between two people who have the game open at the same time.
 //
-// Runs only where the page is a claude.ai artifact that declares the `room`
-// capability; elsewhere `window.claude` is absent and the ONLINE menu item
-// never appears. Everything travels as room *presence* (anyone viewing may set
-// it, about 30 updates a second):
+// Runs where the page is a claude.ai artifact that declares the `room`
+// capability, or on Firebase Hosting (src/firebase-room.js provides the same
+// room interface there). Elsewhere the ONLINE menu item never appears.
+// Everything travels as room *presence* (about 30 updates a second):
 //   - lobby:  a host advertises { host: code, open: true, char }
 //   - guest:  { join: code, char, in: { l, r, u, d, c: [punches, kicks, specials, shields] } }
 //   - host:   { host: code, guest: <guest peer>, s: <game snapshot> }
@@ -24,10 +24,10 @@ const Online = {
 };
 
 async function initOnline(game) {
-  if (!window.claude || typeof window.claude.use !== 'function') return;
   let room = null;
   try {
-    room = await window.claude.use('room');
+    if (window.claude && typeof window.claude.use === 'function') room = await window.claude.use('room');
+    else if (typeof firebaseRoom === 'function') room = await firebaseRoom();
   } catch (err) {
     room = null;
   }
