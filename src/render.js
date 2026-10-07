@@ -830,7 +830,72 @@ function drawAgentBody(ctx, sk, f) {
   drawAgentArm(ctx, sk, 'F', c, false);
 }
 
+// ---- Cut-out art (tools/make_cutout.py) ----
+
+// Skeleton units per pixel of the cut-out picture, across each part.
+const CUTOUT_WIDTH = 0.19;
+// The picture's head is small for a fighting-game figure; draw it bigger.
+const CUTOUT_HEAD = 1.3;
+const cutoutImages = {};
+
+function cutoutParts(id) {
+  if (typeof CUTOUTS === 'undefined' || !CUTOUTS[id]) return null;
+  if (!cutoutImages[id]) {
+    cutoutImages[id] = {};
+    for (const [name, part] of Object.entries(CUTOUTS[id])) {
+      const img = new Image();
+      img.src = part.src;
+      cutoutImages[id][name] = { ...part, img };
+    }
+  }
+  const parts = cutoutImages[id];
+  return Object.values(parts).every((p) => p.img.complete && p.img.naturalWidth) ? parts : null;
+}
+
+// Draw a part so its pivot sits on joint a and its tip points at joint b,
+// stretched along the bone to fit and CUTOUT_WIDTH across it.
+function drawCutoutPart(ctx, part, a, b, shade, lengthScale) {
+  const [px, py] = part.pivot;
+  const [tx, ty] = part.tip;
+  const srcLen = Math.hypot(tx - px, ty - py);
+  const len = lengthScale ? srcLen * CUTOUT_WIDTH * lengthScale : Math.hypot(b.x - a.x, b.y - a.y);
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x));
+  ctx.scale(len / srcLen, CUTOUT_WIDTH);
+  ctx.rotate(-Math.atan2(ty - py, tx - px));
+  ctx.translate(-px, -py);
+  if (shade) ctx.filter = 'brightness(0.62)';
+  ctx.drawImage(part.img, 0, 0);
+  ctx.restore();
+}
+
+function drawCutoutBody(ctx, sk, f) {
+  const parts = cutoutParts(f.char.id);
+  if (!parts) return (BODY_STYLES[f.char.fallbackLook] || drawArmoredBody)(ctx, sk, f);
+  const arm = (side, back) => {
+    drawCutoutPart(ctx, parts.upperArm, sk.shoulder, sk['elbow' + side], back);
+    drawCutoutPart(ctx, parts.forearm, sk['elbow' + side], sk['hand' + side], back);
+  };
+  const leg = (side, back) => {
+    drawCutoutPart(ctx, parts.thigh, sk.hip, sk['knee' + side], back);
+    drawCutoutPart(ctx, parts.shin, sk['knee' + side], sk['foot' + side], back);
+  };
+  arm('B', true);
+  leg('B', true);
+  drawCutoutPart(ctx, parts.torso, sk.hip, sk.neck, false);
+  leg('F', false);
+  // The head keeps its own proportions; it only turns with the neck.
+  ctx.save();
+  ctx.translate(sk.neck.x, sk.neck.y + 4);
+  ctx.scale(CUTOUT_HEAD, CUTOUT_HEAD);
+  drawCutoutPart(ctx, parts.head, { x: 0, y: 0 }, { x: sk.head.x - sk.neck.x, y: sk.head.y - sk.neck.y }, false, 1);
+  ctx.restore();
+  arm('F', false);
+}
+
 const BODY_STYLES = {
+  cutout: drawCutoutBody,
   armored: drawArmoredBody,
   warrior: drawWarriorBody,
   sith: drawSithBody,
