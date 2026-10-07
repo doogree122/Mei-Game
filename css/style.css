@@ -236,3 +236,19 @@ body.touch #help { display: none; }
 #online-back[hidden], #online-host[hidden] { display: none; }
 
 .online-note { font-size: 13px; opacity: 0.7; }
+
+/* ---- Music toggle ---- */
+
+.music-toggle {
+  font: inherit;
+  color: #ffd34d;
+  background: none;
+  border: 1px solid rgba(255, 211, 77, 0.4);
+  border-radius: 999px;
+  padding: 1px 10px;
+  cursor: pointer;
+}
+
+.music-toggle:focus-visible { outline: 2px solid #ffd34d; outline-offset: 2px; }
+.music-toggle.off { color: inherit; border-color: rgba(255, 255, 255, 0.25); }
+.sys.off { opacity: 0.45; text-decoration: line-through; }

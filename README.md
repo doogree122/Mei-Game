@@ -51,6 +51,11 @@ The host's browser runs the fight, and the other player's controls and the fight
 Expect a little input delay for the joining player. Esc (or ☰ on phones) leaves the match.
 Opened from disk or another website, the game has no ONLINE option.
 
+## Music
+
+"Hyperspace Jump" (`assets/music/hyperspace_jump.mp3`, made with Suno) loops in the background. Browsers only allow sound after you interact, so it starts on your first key press or tap.
+It gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
+
 ## Stage
 
 The fight takes place inside a spaceship. The room is about two screens wide (`WORLD_W`), and the camera follows the fighters,
@@ -68,7 +73,9 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |
 | `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the artifact room |
+| `src/music.js` | Background music: start on first input, loop, pause ducking, on/off |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
+| `tools/build_single.py` | Bundles everything (music included) into one HTML page for the claude.ai artifact |
 
 ## Adding sprite art (optional)
 

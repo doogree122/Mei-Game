@@ -181,6 +181,7 @@ class Game {
 
   update() {
     this.frame++;
+    Music.setPaused(this.mode === 'paused');
     if (keyPressed('F2')) this.showBoxes = !this.showBoxes;
 
     if (this.mode === 'title') return this.updateTitle();
@@ -526,5 +527,6 @@ function loop(now) {
 requestAnimationFrame(loop);
 setupTouchControls(game, document.getElementById('game'));
 setupLobbyPanel(game);
+Music.setup();
 initOnline(game);
 document.getElementById('game').focus();

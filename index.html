@@ -16,7 +16,7 @@
     <section id="help">
       <div><b>P1</b> A/D move · W jump · S crouch · J punch · K kick · L blaster · H force field · hold back to block</div>
       <div><b>P2</b> ←/→ move · ↑ jump · ↓ crouch · , punch · . kick · / blaster · M force field</div>
-      <div>Enter start · P pause · Esc menu · F2 hitboxes</div>
+      <div>Enter start · P pause · Esc menu · F2 hitboxes · <button class="music-toggle" data-music-toggle="label" aria-pressed="true">♪ Music: on</button></div>
     </section>
     <p id="rotate-hint">Turn your phone sideways for a bigger view</p>
   </main>
@@ -43,6 +43,7 @@
     <div id="system-buttons">
       <button class="sys" data-key="KeyP" aria-label="Pause">❚❚</button>
       <button class="sys" data-key="Escape" aria-label="Menu">☰</button>
+      <button class="sys" data-music-toggle="icon" aria-label="Music" aria-pressed="true">♪</button>
       <button class="sys" id="fullscreen" aria-label="Fullscreen">⛶</button>
     </div>
   </div>
@@ -56,6 +57,7 @@
   <script src="src/ai.js"></script>
   <script src="src/touch.js"></script>
   <script src="src/online.js"></script>
+  <script src="src/music.js"></script>
   <script src="src/game.js"></script>
 </body>
 </html>
