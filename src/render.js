@@ -272,62 +272,72 @@ function drawArmoredTorso(ctx, sk, c) {
 function drawHelmet(ctx, sk, c) {
   const h = sk.head;
   const r = BODY.head + 1.5;
-  // Gray antenna stalk rising from the top of the helmet, with a bent tip.
-  drawLimb(ctx, { x: h.x - 6, y: h.y - 12 }, { x: h.x - 7, y: h.y - 34 }, 3, c.suitShade);
-  drawLimb(ctx, { x: h.x - 7, y: h.y - 34 }, { x: h.x - 2, y: h.y - 37 }, 3, c.suitShade);
-  drawLimb(ctx, { x: h.x - 5.5, y: h.y - 14 }, { x: h.x - 6.5, y: h.y - 33 }, 1, c.suitLight);
+  const back = h.x - r;
+  const front = h.x + r + 1;
+  const bottom = h.y + 15;
 
-  // Helmet shell: rounded dome with a flat, squared-off face down to the chin.
-  fillCircle(ctx, h.x, h.y - 1, r, c.armor);
-  fillRoundRect(ctx, h.x - 4, h.y - 6, r + 5, 23, 3, c.armor);
-  fillRoundRect(ctx, h.x - r + 1, h.y - 2, r + 4, 18, 5, c.armor);
-  // Shading on the back of the dome and under the chin.
-  ctx.fillStyle = c.armorShade;
+  // Shell: rounded dome over straight sides and a flat bottom rim, shaded
+  // from the back (darker) to the front.
+  const shade = ctx.createLinearGradient(back, 0, front, 0);
+  shade.addColorStop(0, c.armorShade);
+  shade.addColorStop(0.45, c.armor);
+  shade.addColorStop(1, c.armor);
+  ctx.fillStyle = shade;
   ctx.beginPath();
-  ctx.arc(h.x, h.y - 1, r, Math.PI * 0.62, Math.PI * 1.3);
+  ctx.moveTo(back, bottom);
+  ctx.lineTo(back, h.y - 2);
+  ctx.arc(h.x + 0.5, h.y - 2, r + 0.5, Math.PI, Math.PI * 2);
+  ctx.lineTo(front, bottom);
   ctx.closePath();
   ctx.fill();
-  ctx.fillRect(h.x - r + 2, h.y + 13, r + 15, 3);
-  // Dome highlight and a couple of scuffs.
+  // Dome highlight and dents.
   ctx.strokeStyle = c.armorLight;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.arc(h.x + 1, h.y - 1, r - 4, -2.4, -1.5);
+  ctx.arc(h.x + 2, h.y - 2, r - 4, -2.0, -1.2);
   ctx.stroke();
-  ctx.fillStyle = c.armorShade;
-  ctx.fillRect(h.x + 2, h.y - 13, 2, 2);
-  ctx.fillRect(h.x - 9, h.y - 6, 3, 2);
-  // Gray dents on the dome.
   ctx.fillStyle = c.suitLight;
-  ctx.fillRect(h.x - 3, h.y - 15, 4, 2);
-  ctx.fillRect(h.x + 6, h.y - 12, 2, 3);
-  ctx.fillRect(h.x - 11, h.y - 2, 2, 3);
+  ctx.fillRect(h.x - 2, h.y - 15, 3, 2);
+  ctx.fillRect(h.x + 7, h.y - 13, 2, 2);
+  ctx.fillRect(h.x - 4, h.y + 10, 2, 2);
+  // Bottom rim.
+  ctx.fillStyle = c.armorShade;
+  ctx.fillRect(back, bottom - 2, front - back, 2);
 
-  // Cheek plates behind and in front of the visor slot.
-  fillPoly(ctx, [
-    { x: h.x - 3, y: h.y }, { x: h.x + r + 1, y: h.y },
-    { x: h.x + r, y: h.y + 14 }, { x: h.x + 2, y: h.y + 15 },
-  ], c.armorShade);
-  drawLimb(ctx, { x: h.x + r, y: h.y + 2 }, { x: h.x + r - 0.5, y: h.y + 13 }, 1.5, c.armorLight);
-
-  // T-shaped visor: a dark band across the eyes and a slot down the front.
-  ctx.fillStyle = c.visor;
-  ctx.fillRect(h.x - 3, h.y - 7, r + 5, 7);
-  ctx.fillRect(h.x + 7, h.y - 1, 6, 15);
-  // Dark red trim along the top of the band and down the back of the slot.
+  // Dark red band straight around the helmet at brow height.
   ctx.fillStyle = c.visorFrame;
-  ctx.fillRect(h.x - 4, h.y - 10, r + 6, 3);
-  ctx.fillRect(h.x + 4.5, h.y - 1, 2.5, 13);
+  ctx.fillRect(back, h.y - 8.5, front - back, 3.5);
   ctx.fillStyle = c.visorFrameLight;
-  ctx.fillRect(h.x - 3, h.y - 10, r + 4, 1);
-  // Glint on the visor.
-  ctx.fillStyle = 'rgba(160,220,255,0.75)';
-  ctx.fillRect(h.x + 11, h.y - 6, 4, 1.5);
-  ctx.fillRect(h.x + 10, h.y + 1, 1.5, 3);
+  ctx.fillRect(back, h.y - 8.5, front - back, 1);
 
-  // Ear cap on the side of the helmet.
-  fillCircle(ctx, h.x - 7, h.y + 4, 4.5, c.armorShade);
-  fillCircle(ctx, h.x - 7, h.y + 4, 2.2, c.suitShade);
+  // T-shaped visor: a dark slit across the face and a slot down the front.
+  ctx.fillStyle = c.visor;
+  ctx.fillRect(h.x - 1, h.y - 5, front - h.x + 1, 6);
+  ctx.fillRect(h.x + 8, h.y + 1, 5.5, 13);
+  // Dark red trim framing the cheek: under the slit and down the slot's edge.
+  ctx.fillStyle = c.visorFrame;
+  ctx.fillRect(h.x - 1, h.y + 1, 9, 2);
+  ctx.fillRect(h.x + 5.5, h.y + 1, 2.5, 12);
+  ctx.fillRect(h.x - 1, h.y + 1, 2, 11);
+  // Cheek plate and the sliver of faceplate in front of the slot.
+  ctx.fillStyle = c.armorShade;
+  ctx.fillRect(h.x + 1, h.y + 3, 4.5, 9);
+  ctx.fillRect(h.x + 13.5, h.y + 1, front - h.x - 13.5, 12);
+  // Glints on the visor.
+  ctx.fillStyle = 'rgba(160,220,255,0.75)';
+  ctx.fillRect(h.x + 11, h.y - 4, 4, 1.5);
+  ctx.fillRect(h.x + 10, h.y + 2, 1.5, 3);
+
+  // Gold rangefinder housing on the side, with the antenna rising from it.
+  drawLimb(ctx, { x: h.x - 8, y: h.y - 10 }, { x: h.x - 8, y: h.y - 38 }, 2.5, c.suitShade);
+  drawLimb(ctx, { x: h.x - 7.4, y: h.y - 12 }, { x: h.x - 7.4, y: h.y - 36 }, 1, c.suitLight);
+  fillRoundRect(ctx, h.x - 11, h.y - 11, 6.5, 24, 1.5, c.helmetGold);
+  ctx.fillStyle = c.helmetGoldShade;
+  ctx.fillRect(h.x - 11, h.y - 11, 1.5, 24);
+  ctx.fillStyle = c.visor;
+  ctx.fillRect(h.x - 9, h.y - 7, 2.5, 6);
+  ctx.fillRect(h.x - 9.5, h.y + 2, 3.5, 1.2);
+  ctx.fillRect(h.x - 9.5, h.y + 5, 3.5, 1.2);
 }
 
 function drawArmoredBody(ctx, sk, f) {

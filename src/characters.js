@@ -20,6 +20,8 @@ const CHARACTERS = {
       visor: '#101216',
       visorFrame: '#8e1b14', // dark red visor frame and band
       visorFrameLight: '#c4382c',
+      helmetGold: '#cdb877', // rangefinder housing
+      helmetGoldShade: '#8f7b45',
       glove: '#d2d3d8',
       gloveShade: '#9a9ca3',
       boot: '#34353b',
