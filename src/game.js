@@ -26,6 +26,12 @@ class Game {
     this.fxBuffer.width = W / PIXEL;
     this.fxBuffer.height = H / PIXEL;
     this.fxctx = this.fxBuffer.getContext('2d');
+    // Tall screens (a phone held upright) show the ship's exterior around the
+    // arena; viewH is the canvas height and viewOY the arena's top edge.
+    this.viewH = H;
+    this.viewOY = 0;
+    this.extBuffer = document.createElement('canvas');
+    this.extctx = this.extBuffer.getContext('2d');
     this.effects = new Effects();
     this.projectiles = [];
     this.fighters = [
@@ -390,7 +396,56 @@ class Game {
 
   // ---- drawing ----
 
+  // Size the canvas to the screen. Portrait touch screens get a tall canvas with
+  // the arena at the top (below the system buttons) and the exterior around it;
+  // everything else keeps the plain 16:9 arena.
+  layout() {
+    const portrait = this.touch && window.innerHeight > window.innerWidth;
+    let viewH = H;
+    let viewOY = 0;
+    if (portrait) {
+      const scale = W / window.innerWidth;
+      viewH = Math.round(window.innerHeight * scale);
+      viewOY = Math.round((safeAreaTop() + 56) * scale);
+    }
+    if (viewH !== this.viewH || viewOY !== this.viewOY || this.canvas.height !== viewH) {
+      this.viewH = viewH;
+      this.viewOY = viewOY;
+      this.canvas.width = W;
+      this.canvas.height = viewH;
+      this.extBuffer.width = W / PIXEL;
+      this.extBuffer.height = Math.ceil(viewH / PIXEL);
+      document.body.classList.toggle('tall', viewH > H);
+    }
+  }
+
+  // Convert a pointer position on the canvas to arena coordinates.
+  screenToArena(clientX, clientY) {
+    const r = this.canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - r.left) / r.width) * W,
+      y: ((clientY - r.top) / r.height) * this.viewH - this.viewOY,
+    };
+  }
+
   draw() {
+    const ctx = this.ctx;
+    if (this.viewH > H) {
+      const camX = Math.round(this.camX / PIXEL) * PIXEL;
+      Exterior.draw(this.extctx, camX, this.frame, this.viewOY, this.viewH);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(this.extBuffer, 0, 0, W, this.extBuffer.height * PIXEL);
+    }
+    ctx.save();
+    ctx.translate(0, this.viewOY);
+    ctx.beginPath();
+    ctx.rect(0, 0, W, H);
+    ctx.clip();
+    this.drawArena();
+    ctx.restore();
+  }
+
+  drawArena() {
     const ctx = this.ctx;
     const b = this.bctx;
     const fx = this.fxctx;
@@ -502,6 +557,16 @@ class Game {
   }
 }
 
+// The phone's top safe-area inset (notch), in CSS pixels.
+function safeAreaTop() {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top,0px);visibility:hidden';
+  document.body.append(probe);
+  const h = probe.offsetHeight;
+  probe.remove();
+  return h;
+}
+
 function circleRect(cx, cy, r, rect) {
   const nx = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
   const ny = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
@@ -527,6 +592,8 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+game.layout();
+window.addEventListener('resize', () => game.layout());
 setupTouchControls(game, document.getElementById('game'));
 setupLobbyPanel(game);
 Music.setup();

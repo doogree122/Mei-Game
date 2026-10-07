@@ -40,7 +40,8 @@ Enter starts the game, P pauses (Esc while paused quits to the menu) and F2 show
 
 On touch screens, on-screen controls appear: drag anywhere on the left side to move (up = jump, down = crouch/low attacks),
 **P** punch, **K** kick, **SP** blaster, **FF** force field, plus pause, menu and fullscreen buttons. Tap the menu to choose a mode.
-It works in landscape (recommended) and portrait. 2 Players is keyboard-only, so phones don't offer it.
+It works in landscape and portrait. In portrait the screen fills with the ship's exterior around the arena: hull plating above, and below it the girders, belly, engines, a moon and Earth.
+2 Players is keyboard-only, so phones don't offer it.
 To try the touch UI on a desktop, open `index.html?touch=1`.
 
 **Modes:** 1P vs CPU, 2 players on one keyboard, **Training**, and **Online**. Training puts B. Fett on the stage with a standing dummy.
@@ -82,6 +83,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
 | `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
+| `src/exterior.js` | Ship exterior shown above and below the arena on tall (portrait) screens |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |

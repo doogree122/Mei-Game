@@ -37,8 +37,6 @@ html, body {
 
 #help b { color: #ffd34d; }
 
-#rotate-hint { display: none; }
-
 /* ---- Touch devices ---- */
 
 body.touch {
@@ -157,11 +155,10 @@ body.touch #help { display: none; }
 
 .sys[hidden] { display: none; }
 
-/* Portrait: game on top, controls in the space below it. */
-@media (orientation: portrait) {
-  body.touch #wrap { justify-content: flex-start; padding-top: calc(env(safe-area-inset-top) + 56px); }
-  body.touch #rotate-hint { display: block; font-size: 13px; opacity: 0.6; margin: 4px 0 0; }
-}
+/* Portrait: the canvas fills the screen. The arena sits at the top and the
+   ship's exterior fills the rest, under the controls. */
+body.touch.tall #wrap { padding: 0; justify-content: flex-start; }
+body.touch.tall #game { width: 100vw; height: 100dvh; aspect-ratio: auto; }
 
 /* Landscape: the game is letterboxed, so stack system buttons in the side bar. */
 @media (orientation: landscape) {
