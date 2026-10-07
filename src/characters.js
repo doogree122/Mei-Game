@@ -172,6 +172,9 @@ CHARACTERS.seven = {
     suit: '#5a1f6e', suitShade: '#3b1349', suitLight: '#8a3fa8', rimPink: '#ffb347', rimCyan: '#7dffb0',
     hair: '#3a2a22', hairShade: '#22160f', hairLight: '#5a4030', energy: '#ffd23a',
   },
+  // Holds her phaser rifle two-handed at chest height: right hand on the grip,
+  // left hand forward under the barrel.
+  armPose: { uaF: 0.55, faF: 1.75, uaB: 1.05, faB: 1.85 },
   // Her kick goes above head height (short reach, wide hit zone).
   moves: {
     kick: { pose: 'highKick', radius: 30, damage: 11, startup: 8, active: 4, recovery: 16, lunge: 3.5 },

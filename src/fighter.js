@@ -442,7 +442,18 @@ class Fighter {
     return 'hit';
   }
 
+  // A character holding a two-handed weapon (char.armPose) keeps their arms on
+  // it except while punching; legs and torso still follow the move.
   targetPose() {
+    const pose = this.basePose();
+    const hold = this.char.armPose;
+    const lying = pose === POSES.lying;
+    const punching = this.move && /punch/i.test(this.move.name);
+    if (!hold || lying || this.hitstun > 0 || this.won || punching) return pose;
+    return { ...pose, ...hold };
+  }
+
+  basePose() {
     if (this.state === 'ko' || this.state === 'down') return POSES.lying;
     if (this.won) return POSES[this.char.victoryPose] || POSES.victory;
     if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : POSES.hit;
