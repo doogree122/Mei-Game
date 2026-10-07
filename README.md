@@ -2,8 +2,8 @@
 
 A browser-based, side-view 2D fighting game. Plain HTML5 Canvas + JavaScript, no build step.
 
-**Play it:** https://doogree122.github.io/Mei-Game/ (public website, no account needed).
-For online matches against a friend, use the claude.ai artifact version instead (see **Online** below).
+**Play it:** on Firebase Hosting, with online play (see **Firebase** below), or at https://doogree122.github.io/Mei-Game/ (no online play there).
+No account is needed on either site.
 
 ## Run it
 
@@ -52,12 +52,30 @@ It has no timer and no KOs, and health refills between combos. Press Esc to leav
 
 ### Online
 
-When the game runs as a claude.ai artifact, an **ONLINE** option appears on the menu.
+On the Firebase site, or when the game runs as a claude.ai artifact, an **ONLINE** option appears on the menu.
 Two people open the same page at the same time, and each picks a fighter. One picks **Host a game**;
-the other sees that game in the list (with the host's fighter) and joins. Both people need access to the artifact (use its Share menu).
-The host's browser runs the fight, and the other player's controls and the fight travel through the artifact's live room about 30 times a second.
+the other sees that game in the list (with the host's fighter) and joins. Several matches can run at once.
+The host's browser runs the fight, and the other player's controls and the fight travel about 30 times a second:
+through the Firebase Realtime Database on the Firebase site (`src/firebase-room.js`), or through the artifact's live room on claude.ai (both people need access to the artifact; use its Share menu).
 Expect a little input delay for the joining player. Esc (or ☰ on phones) leaves the match.
-Opened from disk or another website, the game has no ONLINE option.
+Opened from disk, GitHub Pages or another website, the game has no ONLINE option.
+
+### Firebase
+
+`firebase.json` publishes the game folder to Firebase Hosting, and `database.rules.json` holds the database rules
+(each signed-in player can write only their own entries). Players sign in anonymously in the background.
+The page reads the project's settings from Firebase Hosting itself (`/__/firebase/init.json`), so no keys are in the code.
+
+One-time setup in the [Firebase console](https://console.firebase.google.com/):
+
+1. Create a project.
+2. **Build → Realtime Database → Create database**, location **United States (us-central1)**, start in locked mode (the deploy installs the real rules).
+3. **Build → Authentication → Get started → Sign-in method → Anonymous → Enable**.
+4. **Project settings → Service accounts → Generate new private key** (downloads a JSON file).
+5. In this GitHub repository, **Settings → Secrets and variables → Actions**: add the secret `FIREBASE_SERVICE_ACCOUNT` (paste the whole JSON file) and, under **Variables**, `FIREBASE_PROJECT_ID` (the project ID).
+
+After that, every push to `claude/fighting-game-prototype` deploys automatically (`.github/workflows/firebase-deploy.yml`), and the site is at `https://<project-id>.web.app`.
+To deploy by hand instead: `npx firebase-tools login` then `npx firebase-tools deploy --project <project-id>`.
 
 ### Updating the public website
 
@@ -101,7 +119,8 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |
-| `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the artifact room |
+| `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the room |
+| `src/firebase-room.js` | The room on Firebase Hosting, backed by the Realtime Database |
 | `src/music.js` | Music: menu track, alternating fight tracks, start on first input, pause ducking, on/off |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
 | `tools/build_single.py` | Bundles everything (music included) into one HTML page for the claude.ai artifact |

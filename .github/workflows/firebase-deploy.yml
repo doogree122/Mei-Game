@@ -1,0 +1,31 @@
+# Publishes the game to Firebase Hosting (and the database rules) on every push
+# to the main game branch. Needs two repository settings on GitHub:
+#   secret   FIREBASE_SERVICE_ACCOUNT  the JSON key of a Firebase service account
+#   variable FIREBASE_PROJECT_ID       the Firebase project ID
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [claude/fighting-game-prototype]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ] || [ -z "$PROJECT_ID" ]; then
+            echo "::notice::Firebase isn't set up for this repository yet; skipping the deploy."
+            exit 0
+          fi
+          echo "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only hosting,database --project "$PROJECT_ID" --non-interactive
