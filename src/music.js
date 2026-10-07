@@ -99,5 +99,14 @@ const Music = (() => {
       }, ms);
     },
     toggle: () => setOn(!on),
+    // Try to start right away. Resolves true when the music is playing (or is
+    // switched off), false when the browser wants a tap or key press first.
+    tryAutoplay() {
+      if (!on) return Promise.resolve(true);
+      return element().play().then(() => {
+        started = true;
+        return true;
+      }, () => false);
+    },
   };
 })();

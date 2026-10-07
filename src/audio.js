@@ -163,6 +163,23 @@ const Sfx = (() => {
       note('sawtooth', N.F3, 0.9, 0.42, 0.11, brass);
       note('sawtooth', N.E3, 1.35, 1.1, 0.12, { cutoff: 900, vibrato: 5, slideTo: N.E3 * 0.94 });
     },
+    // Lightsaber swing: a humming swoosh.
+    saber: () => {
+      tone('sawtooth', 110, 190, 0.28, 0.09);
+      tone('sine', 220, 360, 0.25, 0.08);
+      noise(0.22, 1600, 0.12);
+    },
+    // Force lightning: rapid electric crackles.
+    lightning: () => {
+      for (let i = 0; i < 5; i++) setTimeout(() => noise(0.05, 8000, 0.22), i * 45);
+      tone('square', 900, 1800, 0.25, 0.05);
+    },
+    // Heavy laser blast: a big descending zap.
+    laser: () => {
+      tone('square', 1600, 220, 0.3, 0.1);
+      tone('sawtooth', 800, 110, 0.3, 0.07);
+      noise(0.1, 5000, 0.15);
+    },
     // A shot fizzling against the force field: crackling zap plus a low thump.
     shieldHit: () => {
       tone('square', 1800, 180, 0.22, 0.12);

@@ -12,6 +12,12 @@ const MENU = [
 ];
 const MENU_TOP = 250;
 const MENU_STEP = 48;
+// Character select cards.
+const CARD_W = 200;
+const CARD_GAP = 24;
+const CARD_TOP = 104;
+const CARD_H = 330;
+const CARD_X0 = (W - (ROSTER.length * CARD_W + (ROSTER.length - 1) * CARD_GAP)) / 2;
 
 class Game {
   constructor(canvas) {
@@ -34,12 +40,14 @@ class Game {
     this.extctx = this.extBuffer.getContext('2d');
     this.effects = new Effects();
     this.projectiles = [];
-    this.fighters = [
-      new Fighter({ char: CHARACTERS.fett, x: WORLD_W / 2 - 230, facing: 1, side: 0 }),
-      new Fighter({ char: CHARACTERS.worf, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
-    ];
+    this.setFighters('fett', 'worf');
+    // One idle model per roster entry for the select screen.
+    this.previews = ROSTER.map((id) => new Fighter({ char: CHARACTERS[id], x: 0, facing: 1, side: 0 }));
+    this.lobbyChar = 'fett'; // the fighter this player brings online
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
-    this.mode = 'title';
+    // 'splash' waits for the first tap or key press, which browsers require
+    // before any sound can play; it's skipped when the music autoplays.
+    this.mode = 'splash';
     this.touch = TOUCH_ENABLED;
     this.online = null; // 'host' | 'guest' during an online match
     this.menuIndex = 0;
@@ -50,6 +58,160 @@ class Game {
     this.shake = 0;
     this.training = false;
     this.camX = (WORLD_W - W) / 2;
+  }
+
+  // Build the two fighters. Picking the same character twice gives player 2
+  // the alternate colors.
+  setFighters(id1, id2) {
+    const c1 = CHARACTERS[id1] || CHARACTERS.fett;
+    let c2 = CHARACTERS[id2] || CHARACTERS.worf;
+    if (c2.id === c1.id) c2 = altVersion(c2);
+    this.fighters = [
+      new Fighter({ char: c1, x: WORLD_W / 2 - 230, facing: 1, side: 0 }),
+      new Fighter({ char: c2, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
+    ];
+  }
+
+  // ---- character select ----
+
+  beginSelect(kind) {
+    this.mode = 'select';
+    this.select = {
+      kind,
+      twoPlayer: kind === 'versus',
+      cursor: [0, 1],
+      locked: [false, false],
+      timer: 0,
+    };
+    for (const p of this.previews) p.won = false;
+  }
+
+  updateSelect() {
+    const sel = this.select;
+    const n = ROSTER.length;
+    if (keyPressed('Escape')) {
+      this.mode = 'title';
+      return;
+    }
+    const move = (i, left, right) => {
+      if (sel.locked[i]) return;
+      if (left.some(keyPressed)) sel.cursor[i] = (sel.cursor[i] + n - 1) % n;
+      if (right.some(keyPressed)) sel.cursor[i] = (sel.cursor[i] + 1) % n;
+    };
+    const lock = (i) => {
+      if (sel.locked[i]) return;
+      sel.locked[i] = true;
+      this.previews[sel.cursor[i]].won = true;
+      Sfx.announce();
+    };
+    if (sel.twoPlayer) {
+      move(0, ['KeyA'], ['KeyD']);
+      move(1, ['ArrowLeft'], ['ArrowRight']);
+      if (['KeyJ', 'Enter', 'Space'].some(keyPressed)) lock(0);
+      if (['Comma', 'Period', 'Numpad1'].some(keyPressed)) lock(1);
+    } else {
+      move(0, ['KeyA', 'ArrowLeft'], ['KeyD', 'ArrowRight']);
+      if (['KeyJ', 'Enter', 'Space'].some(keyPressed)) lock(0);
+      // The CPU or training dummy takes a different fighter at random.
+      if (sel.locked[0] && !sel.locked[1]) {
+        const others = ROSTER.map((_, i) => i).filter((i) => i !== sel.cursor[0]);
+        sel.cursor[1] = others[Math.floor(Math.random() * others.length)];
+        sel.locked[1] = true;
+      }
+    }
+    for (const p of this.previews) {
+      p.time++;
+      p.updatePose();
+    }
+    // Both picked: a short beat, then fight.
+    if (sel.locked[0] && sel.locked[1] && ++sel.timer > 45) {
+      const [a, b] = sel.cursor.map((i) => ROSTER[i]);
+      if (sel.kind === 'lobby') {
+        this.lobbyChar = a;
+        this.setFighters(a, 'worf');
+        this.showLobby();
+      } else {
+        this.setFighters(a, b);
+        this.startMatch(sel.kind);
+      }
+    }
+  }
+
+  // Which select card (index) is under an arena point, or -1.
+  cardAt(x, y) {
+    if (y < CARD_TOP || y > CARD_TOP + CARD_H + 40) return -1;
+    const i = Math.floor((x - CARD_X0) / (CARD_W + CARD_GAP));
+    const inCard = x - CARD_X0 - i * (CARD_W + CARD_GAP) <= CARD_W;
+    return i >= 0 && i < ROSTER.length && inCard ? i : -1;
+  }
+
+  drawSelect() {
+    const ctx = this.ctx;
+    const sel = this.select;
+    ctx.fillStyle = 'rgba(8,10,24,0.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'italic 900 44px system-ui, sans-serif';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#1a0b22';
+    ctx.strokeText('CHOOSE YOUR FIGHTER', W / 2, 58);
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillText('CHOOSE YOUR FIGHTER', W / 2, 58);
+
+    ROSTER.forEach((id, i) => {
+      const x = CARD_X0 + i * (CARD_W + CARD_GAP);
+      const p1 = sel.cursor[0] === i;
+      const p2 = sel.twoPlayer ? sel.cursor[1] === i : sel.locked[1] && sel.cursor[1] === i;
+      ctx.fillStyle = 'rgba(12,16,32,0.82)';
+      ctx.beginPath();
+      ctx.roundRect(x, CARD_TOP, CARD_W, CARD_H, 12);
+      ctx.fill();
+      // Preview model standing in the card.
+      const f = this.previews[i];
+      const s = 0.82;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, CARD_TOP, CARD_W, CARD_H, 12);
+      ctx.clip();
+      ctx.translate(x + CARD_W / 2, CARD_TOP + CARD_H - 34);
+      ctx.scale(s, s);
+      ctx.translate(0, -GROUND);
+      drawFighter(ctx, f);
+      ctx.restore();
+      // Name and what they bring.
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(f.char.name, x + CARD_W / 2, CARD_TOP + CARD_H - 30);
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(f.char.blurb, x + CARD_W / 2, CARD_TOP + CARD_H - 10);
+      // Player cursors: P1 gold, P2/CPU cyan; solid once locked in.
+      const frames = [];
+      if (p1) frames.push(['P1', '#ffd34d', sel.locked[0], 0]);
+      if (p2) frames.push([sel.twoPlayer ? 'P2' : (sel.kind === 'training' ? 'DUMMY' : 'CPU'), '#5fd8ff', sel.locked[1], 1]);
+      frames.forEach(([label, color, locked, k]) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = locked ? 6 : 3;
+        ctx.setLineDash(locked ? [] : [10, 6]);
+        ctx.beginPath();
+        ctx.roundRect(x + k * 6 - 3, CARD_TOP + k * 6 - 3, CARD_W - k * 12 + 6, CARD_H - k * 12 + 6, 14);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.fillStyle = color;
+        ctx.fillText(label, x + (k ? CARD_W - 30 : 30), CARD_TOP + 22);
+      });
+    });
+
+    if (Math.floor(this.frame / 30) % 2 === 0 || sel.locked[0]) {
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillStyle = '#fff';
+      const hint = sel.locked[0] && sel.locked[1] ? 'GET READY!'
+        : this.touch ? 'Tap a fighter'
+          : sel.twoPlayer ? 'P1: A/D, J to pick  ·  P2: ←/→, comma to pick' : 'A/D to choose · J or ENTER to pick · Esc back';
+      ctx.fillText(hint, W / 2, CARD_TOP + CARD_H + 36);
+    }
   }
 
   // Two players need two keyboards' worth of keys, so phones don't offer it;
@@ -137,10 +299,12 @@ class Game {
   }
 
   spawnProjectile(owner) {
-    const sk = skeleton(POSES.special);
-    const hand = owner.toWorld(sk.handF, sk);
+    const move = owner.moveDef('special');
+    const sk = skeleton(POSES[move.pose]);
+    const hand = owner.toWorld(sk[move.spawnLimb || 'handF'], sk);
+    const def = owner.shotDef;
     this.projectiles.push({
-      owner, x: hand.x + owner.facing * 12, y: hand.y, vx: FIREBALL.speed * owner.facing, dead: false,
+      owner, def, x: hand.x + owner.facing * 12, y: hand.y, vx: def.speed * owner.facing, dead: false,
     });
     this.effects.spark(hand.x + owner.facing * 12, hand.y, owner.char.colors.energy, 6, 3);
   }
@@ -154,7 +318,7 @@ class Game {
     for (const a of this.projectiles) {
       for (const b of this.projectiles) {
         if (a !== b && a.owner !== b.owner && !a.dead && !b.dead
-          && Math.abs(a.x - b.x) < FIREBALL.radius * 2 && Math.abs(a.y - b.y) < FIREBALL.radius * 2) {
+          && Math.abs(a.x - b.x) < a.def.radius + b.def.radius && Math.abs(a.y - b.y) < a.def.radius + b.def.radius) {
           a.dead = b.dead = true;
           this.effects.spark((a.x + b.x) / 2, a.y, '#ffffff', 18, 6);
           Sfx.block();
@@ -167,7 +331,7 @@ class Game {
       // A force field swallows the shot before it reaches the body.
       if (target.shield > 0) {
         const e = target.shieldEllipse();
-        const r = FIREBALL.radius;
+        const r = p.def.radius;
         if (((p.x - e.cx) / (e.rx + r)) ** 2 + ((p.y - e.cy) / (e.ry + r)) ** 2 <= 1) {
           p.dead = true;
           this.effects.spark(p.x, p.y, SHIELD_COLOR, 16, 6);
@@ -176,8 +340,8 @@ class Game {
         }
       }
       const hb = target.hurtbox();
-      if (circleRect(p.x, p.y, FIREBALL.radius, hb)) {
-        if (target.takeHit(FIREBALL, p.owner, this, { x: p.x, y: p.y })) p.dead = true;
+      if (circleRect(p.x, p.y, p.def.radius, hb)) {
+        if (target.takeHit(p.def, p.owner, this, { x: p.x, y: p.y })) p.dead = true;
       }
     }
     this.projectiles = this.projectiles.filter((p) => !p.dead);
@@ -187,10 +351,26 @@ class Game {
 
   update() {
     this.frame++;
+    // Hide the fight controls on menus so taps reach the menu (in landscape the
+    // joystick area would otherwise cover the lower-left of the screen).
+    const inMenu = this.mode === 'splash' || this.mode === 'title' || this.mode === 'select' || this.mode === 'lobby';
+    if (inMenu !== this.inMenu) {
+      this.inMenu = inMenu;
+      document.body.classList.toggle('in-menu', inMenu);
+    }
     Music.setPaused(this.mode === 'paused');
     if (keyPressed('F2')) this.showBoxes = !this.showBoxes;
 
+    if (this.mode === 'splash') {
+      if (Keys.pressedThisFrame.size > 0) this.mode = 'title';
+      for (const f of this.fighters) {
+        f.time++;
+        f.updatePose();
+      }
+      return;
+    }
     if (this.mode === 'title') return this.updateTitle();
+    if (this.mode === 'select') return this.updateSelect();
     if (this.mode === 'lobby') {
       if (keyPressed('Escape')) lobbyBack(this);
       return;
@@ -314,7 +494,14 @@ class Game {
 
   // Canvas taps (touch screens): pick menu items, continue, resume.
   onTap(x, y) {
-    if (this.mode === 'title') {
+    if (this.mode === 'select') {
+      const i = this.cardAt(x, y);
+      if (i >= 0 && !this.select.locked[0]) {
+        this.select.cursor[0] = i;
+        virtualKeyDown('Enter');
+        setTimeout(() => virtualKeyUp('Enter'), 50);
+      }
+    } else if (this.mode === 'title') {
       const i = Math.round((y - MENU_TOP) / MENU_STEP);
       if (i >= 0 && i < this.menu.length && Math.abs(x - W / 2) < 190) {
         this.menuIndex = i;
@@ -342,7 +529,7 @@ class Game {
     if (keyPressed('KeyS') || keyPressed('ArrowDown')) this.menuIndex = (this.menuIndex + 1) % n;
     if (keyPressed('Enter') || keyPressed('Space') || keyPressed('KeyJ')) {
       Sfx.unlock();
-      this.startMatch(this.menu[this.menuIndex].kind);
+      this.beginSelect(this.menu[this.menuIndex].kind);
       return;
     }
     this.camX = (WORLD_W - W) / 2;
@@ -473,7 +660,7 @@ class Game {
     const fx = this.fxctx;
     const camPix = Math.round(this.camX / PIXEL);
     const camX = camPix * PIXEL;
-    const title = this.mode === 'title';
+    const title = this.mode === 'title' || this.mode === 'splash' || this.mode === 'select';
     const order = [...this.fighters].sort((x, y) => (x.move ? 1 : 0) - (y.move ? 1 : 0));
 
     // Screen shake moves everything in whole art pixels.
@@ -495,7 +682,7 @@ class Game {
       f1.facing = 1; f2.facing = -1; f1.y = f2.y = 0;
     }
     b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
-    for (const f of this.fighters) drawFighterShadow(b, f);
+    if (this.mode !== 'select') for (const f of this.fighters) drawFighterShadow(b, f);
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
@@ -504,7 +691,7 @@ class Game {
     // Layer 2, full-res: fighters (the attacker on top).
     ctx.save();
     ctx.translate(sx - camX, sy);
-    for (const f of order) drawFighter(ctx, f);
+    if (this.mode !== 'select') for (const f of order) drawFighter(ctx, f);
     ctx.restore();
 
     // Layer 3, low-res: attack trails, projectiles, particles, debug boxes.
@@ -520,6 +707,7 @@ class Game {
       ctx.drawImage(this.fxBuffer, sx, sy, W, H);
     }
 
+    if (this.mode === 'select') return this.drawSelect();
     if (title) return this.drawTitle();
     drawHUD(ctx, this);
 
@@ -554,6 +742,22 @@ class Game {
     g.addColorStop(1, '#ff5d8f');
     ctx.fillStyle = g;
     ctx.fillText('MEI FIGHTER', W / 2, 130);
+
+    if (this.mode === 'splash') {
+      ctx.fillStyle = 'rgba(12,16,32,0.78)';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 230, 250, 460, 110, 14);
+      ctx.fill();
+      if (Math.floor(this.frame / 30) % 2 === 0) {
+        ctx.font = 'bold 30px system-ui, sans-serif';
+        ctx.fillStyle = '#ffd34d';
+        ctx.fillText(this.touch ? 'TAP TO START' : 'PRESS ANY KEY', W / 2, 290);
+      }
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillText('♪ with music', W / 2, 330);
+      return;
+    }
 
     ctx.fillStyle = 'rgba(12,16,32,0.78)';
     ctx.beginPath();
@@ -619,5 +823,13 @@ window.addEventListener('resize', () => game.layout());
 setupTouchControls(game, document.getElementById('game'));
 setupLobbyPanel(game);
 Music.setup();
+// Start the music now if the browser allows it; otherwise the start screen's
+// first tap or key press starts it.
+Music.tryAutoplay().then((playing) => {
+  if (playing && game.mode === 'splash') game.mode = 'title';
+});
+window.addEventListener('pointerdown', () => {
+  if (game.mode === 'splash') game.mode = 'title';
+});
 initOnline(game);
 document.getElementById('game').focus();
