@@ -39,7 +39,9 @@ class Game {
       new Fighter({ char: CHARACTERS.worf, x: WORLD_W / 2 + 230, facing: -1, side: 1 }),
     ];
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
-    this.mode = 'title';
+    // 'splash' waits for the first tap or key press, which browsers require
+    // before any sound can play; it's skipped when the music autoplays.
+    this.mode = 'splash';
     this.touch = TOUCH_ENABLED;
     this.online = null; // 'host' | 'guest' during an online match
     this.menuIndex = 0;
@@ -190,6 +192,14 @@ class Game {
     Music.setPaused(this.mode === 'paused');
     if (keyPressed('F2')) this.showBoxes = !this.showBoxes;
 
+    if (this.mode === 'splash') {
+      if (Keys.pressedThisFrame.size > 0) this.mode = 'title';
+      for (const f of this.fighters) {
+        f.time++;
+        f.updatePose();
+      }
+      return;
+    }
     if (this.mode === 'title') return this.updateTitle();
     if (this.mode === 'lobby') {
       if (keyPressed('Escape')) lobbyBack(this);
@@ -473,7 +483,7 @@ class Game {
     const fx = this.fxctx;
     const camPix = Math.round(this.camX / PIXEL);
     const camX = camPix * PIXEL;
-    const title = this.mode === 'title';
+    const title = this.mode === 'title' || this.mode === 'splash';
     const order = [...this.fighters].sort((x, y) => (x.move ? 1 : 0) - (y.move ? 1 : 0));
 
     // Screen shake moves everything in whole art pixels.
@@ -555,6 +565,22 @@ class Game {
     ctx.fillStyle = g;
     ctx.fillText('MEI FIGHTER', W / 2, 130);
 
+    if (this.mode === 'splash') {
+      ctx.fillStyle = 'rgba(12,16,32,0.78)';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 230, 250, 460, 110, 14);
+      ctx.fill();
+      if (Math.floor(this.frame / 30) % 2 === 0) {
+        ctx.font = 'bold 30px system-ui, sans-serif';
+        ctx.fillStyle = '#ffd34d';
+        ctx.fillText(this.touch ? 'TAP TO START' : 'PRESS ANY KEY', W / 2, 290);
+      }
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillText('♪ with music', W / 2, 330);
+      return;
+    }
+
     ctx.fillStyle = 'rgba(12,16,32,0.78)';
     ctx.beginPath();
     ctx.roundRect(W / 2 - 190, MENU_TOP - 35, 380, this.menu.length * MENU_STEP + 76, 14);
@@ -619,5 +645,13 @@ window.addEventListener('resize', () => game.layout());
 setupTouchControls(game, document.getElementById('game'));
 setupLobbyPanel(game);
 Music.setup();
+// Start the music now if the browser allows it; otherwise the start screen's
+// first tap or key press starts it.
+Music.tryAutoplay().then((playing) => {
+  if (playing && game.mode === 'splash') game.mode = 'title';
+});
+window.addEventListener('pointerdown', () => {
+  if (game.mode === 'splash') game.mode = 'title';
+});
 initOnline(game);
 document.getElementById('game').focus();

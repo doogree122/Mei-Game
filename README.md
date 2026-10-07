@@ -67,7 +67,7 @@ git checkout gh-pages && git merge claude/fighting-game-prototype && git push &&
 
 ## Music
 
-"Hyperspace Jump" (`assets/music/hyperspace_jump.mp3`, made with Suno) loops in the background. Browsers only allow sound after you interact, so it starts on your first key press or tap.
+"Hyperspace Jump" (`assets/music/hyperspace_jump.mp3`, made with Suno) loops in the background. The game tries to start it as soon as the page loads. Most browsers block sound until you interact, so in that case a **start screen** ("PRESS ANY KEY" / "TAP TO START") appears first, and that first press starts the music and opens the menu.
 It gets quieter while the game is paused and stops while the tab is hidden. Turn it on or off with the **♪ Music** button under the game, or **♪** on phones; the choice is remembered in that browser.
 
 **Win and lose jingles:** when a round's winner is announced you hear a bright rising arpeggio if you won and a falling minor phrase if you lost.
