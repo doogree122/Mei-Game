@@ -18,6 +18,9 @@ const BODY = { thigh: 34, shin: 34, torso: 48, neck: 6, ua: 25, fa: 25, head: 15
 
 // Move data in frames (60 fps). `limb` is the skeleton joint used as the hit point.
 // height: 'mid' (block high or low), 'low' (must crouch-block), 'high' (must stand-block).
+// Frames after letting go of crouch in which punch becomes an uppercut.
+const UPPERCUT_WINDOW = 10;
+
 const MOVES = {
   punch: {
     pose: 'punch', startup: 4, active: 3, recovery: 9,
@@ -38,6 +41,13 @@ const MOVES = {
     pose: 'sweep', startup: 8, active: 5, recovery: 20,
     damage: 9, hitstun: 0, blockstun: 12, push: 6,
     limb: 'footF', radius: 18, height: 'low', sound: 'heavy', crouching: true, knockdown: true,
+  },
+  // Crouch, then press punch just as you stand up. Hits crouching opponents
+  // too and launches into a knockdown.
+  uppercut: {
+    pose: 'uppercut', startup: 6, active: 5, recovery: 20, lunge: 2.5,
+    damage: 12, hitstun: 0, blockstun: 12, push: 3, launch: 9,
+    limb: 'handF', radius: 18, height: 'mid', sound: 'heavy', knockdown: true,
   },
   airKick: {
     pose: 'airKick', startup: 5, active: 14, recovery: 4,
@@ -83,6 +93,10 @@ const POSES = {
 
   sweep_windup: { torso: 0.5, head: -0.3, ...GUARD, ...CROUCH_LEGS, thF: 0.6, shF: -0.4 },
   sweep: { torso: 0.6, head: -0.4, uaF: 0.9, faF: 2.2, uaB: -0.2, faB: 0.3, thF: 1.15, shF: 1.5, thB: 0.4, shB: -1.4 },
+
+  // Uppercut: fist low from the crouch, then driven up as the legs straighten.
+  uppercut_windup: { torso: 0.5, head: -0.3, uaF: 0.25, faF: 0.9, uaB: 0.45, faB: 2.35, ...CROUCH_LEGS },
+  uppercut: { torso: 0.15, head: -0.3, uaF: 1.95, faF: 2.55, uaB: 0.35, faB: 2.1, thF: 0.5, shF: -0.1, thB: -0.4, shB: -0.1 },
 
   airKick_windup: { torso: 0, head: 0, ...GUARD, thF: 1.4, shF: -0.2, thB: 0.6, shB: -1.2 },
   airKick: { torso: -0.2, head: 0.1, ...GUARD, thF: 1.05, shF: 1.0, thB: 0.4, shB: -1.6 },
@@ -180,6 +194,8 @@ class Fighter {
     this.holdDown = false;
     this.nearThreat = false;
     this.knockedAirborne = false;
+    this.crouchHeld = false;
+    this.uppercutWindow = 0;
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
@@ -276,12 +292,24 @@ class Fighter {
       if (input.down) {
         this.vx = 0;
         this.state = 'crouch';
+        this.crouchHeld = true;
         if (canAttack && this.consume('kick')) return this.startMove('sweep');
         if (canAttack && this.consume('punch')) return this.startMove('lowPunch');
         return;
       }
+      // Standing up from a crouch opens a short window for the uppercut.
+      if (this.crouchHeld) {
+        this.crouchHeld = false;
+        this.uppercutWindow = UPPERCUT_WINDOW;
+      } else if (this.uppercutWindow > 0) {
+        this.uppercutWindow--;
+      }
 
       if (canAttack) {
+        if (this.uppercutWindow > 0 && this.consume('punch')) {
+          this.uppercutWindow = 0;
+          return this.startMove('uppercut');
+        }
         if (this.consume('special') && !game.hasProjectile(this)) return this.startMove('special');
         if (this.consume('kick')) return this.startMove('kick');
         if (this.consume('punch')) return this.startMove('punch');
@@ -431,7 +459,7 @@ class Fighter {
       game.onKO(this);
     } else if (def.knockdown || !this.grounded) {
       this.hitstun = 30;
-      this.vy = this.grounded ? 6 : Math.max(this.vy, 4);
+      this.vy = this.grounded ? def.launch || 6 : Math.max(this.vy, 4);
       this.y = Math.max(this.y, 0.01);
       this.knockedAirborne = true;
       this.state = 'hit';
@@ -448,7 +476,7 @@ class Fighter {
     const pose = this.basePose();
     const hold = this.char.armPose;
     const lying = pose === POSES.lying;
-    const punching = this.move && /punch/i.test(this.move.name);
+    const punching = this.move && /punch|uppercut/i.test(this.move.name);
     if (!hold || lying || this.hitstun > 0 || this.won || punching) return pose;
     const aiming = this.move && this.move.def.projectile && this.char.aimPose;
     return { ...pose, ...(aiming ? this.char.aimPose : hold) };
