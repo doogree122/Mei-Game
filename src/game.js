@@ -357,6 +357,8 @@ class Game {
     if (inMenu !== this.inMenu) {
       this.inMenu = inMenu;
       document.body.classList.toggle('in-menu', inMenu);
+      // Menu music on the menus; the fight track from the round intro on.
+      Music.setTrack(inMenu ? 'menu' : 'fight');
     }
     Music.setPaused(this.mode === 'paused');
     if (keyPressed('F2')) this.showBoxes = !this.showBoxes;
