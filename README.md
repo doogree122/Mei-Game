@@ -2,6 +2,9 @@
 
 A browser-based, side-view 2D fighting game. Plain HTML5 Canvas + JavaScript, no build step.
 
+**Play it:** https://doogree122.github.io/Mei-Game/ (public website, no account needed).
+For online matches against a friend, use the claude.ai artifact version instead (see **Online** below).
+
 ## Run it
 
 Open `index.html` in a browser, or serve the folder:
@@ -51,6 +54,15 @@ The other sees that game in the list and joins as Worf. Both people need access 
 The host's browser runs the fight, and the other player's controls and the fight travel through the artifact's live room about 30 times a second.
 Expect a little input delay for the joining player. Esc (or ☰ on phones) leaves the match.
 Opened from disk or another website, the game has no ONLINE option.
+
+### Updating the public website
+
+The website is served by GitHub Pages from the `gh-pages` branch, a copy of the game plus an empty `.nojekyll` file.
+To publish changes, merge the latest code into `gh-pages` and push:
+
+```sh
+git checkout gh-pages && git merge claude/fighting-game-prototype && git push && git checkout -
+```
 
 ## Music
 
