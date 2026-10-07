@@ -311,7 +311,7 @@ const Stage = (() => {
       roundRect(ctx, px - 48, CEILING_H + 60, 96, 46, 6);
       ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.fillText('MEI-1', px, CEILING_H + 74);
+      ctx.fillText('USS HOOD', px, CEILING_H + 74);
       ctx.fillStyle = '#9fc3ff';
       ctx.fillText(`DECK 0${i + 2}`, px, CEILING_H + 93);
     }

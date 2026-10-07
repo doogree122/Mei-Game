@@ -718,13 +718,13 @@ function drawPhaserRifle(ctx, sk, f, c) {
   const h = sk.handF;
   const mode = rifleMode(f);
   const a = mode === 'thrust' ? Math.atan2(h.y - sk.elbowF.y, h.x - sk.elbowF.x)
-    : mode === 'aim' ? -0.12 : -2.3;
+    : mode === 'aim' ? -0.12 : -2.6;
   const ux = Math.cos(a);
   const uy = Math.sin(a);
   const k = 1.15;
   // Resting, the hand holds it low near the stock so the body lies on the
   // shoulder and the barrel points up behind the head.
-  const shift = mode === 'rest' ? 22 : 0;
+  const shift = mode === 'rest' ? 14 : 0;
   // along = distance down the barrel from the grip, side = + below, - above.
   const at = (along, side) => {
     const d = along + shift;
@@ -813,13 +813,14 @@ function drawAgentHead(ctx, sk, c) {
 
 function drawAgentBody(ctx, sk, f) {
   const c = f.char.colors;
+  // Resting, the rifle lies across the back of her shoulders, behind her
+  // neck and head; only her gripping hand is in front of it.
+  const mode = rifleMode(f);
   drawAgentArm(ctx, sk, 'B', c, true);
+  if (mode === 'rest') drawPhaserRifle(ctx, sk, f, c);
   drawAgentLeg(ctx, sk, 'B', c, true);
   drawAgentTorso(ctx, sk, c);
   drawAgentLeg(ctx, sk, 'F', c, false);
-  // Resting on the shoulder, the barrel passes behind her head.
-  const mode = rifleMode(f);
-  if (mode === 'rest') drawPhaserRifle(ctx, sk, f, c);
   drawAgentHead(ctx, sk, c);
   if (mode !== 'rest') {
     drawPhaserRifle(ctx, sk, f, c);
