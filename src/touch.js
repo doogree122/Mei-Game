@@ -117,8 +117,8 @@ function setupTouchControls(game, canvas) {
 
   // ---- Taps on the canvas drive menus.
   canvas.addEventListener('pointerdown', (e) => {
-    const r = canvas.getBoundingClientRect();
-    game.onTap(((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H);
+    const p = game.screenToArena(e.clientX, e.clientY);
+    game.onTap(p.x, p.y);
   });
 
   // Stop page scrolling / zooming gestures.
