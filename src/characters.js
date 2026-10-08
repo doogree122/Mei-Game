@@ -148,10 +148,10 @@ CHARACTERS.seven = {
   paint: {
     suit: [[22, 38, 78], [46, 78, 138], [100, 140, 202]], // dark, mid, light
     sleeve: [[86, 90, 102], [138, 142, 152], [192, 196, 204]],
-    skin: [[150, 106, 92], [198, 154, 138], [226, 188, 172]], // matched to her neck in the picture
+    skin: [[176, 120, 104], [220, 168, 150], [240, 200, 184]], // neck, matching the painted face
     sole: [24, 26, 38],
     // Limb radii at each joint, in skeleton units.
-    widths: { hip: 9.4, knee: 5.8, ankle: 3.1, shoulder: 5.0, elbow: 4.0, wrist: 3.0, neck: 3.5 },
+    widths: { hip: 9.4, knee: 5.8, ankle: 3.1, shoulder: 5.0, elbow: 4.0, wrist: 3.0, neck: 3.0 },
     // Torso outline as [t, x]: t from hip (0) to neck (1), x forward (+) or back (-).
     torsoBack: [[-0.12, -9], [0, -13], [0.15, -12], [0.34, -7.6], [0.55, -8], [0.8, -9], [0.94, -6.8], [1.04, -3.6]],
     torsoFront: [[-0.12, 6.8], [0.1, 8.6], [0.34, 6.9], [0.52, 8.8], [0.66, 12.6], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
@@ -165,6 +165,17 @@ CHARACTERS.seven = {
     pieceScale: 0.19, // fists
     headScale: 0.19,
     neckLift: 3.5, // how far up the neck the head piece sits
+    // Painted profile head (src/painted.js paintFace), colors from her photo.
+    face: {
+      size: 1.72, // skeleton units per head-frame unit
+      drop: 4.5, // sits this much lower than the skeleton's head point (a shorter neck)
+      skin: [[176, 120, 104], [226, 174, 156], [244, 206, 190]],
+      hair: [[112, 84, 50], [186, 152, 100], [232, 204, 146]],
+      brow: [150, 116, 80],
+      iris: [96, 128, 146],
+      lips: [182, 98, 86],
+      implant: [[84, 90, 102], [170, 176, 188], [232, 236, 242]],
+    },
   },
   scale: 2.0,
   projectile: 'laser', // special fires a big red laser blast from her rifle
