@@ -28,9 +28,10 @@ fight2 = data_uri('assets/music/arcade_march_2.mp3')
 music = menu + fight1 + fight2
 js = f"const MUSIC_DATA = {{ menu: '{menu}', fight1: '{fight1}', fight2: '{fight2}' }};\n"
 # Level backdrops as data URIs too.
-stages = {name[:-4]: 'data:image/jpeg;base64,' + base64.b64encode(open(f'assets/stages/{name}', 'rb').read()).decode()
-          for name in sorted(os.listdir('assets/stages')) if name.endswith('.jpg')}
-js += 'const STAGE_DATA = {' + ', '.join(f"{k}: '{v}'" for k, v in stages.items()) + '};\n'
+mime = {'.jpg': 'image/jpeg', '.png': 'image/png'}
+stages = {name[:-4]: f'data:{mime[name[-4:]]};base64,' + base64.b64encode(open(f'assets/stages/{name}', 'rb').read()).decode()
+          for name in sorted(os.listdir('assets/stages')) if name[-4:] in mime}
+js += 'const STAGE_DATA = {' + ', '.join(f"'{k}': '{v}'" for k, v in stages.items()) + '};\n'
 js += '\n'.join(f'// ---- {p} ----\n' + open(p).read() for p in scripts)
 assert '</script' not in js
 with open(out, 'w') as f:
