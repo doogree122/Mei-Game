@@ -1,15 +1,54 @@
-// Drawing: fighters (skeleton-posed art rendered as pixel sprites), projectiles and HUD.
+// Drawing: fighters, projectiles and HUD.
 //
-// The world is drawn at low resolution (PIXEL screen pixels per art pixel) and
-// scaled up without smoothing. Fighters use the character art in sprites.js when
-// it is available, animated by leaning, lunging and squashing the whole sprite.
-// Otherwise they fall back to the procedural skeleton art, which gets hard edges
-// and a dark 1-pixel outline so it reads like a hand-made sprite.
+// Game coordinates are a 960x540 arena; the canvas has RES screen pixels per
+// game pixel, matched to the display (up to 2x) so everything is drawn sharp.
+// The stage and effects are drawn at that full resolution (PIXEL game pixels per
+// buffer pixel). Fighters cut from pictures (look 'cutout') are drawn straight
+// onto the canvas. Drawn fighters come from skeleton art rendered on a scratch
+// canvas with a FIGHTER_PIXEL grid, then given hard edges and a dark 1-pixel
+// outline so they read like hand-made sprites.
 
-const PIXEL = 2.5;
-// Fighters use a finer pixel grid than the stage so their detail survives.
-const FIGHTER_PIXEL = 1.5;
+let RES = 1;
+let PIXEL = 1;
+let FIGHTER_PIXEL = 1;
+// The outline pass touches every pixel around a drawn fighter each frame, so its
+// grid stops at this size (1.5 screen pixels at 2x), or 1 on touch screens,
+// whose processors are slower.
+const MIN_FIGHTER_PIXEL = matchMedia('(pointer: coarse)').matches ? 1 : 0.75;
+// Canvases baked once (the room, the starfields) hold this many pixels per game pixel.
+const BAKE = 2;
 const OUTLINE = [13, 15, 22];
+const OUTLINE_PX = (0xff000000 | (OUTLINE[2] << 16) | (OUTLINE[1] << 8) | OUTLINE[0]) >>> 0;
+
+// A canvas for baking art at BAKE resolution, drawn in game coordinates.
+function bakedCanvas(w, h) {
+  const cv = document.createElement('canvas');
+  cv.width = Math.ceil(w * BAKE);
+  cv.height = Math.ceil(h * BAKE);
+  const ctx = cv.getContext('2d');
+  ctx.scale(BAKE, BAKE);
+  return { cv, ctx };
+}
+
+// Draw a baked canvas at its size in game coordinates.
+function drawBaked(ctx, cv, x, y) {
+  ctx.drawImage(cv, x, y, cv.width / BAKE, cv.height / BAKE);
+}
+
+// Called by Game.layout() when the display resolution changes.
+function setResolution(res) {
+  RES = res;
+  PIXEL = 1 / res;
+  FIGHTER_PIXEL = Math.max(MIN_FIGHTER_PIXEL, 1 / res);
+  SPR_W = Math.ceil(810 / FIGHTER_PIXEL);
+  SPR_H = Math.ceil(495 / FIGHTER_PIXEL);
+  SPR_OX = Math.round(405 / FIGHTER_PIXEL);
+  SPR_OY = Math.round(450 / FIGHTER_PIXEL);
+  spriteCanvas.width = SPR_W;
+  spriteCanvas.height = SPR_H;
+  spriteMask = new Uint8Array(SPR_W * SPR_H);
+  spriteBox.w = spriteBox.h = 0;
+}
 
 function drawLimb(ctx, a, b, width, color) {
   ctx.strokeStyle = color;
@@ -830,7 +869,83 @@ function drawAgentBody(ctx, sk, f) {
   drawAgentArm(ctx, sk, 'F', c, false);
 }
 
+// ---- Cut-out art (tools/make_cutout.py) ----
+
+// Each character's file (src/cutout-<id>.js) sets CUTOUTS[id] to
+// { width, head, parts }: `width` is skeleton units per pixel of the picture
+// across each part, and `head` how much bigger than the picture to draw the head.
+const cutoutImages = {};
+
+function cutoutParts(id) {
+  if (typeof CUTOUTS === 'undefined' || !CUTOUTS[id]) return null;
+  if (!cutoutImages[id]) {
+    const { width, head, parts } = CUTOUTS[id];
+    const loaded = { width, head, parts: {} };
+    for (const [name, part] of Object.entries(parts)) {
+      const img = new Image();
+      img.src = part.src;
+      loaded.parts[name] = { ...part, img };
+    }
+    cutoutImages[id] = loaded;
+  }
+  const art = cutoutImages[id];
+  return Object.values(art.parts).every((p) => p.img.complete && p.img.naturalWidth) ? art : null;
+}
+
+// Draw a part so its pivot sits on joint a and its tip points at joint b,
+// stretched along the bone to fit and `width` across it. With lengthScale the
+// part keeps the picture's proportions instead of stretching to the bone.
+function drawCutoutPart(ctx, part, a, b, width, filter, lengthScale) {
+  const [px, py] = part.pivot;
+  const [tx, ty] = part.tip;
+  const srcLen = Math.hypot(tx - px, ty - py);
+  const len = lengthScale ? srcLen * width * lengthScale : Math.hypot(b.x - a.x, b.y - a.y);
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x));
+  ctx.scale(len / srcLen, width);
+  ctx.rotate(-Math.atan2(ty - py, tx - px));
+  ctx.translate(-px, -py);
+  if (filter) ctx.filter = filter;
+  ctx.drawImage(part.img, 0, 0);
+  ctx.restore();
+}
+
+function drawCutoutBody(ctx, sk, f) {
+  const art = cutoutParts(f.char.id);
+  if (!art) return (BODY_STYLES[f.char.fallbackLook] || drawArmoredBody)(ctx, sk, f);
+  const { parts, width } = art;
+  // Far-side limbs are darker; player 2's copy in a mirror match is recolored.
+  const alt = f.char.altFilter ? f.char.altFilter + ' ' : '';
+  const near = alt || null;
+  const far = alt + 'brightness(0.62)';
+  const arm = (side, back) => {
+    drawCutoutPart(ctx, parts.upperArm, sk.shoulder, sk['elbow' + side], width, back ? far : near);
+    drawCutoutPart(ctx, parts.forearm, sk['elbow' + side], sk['hand' + side], width, back ? far : near);
+  };
+  const leg = (side, back) => {
+    drawCutoutPart(ctx, parts.thigh, sk.hip, sk['knee' + side], width, back ? far : near);
+    drawCutoutPart(ctx, parts.shin, sk['knee' + side], sk['foot' + side], width, back ? far : near);
+  };
+  // Seven's rifle rests behind her shoulders and comes forward to fire.
+  const rifle = f.char.armPose ? rifleMode(f) : null;
+  arm('B', true);
+  if (rifle === 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
+  leg('B', true);
+  drawCutoutPart(ctx, parts.torso, sk.hip, sk.neck, width, near);
+  leg('F', false);
+  // The head keeps its own proportions; it only turns with the neck.
+  ctx.save();
+  ctx.translate(sk.neck.x, sk.neck.y + 4);
+  ctx.scale(art.head, art.head);
+  drawCutoutPart(ctx, parts.head, { x: 0, y: 0 }, { x: sk.head.x - sk.neck.x, y: sk.head.y - sk.neck.y }, width, near, 1);
+  ctx.restore();
+  if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
+  arm('F', false);
+}
+
 const BODY_STYLES = {
+  cutout: drawCutoutBody,
   armored: drawArmoredBody,
   warrior: drawWarriorBody,
   sith: drawSithBody,
@@ -839,16 +954,15 @@ const BODY_STYLES = {
 
 // ---- Procedural sprite pipeline ----
 
-// Scratch canvas in fighter art pixels. The fighter's ground point sits at (SPR_OX, SPR_OY).
-const SPR_W = 540;
-const SPR_H = 330;
-const SPR_OX = 270;
-const SPR_OY = 300;
+// Scratch canvas in fighter art pixels (sized by setResolution). The fighter's
+// ground point sits at (SPR_OX, SPR_OY).
+let SPR_W = 0;
+let SPR_H = 0;
+let SPR_OX = 0;
+let SPR_OY = 0;
 const spriteCanvas = document.createElement('canvas');
-spriteCanvas.width = SPR_W;
-spriteCanvas.height = SPR_H;
 const spriteCtx = spriteCanvas.getContext('2d', { willReadFrequently: true });
-const spriteMask = new Uint8Array(SPR_W * SPR_H);
+let spriteMask = null;
 
 function isLying(f) {
   return f.state === 'ko' || f.state === 'down' || (f.hitstun > 0 && f.knockedAirborne);
@@ -984,10 +1098,14 @@ function drawArtSprite(ctx, f, entry) {
 
 // Procedural fallback: skeleton art rendered at art resolution, then given
 // hard edges, the hit flash and a 1-pixel dark outline.
+// The area of the scratch canvas the last renderSprite drew: only it is cleared
+// and copied to the screen.
+const spriteBox = { x: 0, y: 0, w: 0, h: 0 };
+
 function renderSprite(f) {
   const ctx = spriteCtx;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, SPR_W, SPR_H);
+  ctx.clearRect(spriteBox.x, spriteBox.y, spriteBox.w, spriteBox.h);
   ctx.setTransform(1 / FIGHTER_PIXEL, 0, 0, 1 / FIGHTER_PIXEL, SPR_OX, SPR_OY);
   ctx.scale(f.scale, f.scale);
   const sk = skeleton(f.pose);
@@ -1024,42 +1142,65 @@ function renderSprite(f) {
   (BODY_STYLES[f.char.look] || drawArmoredBody)(ctx, sk, f);
   if (bw <= 0 || bh <= 0) return spriteCanvas;
 
-  // Hard alpha edges, optional hit flash, then a 1-pixel dark outline.
+  spriteBox.x = x0;
+  spriteBox.y = y0;
+  spriteBox.w = bw;
+  spriteBox.h = bh;
+
+  // Hard alpha edges, optional hit flash, then a 1-pixel dark outline. Pixels
+  // are read as 32-bit words (alpha in the top byte on little-endian machines).
   const img = ctx.getImageData(x0, y0, bw, bh);
   const d = img.data;
+  const px = new Uint32Array(d.buffer);
   const flash = f.flash > 0;
   const n = bw * bh;
-  for (let i = 0, p = 0; p < n; i += 4, p++) {
-    if (d[i + 3] < 110) {
-      d[i + 3] = 0;
+  for (let p = 0; p < n; p++) {
+    const v = px[p];
+    if (v >>> 24 < 110) {
+      px[p] = 0;
       spriteMask[p] = 0;
       continue;
     }
-    d[i + 3] = 255;
+    px[p] = v | 0xff000000;
     spriteMask[p] = 1;
     if (flash) {
+      const i = p * 4;
       d[i] += (255 - d[i]) * 0.7;
       d[i + 1] += (255 - d[i + 1]) * 0.7;
       d[i + 2] += (255 - d[i + 2]) * 0.7;
     }
   }
   for (let y = 0; y < bh; y++) {
+    const row = y * bw;
     for (let x = 0; x < bw; x++) {
-      const p = y * bw + x;
+      const p = row + x;
       if (spriteMask[p]) continue;
-      const near = (x > 0 && spriteMask[p - 1]) || (x < bw - 1 && spriteMask[p + 1])
-        || (y > 0 && spriteMask[p - bw]) || (y < bh - 1 && spriteMask[p + bw]);
-      if (near) {
-        const i = p * 4;
-        d[i] = OUTLINE[0];
-        d[i + 1] = OUTLINE[1];
-        d[i + 2] = OUTLINE[2];
-        d[i + 3] = 255;
-      }
+      if ((x > 0 && spriteMask[p - 1]) || (x < bw - 1 && spriteMask[p + 1])
+        || (y > 0 && spriteMask[p - bw]) || (y < bh - 1 && spriteMask[p + bw])) px[p] = OUTLINE_PX;
     }
   }
   ctx.putImageData(img, x0, y0);
   return spriteCanvas;
+}
+
+// A fighter cut from a picture, drawn at full resolution with the same pose
+// transform as renderSprite; the hit flash brightens the whole figure.
+function drawCutoutFighter(ctx, f) {
+  const sk = skeleton(f.pose);
+  ctx.save();
+  ctx.translate(f.x, GROUND - f.y);
+  ctx.scale(f.scale, f.scale);
+  if (isLying(f)) {
+    ctx.translate(0, -12);
+    ctx.scale(f.facing, 1);
+    ctx.rotate(-Math.PI / 2);
+  } else {
+    ctx.translate(0, -sk.base);
+    ctx.scale(f.facing, 1);
+  }
+  if (f.flash > 0) ctx.filter = 'brightness(2.2)';
+  drawCutoutBody(ctx, sk, f);
+  ctx.restore();
 }
 
 function drawFighterShadow(ctx, f) {
@@ -1074,12 +1215,14 @@ function drawFighterShadow(ctx, f) {
 function drawFighter(ctx, f) {
   const art = spriteFor(f.char);
   if (art) return drawArtSprite(ctx, f, art);
+  if (f.char.look === 'cutout' && cutoutParts(f.char.id)) return drawCutoutFighter(ctx, f);
   const sprite = renderSprite(f);
   const P = FIGHTER_PIXEL;
   const ax = Math.round(f.x / P) * P;
   const ay = Math.round((GROUND - f.y) / P) * P;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(sprite, ax - SPR_OX * P, ay - SPR_OY * P, SPR_W * P, SPR_H * P);
+  const b = spriteBox;
+  if (b.w > 0 && b.h > 0) ctx.drawImage(sprite, b.x, b.y, b.w, b.h, ax + (b.x - SPR_OX) * P, ay + (b.y - SPR_OY) * P, b.w * P, b.h * P);
 }
 
 function drawFighterBoxes(ctx, f) {

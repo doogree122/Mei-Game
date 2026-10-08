@@ -44,10 +44,7 @@ const Stage = (() => {
 
   function buildSpace() {
     const width = Math.ceil(W + WORLD_W * SPACE_PARALLAX) + 2;
-    const cv = document.createElement('canvas');
-    cv.width = width;
-    cv.height = GROUND;
-    const ctx = cv.getContext('2d');
+    const { cv, ctx } = bakedCanvas(width, GROUND);
 
     const bg = ctx.createLinearGradient(0, 0, 0, GROUND);
     bg.addColorStop(0, '#02030a');
@@ -140,10 +137,7 @@ const Stage = (() => {
   }
 
   function buildRoom() {
-    const cv = document.createElement('canvas');
-    cv.width = WORLD_W;
-    cv.height = GROUND;
-    const ctx = cv.getContext('2d');
+    const { cv, ctx } = bakedCanvas(WORLD_W, GROUND);
     const rand = rng(7);
 
     // Wall base.
@@ -400,10 +394,10 @@ const Stage = (() => {
         spaceCanvas = buildSpace();
         roomCanvas = buildRoom();
       }
-      ctx.drawImage(spaceCanvas, -Math.round(camX * SPACE_PARALLAX), 0);
+      drawBaked(ctx, spaceCanvas, -Math.round(camX * SPACE_PARALLAX), 0);
       ctx.save();
       ctx.translate(-Math.round(camX), 0);
-      ctx.drawImage(roomCanvas, 0, 0);
+      drawBaked(ctx, roomCanvas, 0, 0);
       drawLights(ctx, frame);
       ctx.restore();
       drawFloor(ctx, camX);
