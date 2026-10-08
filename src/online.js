@@ -50,8 +50,10 @@ function setPresence(patch) {
   if (Online.room) Online.room.presence(patch).catch(() => {});
 }
 
+// Games hosted in other tabs. `sameTab`, not `isMe`: your own other tabs and
+// devices are `isMe` too, and someone may host on one and join from another.
 function openGames() {
-  return Online.peers.filter((p) => !p.isMe && p.presence.host && p.presence.open);
+  return Online.peers.filter((p) => !p.sameTab && p.presence.host && p.presence.open);
 }
 
 function onRoomPeers(game, peers) {
@@ -62,7 +64,7 @@ function onRoomPeers(game, peers) {
   if (Online.role === 'host') {
     const guest = Online.opponent
       ? peers.find((p) => p.peer === Online.opponent && p.presence.join === Online.code)
-      : peers.find((p) => !p.isMe && p.presence.join === Online.code);
+      : peers.find((p) => !p.sameTab && p.presence.join === Online.code);
     if (guest && !Online.opponent) {
       Online.opponent = guest.peer;
       setPresence({ open: false, guest: guest.peer });
