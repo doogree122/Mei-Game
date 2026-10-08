@@ -1139,7 +1139,7 @@ function renderSprite(f) {
   const bw = x1 - x0;
   const bh = y1 - y0;
 
-  (BODY_STYLES[f.char.look] || drawArmoredBody)(ctx, sk, f);
+  (BODY_STYLES[f.char.look] || BODY_STYLES[f.char.fallbackLook] || drawArmoredBody)(ctx, sk, f);
   if (bw <= 0 || bh <= 0) return spriteCanvas;
 
   spriteBox.x = x0;
@@ -1220,6 +1220,10 @@ function drawFighter(ctx, f) {
   const art = spriteFor(f.char);
   if (art) return drawArtSprite(ctx, f, art);
   if (f.char.look === 'cutout' && cutoutParts(f.char.id)) return drawCutoutFighter(ctx, f);
+  if (f.char.look === 'painted') {
+    const painted = paintedArt(f.char.id);
+    if (painted) return drawPaintedFighter(ctx, f, painted);
+  }
   const sprite = renderSprite(f);
   const P = FIGHTER_PIXEL;
   const ax = Math.round(f.x / P) * P;
