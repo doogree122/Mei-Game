@@ -141,9 +141,16 @@ Then add `<script src="src/sprites.js"></script>` to `index.html` before `src/to
 
 ## Art style
 
-The stage and effects are drawn at low resolution and scaled up without smoothing, so one art pixel is 2.5×2.5 screen pixels.
-Fighters use a finer grid (1 art pixel = 1.5 screen pixels, `FIGHTER_PIXEL`) so their detail survives.
-Each frame they're drawn from their skeleton, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
+The game is laid out on a 960×540 arena, but the canvas renders at the display's real resolution (`RES`, up to 2 screen pixels per game pixel), so text, the stage and effects are sharp on high-density screens.
+The room and starfields are baked once at 2× (`BAKE`).
+
+Drawn fighters (B. FETT, WORF, VADER) are rendered from their skeleton on a scratch canvas, then given hard edges and a 1-pixel dark outline so they look like pixel-art sprites.
+Their grid follows the display but stops at 0.75 game pixels (`MIN_FIGHTER_PIXEL`) to keep that per-pixel pass quick on phones.
+
+**Cut-out fighters** (SEVEN, `look: 'cutout'`) are built from a picture. `tools/make_cutout.py` removes the background and cuts the figure into head, torso, upper arm, forearm, thigh and shin.
+The game pins each part to its bone every frame (the near arm and leg serve for both sides, the far ones drawn darker) and draws them straight onto the canvas at full resolution.
+The best pictures are a side view facing right, full body on a plain background, with the arms and legs clear of the body.
+`src/cutout-<id>.js` holds the parts; `fallbackLook` is the drawn style used until they load.
 
 ## Characters
 
@@ -152,7 +159,7 @@ Each frame they're drawn from their skeleton, then given hard edges and a 1-pixe
 | **B. FETT** | Armored jetpack bounty hunter. Green helmet with a flat face, a T-shaped dark visor with dark-red trim, dark-green cheek plates, gray dents, an ear cap and a gray antenna. Green chest plates, gauntlets and shin plates. Yellow shoulder pad, wrist bands and shaped knee plates. Gray flight suit, light-gray gloves and black boots. Brown ammo belt, chest strap and thigh pouch. Green jetpack with a slim rocket, a rifle on the back, and a black carbine for the special | Blaster bolt | 1.9× size, baseline stats |
 | **WORF** | Alien warrior. Ridged forehead crest with a central ridge, deep-set eyes, shoulder-length brown hair, a full textured beard. Mustard tunic with black yoke and waistband, a chain-mail sash with diamond links and two ringed clasps, black trousers and polished boots. Crosses his arms when he wins | Hand-blaster pulse | 2.0× size (the taller), hits 10% harder, a little slower |
 | **VADER** | Black armor, flared helmet with a triangular grille and dark lenses, ribbed collar, chest control box, belt boxes, and a flowing cape. Holds a red lightsaber | Force lightning from his free hand. His punch is a long-reach saber swing | 2.05× size, hits 15% harder, slow |
-| **SEVEN** | Blue catsuit with magenta and cyan edge lighting, short swept-back hair, a silver implant at the brow, heeled boots, and a gray phaser rifle resting across her shoulders behind her neck, brought down two-handed to fire | Big red laser blast. Her kick goes up to head height | 1.85× size, quickest on her feet |
+| **SEVEN** | Cut out from a side-view picture: blue catsuit with gray sleeves, swept-back blonde hair, heeled boots. A gray phaser rifle rests across her shoulders behind her neck and comes down to fire | Big red laser blast. Her kick goes up to head height | 1.85× size, quickest on her feet |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`, `sith`, `agent`), a projectile style with `projectile` (`bolt`, `pulse`, `lightning`, `laser`), and a size with `scale`.
 `moves` overrides individual moves (Vader's saber punch, Seven's high kick), `shot` tunes the projectile's speed, size and damage, and `altColors` is the mirror-match palette. `ROSTER` sets the select-screen order.

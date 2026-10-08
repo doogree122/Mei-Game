@@ -143,7 +143,8 @@ CHARACTERS.seven = {
   id: 'seven',
   name: 'SEVEN',
   blurb: 'High kick · laser rifle',
-  look: 'agent', // catsuited officer with an eye implant
+  look: 'cutout', // body parts cut from a picture (src/cutout-seven.js)
+  fallbackLook: 'agent', // drawn version: catsuited officer with an eye implant
   scale: 1.85,
   projectile: 'laser', // special fires a big red laser blast from her rifle
   colors: {
@@ -209,5 +210,5 @@ const ROSTER = ['fett', 'worf', 'vader', 'seven'];
 
 // The character as player 2 sees it in a mirror match: same fighter, alternate colors.
 function altVersion(char) {
-  return { ...char, colors: { ...char.colors, ...(char.altColors || {}) } };
+  return { ...char, colors: { ...char.colors, ...(char.altColors || {}) }, altFilter: char.look === 'cutout' ? 'hue-rotate(150deg) saturate(1.2)' : '' };
 }

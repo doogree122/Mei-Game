@@ -12,10 +12,7 @@ const Exterior = (() => {
 
   function buildStars() {
     const size = 512;
-    const cv = document.createElement('canvas');
-    cv.width = size;
-    cv.height = size;
-    const c = cv.getContext('2d');
+    const { cv, ctx: c } = bakedCanvas(size, size);
     let seed = 99;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 90; i++) {
@@ -35,7 +32,7 @@ const Exterior = (() => {
     if (!starTile) starTile = buildStars();
     const off = -((camX * 0.15) % 512);
     for (let x = off - 512; x < W; x += 512) {
-      for (let y = 0; y < viewH; y += 512) ctx.drawImage(starTile, x, y);
+      for (let y = 0; y < viewH; y += 512) drawBaked(ctx, starTile, x, y);
     }
   }
 

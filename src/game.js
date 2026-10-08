@@ -23,15 +23,15 @@ class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    // The stage and effects render into low-res buffers that are scaled up crisply.
+    // The stage and effects render into buffers at screen resolution (sized in layout()).
     this.buffer = document.createElement('canvas');
-    this.buffer.width = W / PIXEL;
-    this.buffer.height = H / PIXEL;
     this.bctx = this.buffer.getContext('2d');
     this.fxBuffer = document.createElement('canvas');
-    this.fxBuffer.width = W / PIXEL;
-    this.fxBuffer.height = H / PIXEL;
     this.fxctx = this.fxBuffer.getContext('2d');
+    this.res = 0;
+    this.maxRes = 2; // lowered by watchDrawTime on devices that can't keep up
+    this.drawTime = 0;
+    this.slowFrames = 0;
     // Tall screens (a phone held upright) show the ship's exterior around the
     // arena; viewH is the canvas height and viewOY the arena's top edge.
     this.viewH = H;
@@ -620,14 +620,35 @@ class Game {
       viewH = Math.round(window.innerHeight * scale);
       viewOY = Math.round((safeAreaTop() + 56) * scale);
     }
-    if (viewH !== this.viewH || viewOY !== this.viewOY || this.canvas.height !== viewH) {
+    if (viewH !== this.viewH) document.body.classList.toggle('tall', viewH > H);
+    // Screen pixels per game pixel: as many as the canvas shows on this display,
+    // from 1 up to 2, in quarter steps so small window changes don't churn.
+    const shown = (this.canvas.getBoundingClientRect().width || W) * (window.devicePixelRatio || 1);
+    const res = Math.min(this.maxRes, Math.max(1, Math.round((shown / W) * 4) / 4));
+    if (viewH !== this.viewH || viewOY !== this.viewOY || res !== this.res) {
       this.viewH = viewH;
       this.viewOY = viewOY;
-      this.canvas.width = W;
-      this.canvas.height = viewH;
-      this.extBuffer.width = W / PIXEL;
+      this.res = res;
+      setResolution(res);
+      this.canvas.width = Math.round(W * res);
+      this.canvas.height = Math.round(viewH * res);
+      this.buffer.width = this.fxBuffer.width = Math.round(W / PIXEL);
+      this.buffer.height = this.fxBuffer.height = Math.round(H / PIXEL);
+      this.extBuffer.width = Math.round(W / PIXEL);
       this.extBuffer.height = Math.ceil(viewH / PIXEL);
-      document.body.classList.toggle('tall', viewH > H);
+    }
+  }
+
+  // If drawing keeps taking more than most of a 60 fps frame, step the
+  // resolution down a quarter at a time (never below 1).
+  watchDrawTime(ms) {
+    this.drawTime += (ms - this.drawTime) * 0.05;
+    this.slowFrames = this.drawTime > 11 ? this.slowFrames + 1 : 0;
+    if (this.slowFrames > 90 && this.res > 1) {
+      this.maxRes = this.res - 0.25;
+      this.slowFrames = 0;
+      this.drawTime = 0;
+      this.layout();
     }
   }
 
@@ -642,6 +663,7 @@ class Game {
 
   draw() {
     const ctx = this.ctx;
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
     if (this.viewH > H) {
       const camX = Math.round(this.camX / PIXEL) * PIXEL;
       Exterior.draw(this.extctx, camX, this.frame, this.viewOY, this.viewH);
@@ -817,7 +839,9 @@ function loop(now) {
     endInputFrame();
     acc -= STEP;
   }
+  const t0 = performance.now();
   game.draw();
+  game.watchDrawTime(performance.now() - t0);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
