@@ -612,16 +612,16 @@ function paintJetpack(ctx, paint, sk, f) {
     return g;
   };
   // Thrusters: two cylinders behind the case, then their nozzles.
-  for (const x of [-19.5, -16.5]) {
-    poly([[0.98, x - 1.6], [0.98, x + 1.6], [0.36, x + 1.6], [0.36, x - 1.6]]);
-    ctx.fillStyle = metal([0.6, x - 1.6], [0.6, x + 1.6]);
+  for (const x of [-25, -20]) {
+    poly([[1.02, x - 2.4], [1.02, x + 2.4], [0.3, x + 2.4], [0.3, x - 2.4]]);
+    ctx.fillStyle = metal([0.6, x - 2.4], [0.6, x + 2.4]);
     ctx.fill();
-    poly([[0.37, x - 1.4], [0.37, x + 1.4], [0.28, x + 2.1], [0.28, x - 2.1]]);
+    poly([[0.31, x - 2.1], [0.31, x + 2.1], [0.19, x + 3.1], [0.19, x - 3.1]]);
     ctx.fillStyle = rgb(md);
     ctx.fill();
     if (!f.grounded) {
       // Exhaust flame while in the air.
-      const q = at(0.27, x);
+      const q = at(0.18, x);
       const flick = 0.8 + Math.sin(f.time * 0.9 + x) * 0.2;
       for (const [dy, r] of [[3, 6], [8, 8], [14, 6]]) {
         const g = ctx.createRadialGradient(q.x, q.y + dy, 0, q.x, q.y + dy, r * flick);
@@ -637,18 +637,18 @@ function paintJetpack(ctx, paint, sk, f) {
   }
   // The case.
   ctx.beginPath();
-  curveThrough(ctx, [[1.0, -9], [1.03, -13], [0.98, -16.8], [0.7, -17.6], [0.44, -16.6], [0.4, -12], [0.44, -9], [0.7, -8.6], [1.0, -9]].map(([t, x]) => at(t, x)), true);
+  curveThrough(ctx, [[1.06, -8.5], [1.1, -14.5], [1.04, -21.6], [0.7, -22.8], [0.36, -21.6], [0.3, -15], [0.36, -8.5], [0.7, -8], [1.06, -8.5]].map(([t, x]) => at(t, x)), true);
   ctx.closePath();
-  ctx.fillStyle = metal([0.7, -17.6], [0.7, -8.6]);
+  ctx.fillStyle = metal([0.7, -22.8], [0.7, -8]);
   ctx.fill();
   ctx.strokeStyle = rgb(md);
   ctx.lineWidth = 0.4;
   ctx.stroke();
   // Center panel and rivets.
-  poly([[0.9, -11], [0.9, -15.2], [0.54, -15.2], [0.54, -11]]);
+  poly([[0.96, -11], [0.96, -19.6], [0.46, -19.6], [0.46, -11]]);
   ctx.fillStyle = rgb(md, 0.8);
   ctx.fill();
-  for (const [t, x] of [[0.86, -11.8], [0.86, -14.4], [0.58, -11.8], [0.58, -14.4]]) {
+  for (const [t, x] of [[0.92, -12], [0.92, -18.6], [0.5, -12], [0.5, -18.6]]) {
     const q = at(t, x);
     ctx.beginPath();
     ctx.arc(q.x, q.y, 0.45, 0, Math.PI * 2);
@@ -656,10 +656,10 @@ function paintJetpack(ctx, paint, sk, f) {
     ctx.fill();
   }
   // Dome on top.
-  const top = at(1.04, -14.5);
+  const top = at(1.1, -17);
   ctx.beginPath();
-  ctx.arc(top.x, top.y, 2.4, 0, Math.PI * 2);
-  ctx.fillStyle = metal([1.04, -17], [1.04, -12]);
+  ctx.arc(top.x, top.y, 3.4, 0, Math.PI * 2);
+  ctx.fillStyle = metal([1.1, -20.4], [1.1, -13.6]);
   ctx.fill();
   ctx.strokeStyle = rgb(md);
   ctx.stroke();
