@@ -129,11 +129,11 @@ const Sfx = (() => {
     ko: () => { noise(0.5, 600, 0.5); tone('sawtooth', 200, 40, 0.8, 0.15); },
     announce: () => tone('square', 440, 880, 0.2, 0.06),
     // Force field up: a rising power-up whoosh, then a hum for as long as it lasts.
-    shield: () => {
+    shield: (seconds = SHIELD_FRAMES / 60) => {
       tone('sine', 180, 900, 0.3, 0.16);
       tone('triangle', 270, 1350, 0.25, 0.07);
       noise(0.25, 4000, 0.12);
-      hum(SHIELD_FRAMES / 60);
+      hum(seconds);
     },
     // Winning: a bright rising arpeggio for a round; a fanfare for the match.
     win: (match) => {

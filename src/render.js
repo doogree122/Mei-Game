@@ -1255,37 +1255,121 @@ function drawShield(ctx, f, frame) {
   if (f.shield <= 0) return;
   if (f.shield < 12 && f.shield % 4 < 2) return;
   const e = f.shieldEllipse();
-  const pulse = 1 + Math.sin(frame * 0.3) * 0.03;
+  const field = f.field;
+  const color = field.color;
   ctx.save();
   ctx.translate(e.cx, e.cy);
-  ctx.scale(pulse, pulse);
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = SHIELD_COLOR;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, e.rx, e.ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 0.9;
-  ctx.strokeStyle = SHIELD_COLOR;
-  ctx.lineWidth = 5;
-  ctx.stroke();
-  ctx.globalAlpha = 0.6;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, e.rx - 6, e.ry - 6, 0, -2.4, -1.2);
-  ctx.stroke();
-  // Hex shimmer drifting up the shell.
-  ctx.globalAlpha = 0.35;
-  ctx.strokeStyle = SHIELD_COLOR;
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 6; i++) {
-    const t = ((frame * 0.02 + i / 6) % 1) * 2 - 1;
-    const y = t * e.ry * 0.85;
-    const half = e.rx * Math.sqrt(Math.max(0, 1 - (y / e.ry) ** 2)) * 0.8;
+  const shell = (alpha, width) => {
     ctx.beginPath();
-    ctx.moveTo(-half, y);
-    ctx.lineTo(half, y);
+    ctx.ellipse(0, 0, e.rx, e.ry, 0, 0, Math.PI * 2);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
     ctx.stroke();
+  };
+  if (field.style === 'hex') {
+    // Borg honeycomb: a faint green shell covered in hexagon cells.
+    shell(0.14, 3);
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, e.rx, e.ry, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    const r = 11;
+    const drift = (frame * 0.4) % (r * Math.sqrt(3));
+    for (let row = -Math.ceil(e.ry / (r * 1.5)) - 1; row <= Math.ceil(e.ry / (r * 1.5)) + 1; row++) {
+      for (let col = -Math.ceil(e.rx / (r * 1.73)) - 1; col <= Math.ceil(e.rx / (r * 1.73)) + 1; col++) {
+        const cx = col * r * Math.sqrt(3) + (row % 2 ? (r * Math.sqrt(3)) / 2 : 0);
+        const cy = row * r * 1.5 - drift;
+        const lit = (Math.sin(frame * 0.15 + row * 1.7 + col * 2.3) + 1) / 2;
+        ctx.globalAlpha = 0.2 + lit * 0.5;
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = Math.PI / 6 + (k * Math.PI) / 3;
+          const x = cx + Math.cos(a) * r * 0.92;
+          const y = cy + Math.sin(a) * r * 0.92;
+          if (k === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  } else if (field.style === 'force') {
+    // The Force: rippling lines pushing outward, no shell.
+    ctx.lineCap = 'round';
+    // Each line is drawn twice, dark then bright, so it reads on any background.
+    for (let i = 0; i < 4; i++) {
+      const t = ((frame * 0.035 + i / 4) % 1);
+      for (const [stroke, w, a] of [['#1a0f3a', 7 - t * 4, 0.45], [color, 4.5 - t * 3, 0.95], ['#ffffff', 1.4, 0.6]]) {
+        ctx.globalAlpha = a * (1 - t);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, e.rx * (0.55 + t * 0.6), e.ry * (0.6 + t * 0.5), 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    // Streaks radiating out.
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 + Math.sin(frame * 0.07 + i) * 0.2;
+      const t = ((frame * 0.05 + i * 0.37) % 1);
+      const r0 = 0.5 + t * 0.55;
+      for (const [stroke, w] of [['#1a0f3a', 5], [color, 3]]) {
+        ctx.globalAlpha = 0.8 * (1 - t);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * e.rx * r0, Math.sin(a) * e.ry * r0);
+        ctx.lineTo(Math.cos(a) * e.rx * (r0 + 0.2), Math.sin(a) * e.ry * (r0 + 0.2));
+        ctx.stroke();
+      }
+    }
+  } else if (field.style === 'plate') {
+    // Overlapping curved plates of brown energy in front, like armor.
+    shell(0.12, 2);
+    const dir = f.facing;
+    for (let i = -2; i <= 2; i++) {
+      const a0 = i * 0.38 - 0.17;
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#f2d6b4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, e.rx, e.ry, 0, (dir > 0 ? 0 : Math.PI) + a0, (dir > 0 ? 0 : Math.PI) + a0 + 0.34);
+      ctx.ellipse(0, 0, e.rx * 0.82, e.ry * 0.86, 0, (dir > 0 ? 0 : Math.PI) + a0 + 0.34, (dir > 0 ? 0 : Math.PI) + a0, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 0.85;
+      ctx.stroke();
+    }
+  } else {
+    // A plain bubble with a highlight and bands drifting up it.
+    const pulse = 1 + Math.sin(frame * 0.3) * 0.03;
+    ctx.scale(pulse, pulse);
+    shell(0.22, 5);
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, e.rx - 6, e.ry - 6, 0, -2.4, -1.2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = color;
+    for (let i = 0; i < 6; i++) {
+      const t = ((frame * 0.02 + i / 6) % 1) * 2 - 1;
+      const y = t * e.ry * 0.85;
+      const half = e.rx * Math.sqrt(Math.max(0, 1 - (y / e.ry) ** 2)) * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-half, y);
+      ctx.lineTo(half, y);
+      ctx.stroke();
+    }
   }
   ctx.restore();
 }
@@ -1297,22 +1381,52 @@ function drawAttackTrail(ctx, f) {
   const since = frame - def.startup;
   if (since < 0 || since > def.active + 3) return;
   const p = f.hitPoint();
-  const r = f.hitRadius * 1.5;
+  // A weak move (rating 1) leaves a thin, short swish; a strong one (3) a
+  // wide, thick arc with a glow and an echo behind it.
+  const rating = def.rating || 2;
+  const r = f.hitRadius * [1.25, 1.5, 1.85][rating - 1];
+  const spread = [0.6, 0.9, 1.25][rating - 1];
   const mid = f.facing > 0 ? 0 : Math.PI;
+  const cx = p.x - f.facing * r * 0.6;
   ctx.save();
-  ctx.globalAlpha = since < def.active ? 0.9 : 0.9 * (1 - (since - def.active) / 4);
+  const fade = since < def.active ? 1 : 1 - (since - def.active) / 4;
   ctx.lineCap = 'round';
-  for (const [color, width] of [[f.char.colors.energy, 8], ['#ffffff', 3]]) {
+  const layers = [
+    [[f.char.colors.energy, 5, 0.7], ['#ffffff', 2, 0.6]],
+    [[f.char.colors.energy, 8, 0.9], ['#ffffff', 3, 0.9]],
+    [[f.char.colors.energy, 22, 0.3], [f.char.colors.energy, 12, 0.95], ['#ffffff', 4, 1]],
+  ][rating - 1];
+  for (const [color, width, alpha] of layers) {
+    ctx.globalAlpha = alpha * fade;
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
     ctx.beginPath();
-    ctx.arc(p.x - f.facing * r * 0.6, p.y, r, mid - 0.9, mid + 0.9);
+    ctx.arc(cx, p.y, r, mid - spread, mid + spread);
+    ctx.stroke();
+  }
+  if (rating === 3) {
+    ctx.globalAlpha = 0.35 * fade;
+    ctx.strokeStyle = f.char.colors.energy;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(cx - f.facing * 14, p.y, r * 0.8, mid - spread * 0.8, mid + spread * 0.8);
     ctx.stroke();
   }
   ctx.restore();
 }
 
+// Shots are drawn bigger or smaller with their rating.
 function drawProjectile(ctx, p, time) {
+  const k = [0.8, 1, 1.3][(p.def.rating || 2) - 1];
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.scale(k, k);
+  ctx.translate(-p.x, -p.y);
+  drawProjectileShape(ctx, p, time);
+  ctx.restore();
+}
+
+function drawProjectileShape(ctx, p, time) {
   const color = p.owner.char.colors.energy;
   if (p.owner.char.projectile === 'bolt') {
     // Blaster bolt: a hot core with a glow, stretched along its travel.
@@ -1430,13 +1544,16 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
   const mw = 130;
   const mx = flip ? x : x + w - mw;
   const my = y + h + 10;
-  const ready = f.shield > 0 ? f.shield / SHIELD_FRAMES : f.shieldCooldown > 0 ? 1 - f.shieldCooldown / SHIELD_COOLDOWN : 1;
+  const field = f.field;
+  const ready = f.shield > 0 ? f.shield / field.frames : f.shieldCooldown > 0 ? 1 - f.shieldCooldown / field.cooldown : 1;
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
   ctx.fillRect(mx, my, mw, 8);
-  ctx.fillStyle = f.shieldCooldown > 0 ? 'rgba(111,216,255,0.45)' : SHIELD_COLOR;
+  ctx.fillStyle = field.color;
+  ctx.globalAlpha = f.shieldCooldown > 0 ? 0.45 : 1;
   ctx.fillRect(flip ? mx + mw * (1 - ready) : mx, my, mw * ready, 8);
+  ctx.globalAlpha = 1;
   ctx.font = 'bold 11px system-ui, sans-serif';
-  ctx.fillStyle = SHIELD_COLOR;
+  ctx.fillStyle = field.color;
   ctx.textAlign = flip ? 'left' : 'right';
   ctx.fillText('FORCE FIELD', flip ? mx : mx + mw, my + 11);
 

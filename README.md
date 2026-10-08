@@ -32,8 +32,23 @@ Low attacks must be blocked crouching, and jump attacks must be blocked standing
 The standing kick is a high kick that lands at chest height.
 **Ducking:** crouching makes standing punches and kicks whiff over your head. Low attacks (crouch punch, sweep), jump kicks and blaster shots still hit.
 
-**Force field:** press it to raise an energy bubble for about ¾ of a second. Blaster shots that touch it fizzle out with a zap, but punches and kicks go straight through. It hums while it's up.
-You can move and jump inside it but can't attack, and it takes about 1½ seconds to recharge. The meter under each health bar shows when it's ready.
+**Force field:** press it to raise your fighter's field for about ¾ of a second. It hums while it's up; you can move and jump inside it but can't attack, and it takes about 1½ seconds to recharge. The meter under each health bar, in the field's color, shows when it's ready. Each fighter's field is different (see **Fighters compared**).
+
+**Uppercut hits** launch the opponent up and back: they fly across the floor, land and skid along it.
+
+### Fighters compared
+
+Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.
+
+| | Punch | Kick | Low kick | Uppercut | Shot | Force field | Movement |
+|---|---|---|---|---|---|---|---|
+| **WORF** | 2 | 2 | 1 | 3 | Phaser 1 | Blue bubble: stops shots only | Heavy and steady |
+| **SEVEN** | 1 | 3 | 2 | 3 | Phaser 2 | Green Borg honeycomb: stops shots only | Fastest, highest jump |
+| **VADER** | 1 | 1 | 1 | 3 | Lightning 3 | Force lines: shove away anyone who comes in close or attacks; shots go through | Slowest, low jump |
+| **B. FETT** | 1 | 2 | 3 | 1 | Blaster 2 | Purple bubble: stops shots and punches | Jetpack: floaty jumps |
+| **MANDO** | 2 | 2 | 1 | 3 | Blaster 2 | Brown armor plates: stop shots and kicks | Jetpack: floaty jumps |
+
+Punches are the punch, low punch and uppercut; kicks are the kick, sweep (low kick) and jump kick. The CPU raises its field when it would help: against shots, or against a close attack its field stops (Vader against any close attack).
 
 Enter starts the game, P pauses (Esc while paused quits to the menu) and F2 shows hitboxes.
 

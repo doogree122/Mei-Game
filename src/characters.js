@@ -38,13 +38,12 @@ const CHARACTERS = {
       metalLight: '#b9bbc2',
       energy: '#ff7a2a',
     },
-    stats: {
-      walk: 5.0,
-      backWalk: 3.7,
-      jumpV: 15.5,
-      jumpVX: 6.2,
-      power: 1,
-    },
+    // Move strength, 1 (weak) to 3 (strong): damage, knockback and how big the hit looks.
+    ratings: { punch: 1, kick: 2, lowKick: 3, uppercut: 1, shot: 2 },
+    // Force field: purple, stops shots and punches.
+    field: { color: '#b46cff', style: 'bubble', blocks: ['shots', 'punches'] },
+    // Jetpack: floaty jumps that hang in the air.
+    stats: { walk: 5.0, backWalk: 3.8, jumpV: 14.6, jumpVX: 6.4, gravity: 0.8, power: 1 },
   },
 };
 
@@ -130,14 +129,11 @@ CHARACTERS.worf = {
     deviceLight: '#9aa0ab',
     energy: '#ffb43a',
   },
-  // Heavier hitter, a little slower on his feet.
-  stats: {
-    walk: 4.5,
-    backWalk: 3.3,
-    jumpV: 15,
-    jumpVX: 5.8,
-    power: 1.1,
-  },
+  ratings: { punch: 2, kick: 2, lowKick: 1, uppercut: 3, shot: 1 },
+  // Force field: blue, stops shots only.
+  field: { color: '#4aa8ff', style: 'bubble', blocks: ['shots'] },
+  // Heavy and steady on his feet.
+  stats: { walk: 4.4, backWalk: 3.2, jumpV: 14.8, jumpVX: 5.6, gravity: 1, power: 1 },
 };
 
 CHARACTERS.vader = {
@@ -175,14 +171,12 @@ CHARACTERS.vader = {
     uppercut: { radius: 22, sfx: 'saber' }, // a rising saber slash
   },
   shot: { speed: 10, radius: 20, damage: 11, hitstun: 22 },
-  // Slow and heavy.
-  stats: {
-    walk: 4.0,
-    backWalk: 3.0,
-    jumpV: 14.5,
-    jumpVX: 5.4,
-    power: 1.15,
-  },
+  ratings: { punch: 1, kick: 1, lowKick: 1, uppercut: 3, shot: 3 },
+  // Force field: rippling Force lines that shove the opponent back. It blocks
+  // nothing itself: shots go through.
+  field: { color: '#8f6bff', style: 'force', blocks: [], repel: true },
+  // Slow, heavy strides and a low jump.
+  stats: { walk: 3.6, backWalk: 2.8, jumpV: 13.8, jumpVX: 5.0, gravity: 1.05, power: 1 },
 };
 
 CHARACTERS.seven = {
@@ -274,14 +268,11 @@ CHARACTERS.seven = {
     special: { sfx: 'laser' },
   },
   shot: { speed: 9, radius: 22, damage: 13 },
-  // Quick on her feet.
-  stats: {
-    walk: 5.4,
-    backWalk: 4.0,
-    jumpV: 16,
-    jumpVX: 6.6,
-    power: 1,
-  },
+  ratings: { punch: 1, kick: 3, lowKick: 2, uppercut: 3, shot: 2 },
+  // Force field: a green Borg honeycomb, stops shots only.
+  field: { color: '#56f08a', style: 'hex', blocks: ['shots'] },
+  // Quickest on her feet, highest jump.
+  stats: { walk: 5.8, backWalk: 4.4, jumpV: 16.2, jumpVX: 7.0, gravity: 1, power: 1 },
 };
 
 CHARACTERS.fett.altColors = {
@@ -370,7 +361,11 @@ CHARACTERS.mando = {
     metal: '#24252b', metalLight: '#b9bbc2', energy: '#ff6a2a',
   },
   altColors: {},
-  stats: { walk: 5.0, backWalk: 3.6, jumpV: 15.2, jumpVX: 6.0, power: 1.05 },
+  ratings: { punch: 2, kick: 2, lowKick: 1, uppercut: 3, shot: 2 },
+  // Force field: brown, stops shots and kicks.
+  field: { color: '#a8774a', style: 'plate', blocks: ['shots', 'kicks'] },
+  // Jetpack: floaty jumps.
+  stats: { walk: 4.8, backWalk: 3.6, jumpV: 14.4, jumpVX: 6.0, gravity: 0.82, power: 1 },
 };
 
 // Order on the character select screen.

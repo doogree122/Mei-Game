@@ -4,7 +4,7 @@ class Effects {
     this.particles = [];
   }
 
-  spark(x, y, color, count = 12, speed = 6) {
+  spark(x, y, color, count = 12, speed = 6, ring = 28) {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = speed * (0.4 + Math.random());
@@ -14,7 +14,7 @@ class Effects {
         color, gravity: 0.15, kind: 'spark',
       });
     }
-    this.particles.push({ x, y, vx: 0, vy: 0, life: 8, max: 8, size: 28, color, gravity: 0, kind: 'ring' });
+    this.particles.push({ x, y, vx: 0, vy: 0, life: 8, max: 8, size: ring, color, gravity: 0, kind: 'ring' });
   }
 
   dust(x, y, dir = 0) {

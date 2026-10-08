@@ -54,8 +54,16 @@ class AIController {
 
     this.planTimer = Math.round(14 - d * 8 + Math.random() * 8);
 
-    if (incoming && self.shield === 0 && self.shieldCooldown === 0 && Math.abs(self.x - incoming.x) < 220
+    const fieldReady = self.shield === 0 && self.shieldCooldown === 0;
+    // An attack coming in close that this fighter's force field handles: one
+    // it blocks, or any attack for Vader, whose field shoves the attacker away.
+    const fieldStops = opp.move && !opp.move.def.projectile && dist < 150
+      && (self.field.repel || self.fieldBlocks(opp.move.def));
+    if (incoming && fieldReady && self.field.blocks.includes('shots') && Math.abs(self.x - incoming.x) < 220
       && r < 0.35 + d * 0.3) {
+      this.queued = 'shield';
+      this.planTimer = 6;
+    } else if (fieldStops && fieldReady && r < 0.25 + d * 0.25) {
       this.queued = 'shield';
       this.planTimer = 6;
     } else if (incoming && r < 0.4 + d * 0.5) {

@@ -415,13 +415,13 @@ class Game {
     for (const p of this.projectiles) {
       if (p.dead) continue;
       const target = this.fighters.find((f) => f !== p.owner);
-      // A force field swallows the shot before it reaches the body.
-      if (target.shield > 0) {
+      // A force field that stops shots swallows it before it reaches the body.
+      if (target.shield > 0 && target.field.blocks.includes('shots')) {
         const e = target.shieldEllipse();
         const r = p.def.radius;
         if (((p.x - e.cx) / (e.rx + r)) ** 2 + ((p.y - e.cy) / (e.ry + r)) ** 2 <= 1) {
           p.dead = true;
-          this.effects.spark(p.x, p.y, SHIELD_COLOR, 16, 6);
+          this.effects.spark(p.x, p.y, target.field.color, 16, 6);
           Sfx.shieldHit();
           continue;
         }
@@ -654,9 +654,30 @@ class Game {
     if (acceptInput) {
       this.resolveHits(a, b);
       this.resolveHits(b, a);
+      this.resolveRepel(a, b);
+      this.resolveRepel(b, a);
     }
     this.updateProjectiles();
     this.effects.update();
+  }
+
+  // Vader's Force field shoves the opponent away while it is up: anyone
+  // inside it is thrown back out, and their attack is cut off.
+  resolveRepel(f, opp) {
+    if (f.shield <= 0 || !f.field.repel || opp.isKO || opp.downTime > 0) return;
+    const e = f.shieldEllipse();
+    if (Math.abs(opp.x - f.x) > e.rx + 18 * opp.scale || opp.y > e.ry * 2) return;
+    const dir = opp.x >= f.x ? 1 : -1;
+    opp.vx = dir * 11;
+    opp.move = null;
+    opp.blockstun = Math.max(opp.blockstun, 14);
+    opp.state = 'block';
+    if (!f.repelled) {
+      f.repelled = true;
+      this.effects.spark(opp.x - dir * 20 * opp.scale, GROUND - 90 * opp.scale, f.field.color, 22, 8, 50);
+      this.shake = 6;
+      Sfx.shieldHit();
+    }
   }
 
   resolveHits(att, def) {
