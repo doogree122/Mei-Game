@@ -38,15 +38,15 @@ function paintedPattern(ctx, art, name) {
     set = {};
     art.patterns.set(ctx, set);
   }
-  if (!set[name]) set[name] = ctx.createPattern(art.textures[name], 'repeat');
-  return set[name];
+  if (!set[name] && art.textures[name]) set[name] = ctx.createPattern(art.textures[name], 'repeat');
+  return set[name] || null;
 }
 
 const rgb = (c, k = 1) => `rgb(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)})`;
 
 // Fill the current path as a rounded, lit surface. `from`/`to` span the shape
 // from its shadow side to its lit side; k darkens far-side limbs.
-function shadeSurface(ctx, art, colors, texture, from, to, k, grain) {
+function shadeSurface(ctx, art, colors, texture, from, to, k, grain, strength = 0.55) {
   const [dark, mid, light] = colors;
   const g = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
   g.addColorStop(0, rgb(dark, k));
@@ -55,12 +55,13 @@ function shadeSurface(ctx, art, colors, texture, from, to, k, grain) {
   g.addColorStop(1, rgb(mid, k * 0.92));
   ctx.fillStyle = g;
   ctx.fill();
+  const pattern = paintedPattern(ctx, art, texture);
+  if (!pattern) return;
   ctx.save();
   ctx.clip();
-  const pattern = paintedPattern(ctx, art, texture);
   pattern.setTransform(new DOMMatrix().scaleSelf(grain, grain));
   ctx.globalCompositeOperation = 'soft-light';
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = strength;
   ctx.fillStyle = pattern;
   ctx.fill();
   ctx.restore();
@@ -133,35 +134,65 @@ function torsoFrame(sk) {
   return (t, x) => ({ x: sk.hip.x + u.x * t * L + fwd.x * x, y: sk.hip.y + u.y * t * L + fwd.y * x });
 }
 
+// The torso: the outline filled with its base fabric, then `torsoLayers`
+// (panels of other fabric: shoulders, belt, sash...) clipped to it, then
+// `torsoLines` (seams). Fabrics name a color set and a texture in the paint block.
 function paintTorso(ctx, art, paint, sk, grain) {
   const at = torsoFrame(sk);
-  const back = paint.torsoBack.map(([t, x]) => at(t, x));
-  const front = paint.torsoFront.map(([t, x]) => at(t, x));
-  ctx.beginPath();
-  curveThrough(ctx, back, true);
-  curveThrough(ctx, [...front].reverse(), false);
-  ctx.closePath();
-  shadeSurface(ctx, art, paint.suit, 'suit', at(0.5, -13), at(0.5, 13), 1, grain);
-
-  // The gray sleeve fabric wraps over the top of the back and shoulder.
-  ctx.beginPath();
-  curveThrough(ctx, paint.raglan.map(([t, x]) => at(t, x)), true);
-  ctx.closePath();
-  shadeSurface(ctx, art, paint.sleeve, 'sleeve', at(0.9, -9), at(0.9, 7), 1, grain);
-
-  // Seams: the curved waist band and the center line down the front.
-  ctx.strokeStyle = rgb(paint.suit[0], 0.8);
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  curveThrough(ctx, paint.waistSeam.map(([t, x]) => at(t, x)), true);
-  ctx.stroke();
-  ctx.strokeStyle = rgb(paint.suit[2], 0.9);
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 0.35;
-  ctx.beginPath();
-  curveThrough(ctx, paint.waistSeam.map(([t, x]) => at(t - 0.025, x)), true);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
+  const outline = () => {
+    ctx.beginPath();
+    curveThrough(ctx, paint.torsoBack.map(([t, x]) => at(t, x)), true);
+    curveThrough(ctx, [...paint.torsoFront].reverse().map(([t, x]) => at(t, x)), false);
+    ctx.closePath();
+  };
+  const [colors, texture] = paint.torso;
+  outline();
+  shadeSurface(ctx, art, paint[colors], texture, at(0.5, -14), at(0.5, 14), 1, grain);
+  ctx.save();
+  outline();
+  ctx.clip();
+  for (const layer of paint.torsoLayers || []) {
+    ctx.beginPath();
+    if (layer.smooth) {
+      curveThrough(ctx, layer.shape.map(([t, x]) => at(t, x)), true);
+    } else {
+      layer.shape.forEach(([t, x], i) => {
+        const q = at(t, x);
+        if (i === 0) ctx.moveTo(q.x, q.y);
+        else ctx.lineTo(q.x, q.y);
+      });
+    }
+    ctx.closePath();
+    shadeSurface(ctx, art, paint[layer.fabric[0]], layer.fabric[1], at(0.5, -14), at(0.5, 14), 1, layer.grain || grain, layer.strength);
+  }
+  // Badges: small flat shapes on the chest (a comm badge).
+  for (const badge of paint.torsoBadges || []) {
+    ctx.beginPath();
+    badge.shape.forEach(([t, x], i) => {
+      const q = at(t, x);
+      if (i === 0) ctx.moveTo(q.x, q.y);
+      else ctx.lineTo(q.x, q.y);
+    });
+    ctx.closePath();
+    const q0 = at(...badge.shape[0]);
+    const q1 = at(...badge.shape[2]);
+    const bg = ctx.createLinearGradient(q0.x, q0.y, q1.x, q1.y);
+    bg.addColorStop(0, rgb(badge.colors[1]));
+    bg.addColorStop(1, rgb(badge.colors[0]));
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = rgb(badge.colors[0], 0.7);
+    ctx.lineWidth = 0.2;
+    ctx.stroke();
+  }
+  for (const line of paint.torsoLines || []) {
+    ctx.strokeStyle = rgb(line.color);
+    ctx.lineWidth = line.width;
+    ctx.beginPath();
+    curveThrough(ctx, line.pts.map(([t, x]) => at(t, x)), true);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 // The suit's neckline: a thin band of fabric at the base of the neck, over the
@@ -172,12 +203,13 @@ function paintCollar(ctx, art, paint, sk, grain) {
   ctx.beginPath();
   curveThrough(ctx, band, true);
   ctx.closePath();
-  shadeSurface(ctx, art, paint.sleeve, 'sleeve', at(1, -6), at(1, 6), 1, grain);
-  // A thin blue trim along the neckline's edge.
-  ctx.strokeStyle = rgb(paint.suit[1]);
+  const [colors, texture] = paint.collarFabric;
+  shadeSurface(ctx, art, paint[colors], texture, at(1, -6), at(1, 6), 1, grain);
+  // A thin trim along the neckline's edge.
+  ctx.strokeStyle = rgb(paint.collarTrim);
   ctx.lineWidth = 0.7;
   ctx.beginPath();
-  curveThrough(ctx, paint.collarTrim.map(([t, x]) => at(t, x)), true);
+  curveThrough(ctx, paint.collarTop.map(([t, x]) => at(t, x)), true);
   ctx.stroke();
 }
 
@@ -358,6 +390,137 @@ function paintFace(ctx, sk, paint) {
 // reaches the floor (4 units below the ankle joint). BOOT_LENGTH stretches the
 // foot front to back.
 const BOOT_LENGTH = 1.35;
+// ---- Painted Klingon profile head ----
+
+const KLINGON_SKIN = [
+  [1.2, 9.8], [3.6, 8.6], [5.2, 6.8], [6.2, 4.8], [6.9, 3.4], [6.4, 2.6], [5.7, 2.1], [6.1, 1.2], [7.3, -0.6],
+  [7.6, -1.6], [6.6, -2.3], [6.5, -3.4], [6.6, -4.2], [6.2, -6.0], [4.6, -7.6], [2.8, -7.8], [2.6, -12],
+  [-3.8, -12], [-4.0, -5.0], [-6.6, 1.5], [-5.6, 6.8], [-2.6, 9.4],
+];
+const KLINGON_HAIR = [
+  [1.0, 10.3], [-1.6, 11.2], [-5.0, 9.8], [-7.6, 6.0], [-8.4, 0.5], [-8.2, -5.5], [-7.4, -11.5], [-5.8, -15.5],
+  [-4.4, -15.0], [-4.1, -10.2], [-3.6, -5.2], [-2.6, -0.8], [-1.6, 3.2], [-0.6, 6.6], [0.4, 8.8],
+];
+const KLINGON_BEARD = [
+  [6.6, -2.4], [7.1, -3.2], [6.8, -4.6], [6.6, -6.0], [5.6, -7.6], [3.6, -8.3], [0.8, -7.0], [-2.0, -4.4],
+  [-2.8, -1.2], [-1.8, -1.0], [0.4, -3.6], [2.8, -4.7], [4.9, -4.3], [5.7, -3.4], [5.5, -2.7],
+];
+
+function paintKlingonFace(ctx, sk, paint) {
+  const F = paint.face;
+  const H = headFrame(sk, F.size, F.drop);
+  const [sd, sm, sl] = F.skin;
+
+  shapeThrough(ctx, H, KLINGON_SKIN);
+  const g = ctx.createLinearGradient(H([-6, 0]).x, H([-6, 0]).y, H([7.5, 0]).x, H([7.5, 0]).y);
+  g.addColorStop(0, rgb(sd));
+  g.addColorStop(0.55, rgb(sm));
+  g.addColorStop(0.86, rgb(sl));
+  g.addColorStop(1, rgb(sm));
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // The forehead crest: ridges that run up from the brow over the top of the
+  // head, each lit on top with a shadow beneath.
+  for (let i = 0; i < 7; i++) {
+    const t = i / 6;
+    const x0 = 6.4 - t * 5.0;
+    const y0 = 3.7 + t * 5.6;
+    const ridge = [[x0 + 0.3, y0 - 0.2], [x0 - 1.1, y0 + 0.5 - t * 0.3], [x0 - 2.6, y0 + 0.2 - t * 0.6]];
+    strokeThrough(ctx, H, ridge.map(([x, y]) => [x, y - 0.35]), 'rgba(40,18,10,0.45)', 0.45 * F.size);
+    strokeThrough(ctx, H, ridge, rgb(F.ridge), 0.42 * F.size);
+  }
+  // A central ridge along the crest.
+  strokeThrough(ctx, H, [[6.2, 4.4], [5.0, 6.8], [3.4, 8.6], [1.4, 9.7]], rgb(F.ridge), 0.5 * F.size);
+  // Heavy brow shadow over the deep-set eye, cheekbone light, shadow under the jaw.
+  softSpot(ctx, H([5.2, 1.8]), 1.9 * F.size, 'rgb(40,20,12)', 0.6);
+  softSpot(ctx, H([4.2, -0.9]), 2.6 * F.size, rgb(sl), 0.45);
+  const jg = ctx.createLinearGradient(H([0, -6]).x, H([0, -6]).y, H([0, -9.5]).x, H([0, -9.5]).y);
+  jg.addColorStop(0, 'rgba(30,14,8,0)');
+  jg.addColorStop(0.4, 'rgba(30,14,8,0.5)');
+  jg.addColorStop(1, 'rgba(30,14,8,0.2)');
+  ctx.fillStyle = jg;
+  ctx.fill();
+  ctx.restore();
+  shapeThrough(ctx, H, KLINGON_SKIN);
+  ctx.strokeStyle = 'rgba(25,12,8,0.45)';
+  ctx.lineWidth = 0.2 * F.size;
+  ctx.stroke();
+
+  // Eye: small and dark under the brow.
+  shapeThrough(ctx, H, [[4.5, 2.0], [5.2, 2.2], [5.75, 1.95], [5.4, 1.6], [4.9, 1.6]]);
+  ctx.fillStyle = 'rgb(205,190,175)';
+  ctx.fill();
+  const iris = H([5.3, 1.88]);
+  ctx.beginPath();
+  ctx.arc(iris.x, iris.y, 0.3 * F.size, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgb(40,24,16)';
+  ctx.fill();
+  strokeThrough(ctx, H, [[4.4, 2.1], [5.2, 2.35], [5.85, 2.05]], 'rgb(30,14,10)', 0.3 * F.size);
+  // A scowling brow line and a wide nostril.
+  strokeThrough(ctx, H, [[4.4, 2.75], [5.6, 3.1], [6.7, 3.2]], 'rgba(30,14,10,0.7)', 0.35 * F.size);
+  strokeThrough(ctx, H, [[6.4, -1.6], [6.8, -2.0], [7.2, -1.9]], 'rgba(30,12,8,0.85)', 0.35 * F.size);
+
+  // Beard and mustache, with fine hairs.
+  const [hd, hm, hl] = F.hair;
+  shapeThrough(ctx, H, KLINGON_BEARD);
+  ctx.fillStyle = rgb(F.beard);
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  for (let i = 0; i < 14; i++) {
+    const x = 6.4 - i * 0.62;
+    strokeThrough(ctx, H, [[x, -3.0 + i * 0.12], [x - 0.5, -5.2 + i * 0.25], [x - 0.9, -7.6 + i * 0.35]], i % 2 ? 'rgba(150,110,85,0.35)' : 'rgba(10,6,4,0.4)', 0.16 * F.size);
+  }
+  ctx.restore();
+  strokeThrough(ctx, H, [[5.5, -3.95], [6.6, -3.9]], 'rgb(20,8,6)', 0.22 * F.size); // mouth
+
+  // The long mane, swept back from the crest and down the back.
+  shapeThrough(ctx, H, KLINGON_HAIR);
+  const hg = ctx.createLinearGradient(H([-8, 0]).x, H([-8, 0]).y, H([0, 8]).x, H([0, 8]).y);
+  hg.addColorStop(0, rgb(hd));
+  hg.addColorStop(0.6, rgb(hm));
+  hg.addColorStop(1, rgb(hl));
+  ctx.fillStyle = hg;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  for (let i = 0; i < 26; i++) {
+    const o = i / 25;
+    const w = Math.sin(i * 2.3) * 0.4;
+    const pts = [[0.6 - o * 1.6, 10.2 - o * 0.8], [-3.4 - o * 1.4 + w, 10.0 - o * 1.4], [-6.6 + o * 1.6, 6 - o * 2], [-7.6 + o * 2.4 + w, -2 - o * 1], [-6.8 + o * 1.8, -12 - o * 2]];
+    strokeThrough(ctx, H, pts, i % 3 === 0 ? 'rgba(150,112,88,0.38)' : 'rgba(5,3,2,0.35)', (0.18 + (i % 4) * 0.05) * F.size);
+  }
+  softSpot(ctx, H([-2.8, 9.2]), 3 * F.size, rgb(hl), 0.45);
+  softSpot(ctx, H([-6.6, 1.0]), 2.6 * F.size, rgb(hl), 0.25);
+  ctx.restore();
+}
+
+// A flat shoe in the same frame: rounded toe, low heel, glossy.
+function paintShoe(ctx, art, paint, knee, foot, k) {
+  const len = Math.hypot(foot.x - knee.x, foot.y - knee.y) || 1;
+  const d = { x: (foot.x - knee.x) / len, y: (foot.y - knee.y) / len };
+  const f = { x: d.y, y: -d.x };
+  const at = ([x, y]) => ({ x: foot.x + f.x * x + d.x * y, y: foot.y + f.y * x + d.y * y });
+  const [dark, mid, light] = paint.shoe;
+  ctx.beginPath();
+  curveThrough(ctx, [[-4.4, -2.4], [-5.0, 1.2], [-4.8, 4], [2.4, 4.1], [10.6, 4], [13.2, 2.8], [12.2, 0.6], [7.6, -0.6], [3.6, -1.8], [3.2, -2.6]].map(at), true);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(at([0, 4]).x, at([0, 4]).y, at([0, -2]).x, at([0, -2]).y);
+  g.addColorStop(0, rgb(dark, k));
+  g.addColorStop(0.6, rgb(mid, k));
+  g.addColorStop(1, rgb(dark, k));
+  ctx.fillStyle = g;
+  ctx.fill();
+  softSpot(ctx, at([8.6, 1.0]), 2.6, rgb(light, k), 0.7);
+  ctx.strokeStyle = rgb(dark, k * 0.6);
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  curveThrough(ctx, [[-4.8, 4], [2.4, 4.2], [10.6, 4.1]].map(at), true);
+  ctx.stroke();
+}
+
 function paintBoot(ctx, art, paint, knee, foot, k, grain) {
   const len = Math.hypot(foot.x - knee.x, foot.y - knee.y) || 1;
   const d = { x: (foot.x - knee.x) / len, y: (foot.y - knee.y) / len };
@@ -415,25 +578,43 @@ function paintedBody(ctx, sk, f, art) {
   // Any whole-figure filter (hit flash, mirror-match colors) set by the caller.
   const base = ctx.filter === 'none' ? '' : ctx.filter;
 
-  const arm = (side, k, fist) => {
+  const [armColors, armTexture] = p.arm;
+  const [legColors, legTexture] = p.leg;
+  const arm = (side, k, hand) => {
     const elbow = sk['elbow' + side];
-    const hand = sk['hand' + side];
-    paintLimb(ctx, art, p.sleeve, 'sleeve', sk.shoulder, elbow, W.shoulder, W.elbow, { front: [0.5, 0.35] }, k, grain);
-    paintLimb(ctx, art, p.sleeve, 'sleeve', elbow, hand, W.elbow * 0.95, W.wrist, { front: [0.45, 0.3] }, k, grain);
+    const wrist = sk['hand' + side];
+    paintLimb(ctx, art, p[armColors], armTexture, sk.shoulder, elbow, W.shoulder, W.elbow, { front: [0.5, 0.35] }, k, grain);
+    paintLimb(ctx, art, p[armColors], armTexture, elbow, wrist, W.elbow * 0.95, W.wrist, { front: [0.45, 0.3] }, k, grain);
     if (k < 1) ctx.filter = `${base} brightness(${k})`;
-    drawPiece(ctx, art.pieces[fist], hand, sub(elbow, hand), p.pieceScale);
+    drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
     ctx.filter = base || 'none';
+  };
+  // A stripe down the outside of the leg (trouser piping).
+  const stripe = (a, b, k) => {
+    if (!p.legStripe) return;
+    ctx.strokeStyle = rgb(p.legStripe, k);
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(a.x + (b.x - a.x) * 0.08, a.y + (b.y - a.y) * 0.08);
+    ctx.lineTo(b.x - (b.x - a.x) * 0.04, b.y - (b.y - a.y) * 0.04);
+    ctx.stroke();
   };
   const leg = (side, k) => {
     const knee = sk['knee' + side];
     const foot = sk['foot' + side];
-    paintLimb(ctx, art, p.suit, 'suit', sk.hip, knee, W.hip, W.knee, { front: [1.0, 0.35], back: [1.6, 0.18] }, k, grain);
-    paintLimb(ctx, art, p.suit, 'suit', knee, foot, W.knee * 0.95, W.ankle, { back: [1.5, 0.3], front: [0.3, 0.2] }, k, grain);
-    paintBoot(ctx, art, p, knee, foot, k, grain);
+    const swell = p.legSwell || { thigh: { front: [1.0, 0.35], back: [1.6, 0.18] }, shin: { back: [1.5, 0.3], front: [0.3, 0.2] } };
+    if (p.foot === 'shoe') paintShoe(ctx, art, p, knee, foot, k);
+    paintLimb(ctx, art, p[legColors], legTexture, sk.hip, knee, W.hip, W.knee, swell.thigh, k, grain);
+    stripe(sk.hip, knee, k);
+    paintLimb(ctx, art, p[legColors], legTexture, knee, foot, W.knee * 0.95, W.ankle, swell.shin, k, grain);
+    stripe(knee, foot, k);
+    if (p.foot !== 'shoe') paintBoot(ctx, art, p, knee, foot, k, grain);
   };
+  const shooting = !!(f.move && f.move.def.projectile);
+  const frontHand = shooting && p.hands.shot ? p.hands.shot : p.hands.front;
 
   const rifle = f.char.armPose ? rifleMode(f) : null;
-  arm('B', FAR, 'borgFist');
+  arm('B', FAR, p.hands.back);
   if (rifle === 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
   leg('B', FAR);
   paintTorso(ctx, art, p, sk, grain);
@@ -443,12 +624,13 @@ function paintedBody(ctx, sk, f, art) {
   const up = sub(sk.neck, sk.head);
   const ul = Math.hypot(up.x, up.y) || 1;
   const along = (d) => ({ x: sk.neck.x + (up.x / ul) * d, y: sk.neck.y + (up.y / ul) * d });
-  paintLimb(ctx, art, p.skin, 'sleeve', along(-1), along(p.neckLift + 5), W.neck, W.neck * 0.92, {}, 1, grain);
-  if (p.face) paintFace(ctx, sk, p);
+  paintLimb(ctx, art, p.skin, armTexture, along(-1), along(p.neckLift + 5), W.neck, W.neck * 0.92, {}, 1, grain);
+  if (p.face && p.face.style === 'klingon') paintKlingonFace(ctx, sk, p);
+  else if (p.face) paintFace(ctx, sk, p);
   else drawPiece(ctx, art.pieces.head, along(p.neckLift), up, p.headScale);
-  paintCollar(ctx, art, p, sk, grain);
+  if (p.collar) paintCollar(ctx, art, p, sk, grain);
   if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
-  arm('F', 1, 'fist');
+  arm('F', 1, frontHand);
 }
 
 // Drawn straight onto the screen canvas in world coordinates, with the same

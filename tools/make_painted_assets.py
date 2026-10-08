@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Pull the pieces the painted renderer needs out of a reference picture.
 
-Usage: python3 tools/make_painted_assets.py <seven.webp> src/painted-seven.js
+Usage: python3 tools/make_painted_assets.py <character id> <picture> src/painted-<id>.js
 
-The painted renderer (src/painted.js) draws the body, arms, legs and boots as
-smooth shaded shapes. From the picture it takes only what can't be painted
-well in code: the head and the two fists, cut from the backdrop with a soft
-edge, and two small seamless texture tiles (the suit's scaly fabric and the
-sleeve knit) that are laid over the painted shapes. Coordinates are for the
-2000x1116 side-view picture of Seven in a fighting stance on white.
+The painted renderer (src/painted.js) draws the body, head, arms, legs and
+feet as smooth shaded shapes. From the picture it takes only what can't be
+painted well in code: the hands (fists, a hand holding a weapon), cut from the
+white backdrop with a soft edge, and small seamless texture tiles of the
+fabrics, laid over the painted shapes. Coordinates in CONFIGS are for the
+2000x1116 picture each character was taken from.
 """
 import base64
 import io
@@ -18,9 +18,12 @@ import sys
 import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
-PIECES = {
-    # pivot: where it attaches (base of the neck, the wrist); tip: a point the
-    # renderer lines up with the bone (the top of the head, the knuckles).
+# pivot: where a piece attaches (the base of the neck, the wrist); tip: a point
+# the renderer lines up with the bone (the top of the head, the knuckles).
+# Texture boxes are plain stretches of each fabric; `amp` sets how strong the
+# grain is.
+SEVEN = {
+  'pieces': {
     # Down to where the neck meets the suit's neckline, so her own neck is kept.
     'head': {'poly': [(948, 28), (1062, 28), (1092, 80), (1086, 124), (1075, 140), (1066, 176), (1040, 196), (1036, 218), (1002, 216), (984, 200), (970, 186), (952, 150)],
              'pivot': (1002, 212), 'tip': (1010, 40)},
@@ -28,12 +31,29 @@ PIECES = {
              'pivot': (1097, 220), 'tip': (1106, 170)},
     'borgFist': {'poly': [(1170, 174), (1244, 174), (1244, 230), (1224, 250), (1199, 250), (1179, 238), (1170, 216)],
                  'pivot': (1204, 242), 'tip': (1212, 182)},
+  },
+  'textures': {
+    'suit': ((998, 596, 1038, 636), 160),
+    'sleeve': ((1064, 264, 1086, 286), 160),
+  },
 }
-# Patches for the texture tiles: plain stretches of suit and sleeve.
-TEXTURES = {
-    'suit': (998, 596, 1038, 636),
-    'sleeve': (1064, 264, 1086, 286),
+
+WORF = {
+  'pieces': {
+    # His hanging fist (both arms use it) and the hand holding his phaser.
+    'fist': {'poly': [(796, 600), (852, 598), (858, 615), (865, 640), (867, 662), (861, 684), (840, 690), (805, 680), (797, 640)],
+             'pivot': (825, 604), 'tip': (835, 682)},
+    'phaserHand': {'poly': [(1150, 282), (1280, 282), (1280, 322), (1240, 328), (1244, 350), (1240, 390), (1195, 392), (1162, 380), (1160, 340), (1150, 320)],
+                   'pivot': (1162, 360), 'tip': (1230, 352)},
+  },
+  'textures': {
+    'tunic': ((800, 330, 836, 366), 120),
+    'cloth': ((900, 700, 936, 736), 120),
+    'sash': ((1040, 400, 1070, 430), 260),
+  },
 }
+
+CONFIGS = {'seven': SEVEN, 'worf': WORF}
 
 
 def figure_mask(im):
@@ -68,7 +88,7 @@ def data_uri(img, fmt):
     return f'data:image/{fmt};base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
-def texture_tile(im, box):
+def texture_tile(im, box, amp):
     """Seamless gray detail tile (128 = no change), for a soft-light overlay."""
     # The fabric's grain relative to its local brightness; blurred with a
     # margin so the patch edges don't leave a ring.
@@ -79,7 +99,7 @@ def texture_tile(im, box):
     inner = (pad, pad, pad + x1 - x0, pad + y1 - y0)
     lum = np.asarray(wide.crop(inner)).astype(float)
     base = np.asarray(blur.crop(inner)).astype(float) + 1
-    detail = np.clip(128 + (lum / base - 1) * 160, 0, 255).astype(np.uint8)
+    detail = np.clip(128 + (lum / base - 1) * amp, 0, 255).astype(np.uint8)
     tile = Image.fromarray(detail, 'L')
     # Mirror into a 2x2 block so the edges meet.
     w, h = tile.size
@@ -91,11 +111,12 @@ def texture_tile(im, box):
     return out
 
 
-def main(src, out):
+def main(char_id, src, out):
+    cfg = CONFIGS[char_id]
     im = Image.open(src).convert('RGB')
     alpha = figure_mask(im)
     data = {'pieces': {}, 'textures': {}}
-    for name, spec in PIECES.items():
+    for name, spec in cfg['pieces'].items():
         poly = Image.new('L', im.size, 0)
         ImageDraw.Draw(poly).polygon(spec['poly'], fill=255)
         # The cut edges fade (they sit over painted shapes); the outline stays.
@@ -109,20 +130,20 @@ def main(src, out):
             'pivot': [spec['pivot'][0] - box[0], spec['pivot'][1] - box[1]],
             'tip': [spec['tip'][0] - box[0], spec['tip'][1] - box[1]],
         }
-    for name, box in TEXTURES.items():
-        data['textures'][name] = data_uri(texture_tile(im, box), 'png')
+    for name, (box, amp) in cfg['textures'].items():
+        data['textures'][name] = data_uri(texture_tile(im, box, amp), 'png')
     with open(out, 'w') as f:
-        f.write('// Generated by tools/make_painted_assets.py from a reference picture of Seven.\n')
+        f.write(f'// Generated by tools/make_painted_assets.py from a reference picture of {char_id}.\n')
         f.write('var PAINTED = window.PAINTED || {};\n')
-        f.write('PAINTED.seven = ' + json.dumps(data) + ';\n')
+        f.write(f'PAINTED.{char_id} = ' + json.dumps(data) + ';\n')
     print(out, sum(len(v['src']) for v in data['pieces'].values()) // 1024, 'KB pieces')
     preview = Image.new('RGBA', (900, 300), (90, 90, 110, 255))
     x = 0
-    for name in PIECES:
+    for name in cfg['pieces']:
         p = Image.open(io.BytesIO(base64.b64decode(data['pieces'][name]['src'].split(',')[1])))
         preview.alpha_composite(p, (x, 0))
         x += p.width + 10
-    for name in TEXTURES:
+    for name in cfg['textures']:
         t = Image.open(io.BytesIO(base64.b64decode(data['textures'][name].split(',')[1]))).convert('RGBA')
         preview.alpha_composite(t, (x, 0))
         x += t.width + 10
@@ -130,4 +151,4 @@ def main(src, out):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:4])

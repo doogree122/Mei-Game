@@ -52,8 +52,54 @@ CHARACTERS.worf = {
   id: 'worf',
   name: 'WORF',
   blurb: 'Heavy hitter · pulse blaster',
-  look: 'warrior', // ridge-browed alien officer
+  look: 'painted', // painted body and head (src/painted.js), hands from a picture
+  fallbackLook: 'warrior', // drawn version, until the picture pieces load
   scale: 2.0, // the taller of the two
+  paint: {
+    tunic: [[118, 72, 22], [196, 140, 44], [236, 190, 86]], // dark, mid, light
+    black: [[6, 6, 8], [30, 28, 30], [78, 72, 70]],
+    belt: [[10, 10, 12], [44, 42, 44], [96, 92, 92]],
+    sash: [[50, 50, 56], [118, 118, 126], [196, 196, 204]],
+    badge: [[150, 110, 40], [246, 214, 130]],
+    skin: [[70, 40, 30], [118, 72, 50], [160, 106, 78]],
+    shoe: [[6, 6, 8], [34, 34, 40], [150, 150, 160]],
+    legStripe: [164, 120, 44],
+    widths: { hip: 11, knee: 7.2, ankle: 5.2, shoulder: 6.8, elbow: 5.8, wrist: 4.6, neck: 5 },
+    legSwell: { thigh: { front: [0.4, 0.4], back: [0.6, 0.25] }, shin: { back: [0.3, 0.4] } },
+    torsoBack: [[-0.12, -11], [0, -14], [0.15, -13.2], [0.34, -11.8], [0.55, -11.8], [0.8, -11.8], [0.94, -9.2], [1.04, -4.8]],
+    torsoFront: [[-0.12, 8.5], [0.1, 10.8], [0.34, 11.4], [0.52, 11.8], [0.66, 12.8], [0.8, 11.8], [0.92, 8.2], [1.04, 4.6]],
+    torso: ['tunic', 'tunic'],
+    torsoLayers: [
+      { shape: [[1.1, -12], [1.1, 6], [0.92, 7.5], [0.86, 2], [0.83, -13]], fabric: ['black', 'cloth'] }, // shoulder yoke
+      { shape: [[0.82, -15], [0.8, -8.5], [0.6, -7.6], [0.33, -8], [0.3, -15]], fabric: ['black', 'cloth'] }, // side panel
+      { shape: [[0.21, -16], [0.21, 16], [-0.4, 16], [-0.4, -16]], fabric: ['black', 'cloth'] }, // trousers
+      { shape: [[0.335, -16], [0.335, 16], [0.2, 16], [0.2, -16]], fabric: ['belt', 'cloth'] }, // wide belt
+      { shape: [[1.07, -1], [0.34, 15], [0.22, 15], [0.22, 7], [0.95, -11]], fabric: ['sash', 'sash'], grain: 0.24, strength: 1 }, // baldric
+    ],
+    torsoLines: [{ pts: [[1.07, -1], [0.34, 15]], color: [30, 30, 34], width: 0.45 }, { pts: [[0.95, -11], [0.22, 7]], color: [30, 30, 34], width: 0.45 }],
+    torsoBadges: [{ shape: [[0.86, 6.2], [0.74, 9.4], [0.77, 7.6], [0.73, 5.6]], colors: [[150, 110, 40], [246, 214, 130]] }],
+    arm: ['tunic', 'tunic'],
+    leg: ['black', 'cloth'],
+    foot: 'shoe',
+    hands: { front: 'fist', back: 'fist', shot: 'phaserHand' },
+    // A black stand-up collar with a gold edge.
+    collarFabric: ['black', 'cloth'],
+    collarTrim: [164, 120, 44],
+    collar: [[0.96, -7.6], [1.08, -6.2], [1.15, -2.6], [1.15, 1.6], [1.09, 4.8], [0.95, 6.2], [0.92, 2], [0.94, -2], [0.92, -6]],
+    collarTop: [[1.08, -6.2], [1.15, -2.6], [1.15, 1.6], [1.09, 4.8]],
+    grain: 0.3,
+    pieceScale: 0.2, // hands
+    neckLift: 3,
+    face: {
+      style: 'klingon',
+      size: 1.9,
+      drop: 4,
+      skin: [[70, 40, 30], [118, 72, 50], [160, 106, 78]],
+      ridge: [150, 100, 82],
+      hair: [[20, 12, 10], [50, 32, 24], [100, 70, 54]],
+      beard: [52, 32, 24],
+    },
+  },
   projectile: 'pulse', // special fires a hand-blaster pulse
   victoryPose: 'armsCrossed',
   colors: {
@@ -155,12 +201,23 @@ CHARACTERS.seven = {
     // Torso outline as [t, x]: t from hip (0) to neck (1), x forward (+) or back (-).
     torsoBack: [[-0.12, -9], [0, -13], [0.15, -12], [0.34, -7.6], [0.55, -8], [0.8, -9], [0.94, -6.8], [1.04, -3.6]],
     torsoFront: [[-0.12, 6.8], [0.1, 8.6], [0.34, 6.9], [0.52, 8.8], [0.66, 12.6], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
-    raglan: [[1.04, -3.6], [0.94, -7], [0.8, -9.1], [0.72, -8.4], [0.7, -3.6], [0.86, 0.6], [0.98, 2.9], [1.04, 3.4]],
-    waistSeam: [[0.46, -7.7], [0.42, -2.4], [0.36, 3.6], [0.38, 7]],
+    // Fabrics are [color set, texture].
+    torso: ['suit', 'suit'],
+    torsoLayers: [
+      // The gray sleeve fabric wraps over the top of the back and shoulder.
+      { shape: [[1.04, -3.6], [0.94, -7], [0.8, -9.1], [0.72, -8.4], [0.7, -3.6], [0.86, 0.6], [0.98, 2.9], [1.04, 3.4]], fabric: ['sleeve', 'sleeve'], smooth: true },
+    ],
+    torsoLines: [{ pts: [[0.46, -7.7], [0.42, -2.4], [0.36, 3.6], [0.38, 7]], color: [18, 30, 62], width: 0.5 }], // waist seam
+    arm: ['sleeve', 'sleeve'],
+    leg: ['suit', 'suit'],
+    foot: 'heel',
+    hands: { front: 'fist', back: 'borgFist' },
+    collarFabric: ['sleeve', 'sleeve'],
+    collarTrim: [46, 78, 138],
     // The suit's low round neckline: a thin band at the base of the neck, as a
     // closed loop, and its top edge.
     collar: [[0.97, -6.4], [1.03, -4.6], [1.05, -1.4], [1.03, 2], [0.99, 4.6], [0.94, 5.6], [0.97, 2], [0.99, -1.4], [0.97, -4.6]],
-    collarTrim: [[1.03, -4.6], [1.05, -1.4], [1.03, 2], [0.99, 4.6]],
+    collarTop: [[1.03, -4.6], [1.05, -1.4], [1.03, 2], [0.99, 4.6]],
     grain: 0.3, // texture tile pixels to skeleton units
     pieceScale: 0.19, // fists
     headScale: 0.19,
