@@ -13,8 +13,9 @@ const MENU = [
 const MENU_TOP = 250;
 const MENU_STEP = 48;
 // Character select cards.
-const CARD_W = 200;
-const CARD_GAP = 24;
+const CARD_GAP = 18;
+// As wide as fits the roster, up to 200.
+const CARD_W = Math.min(200, (W - 40 - (ROSTER.length - 1) * CARD_GAP) / ROSTER.length);
 const CARD_TOP = 104;
 const CARD_H = 330;
 const CARD_X0 = (W - (ROSTER.length * CARD_W + (ROSTER.length - 1) * CARD_GAP)) / 2;
@@ -169,7 +170,7 @@ class Game {
       ctx.fill();
       // Preview model standing in the card.
       const f = this.previews[i];
-      const s = 0.82;
+      const s = 0.82 * (CARD_W / 200);
       ctx.save();
       ctx.beginPath();
       ctx.roundRect(x, CARD_TOP, CARD_W, CARD_H, 12);
