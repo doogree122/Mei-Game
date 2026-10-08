@@ -54,7 +54,7 @@ CHARACTERS.worf = {
   blurb: 'Heavy hitter · pulse blaster',
   look: 'painted', // painted body and head (src/painted.js), hands from a picture
   fallbackLook: 'warrior', // drawn version, until the picture pieces load
-  scale: 2.0, // the taller of the two
+  scale: 2.14, // the tallest of Worf, Seven and Mando
   paint: {
     tunic: [[118, 72, 22], [196, 140, 44], [236, 190, 86]], // dark, mid, light
     black: [[6, 6, 8], [30, 28, 30], [78, 72, 70]],
@@ -301,7 +301,7 @@ CHARACTERS.mando = {
   blurb: 'Beskar armor · blaster',
   look: 'painted',
   fallbackLook: 'armored',
-  scale: 1.95,
+  scale: 2.12, // as tall as Seven (her hair rises above his helmet's top), shorter than Worf
   projectile: 'bolt',
   shot: { speed: 9, damage: 12 },
   paint: {
