@@ -12,6 +12,22 @@ const BUFFER_FRAMES = 6;
 // Force field: stops blaster shots (not punches or kicks) for a moment, then recharges.
 const SHIELD_FRAMES = 45;
 const SHIELD_COOLDOWN = 90;
+// A character's force field: `field` in characters.js over these defaults.
+// `blocks` lists what it stops: 'shots', 'punches' (punch, low punch,
+// uppercut), 'kicks' (kick, sweep, jump kick). With `repel` it shoves the
+// opponent back while up. `style` picks its look in render.js.
+const DEFAULT_FIELD = { color: '#6fd8ff', style: 'bubble', frames: SHIELD_FRAMES, cooldown: SHIELD_COOLDOWN, blocks: ['shots'], repel: false, size: 1 };
+const PUNCHES = ['punch', 'lowPunch', 'uppercut'];
+
+// Move strength ratings (characters.js `ratings`, 1 weak, 2 normal, 3 strong).
+const RATING = {
+  1: { damage: 0.75, push: 0.85, hitstun: -2, shotSize: 0.8 },
+  2: { damage: 1, push: 1, hitstun: 0, shotSize: 1 },
+  3: { damage: 1.35, push: 1.3, hitstun: 3, shotSize: 1.25 },
+};
+// Which rating each move uses.
+const RATED_MOVES = { punch: 'punch', kick: 'kick', sweep: 'lowKick', uppercut: 'uppercut' };
+
 
 // Limb lengths in pixels.
 const BODY = { thigh: 34, shin: 34, torso: 48, neck: 6, ua: 25, fa: 25, head: 15 };
@@ -46,7 +62,8 @@ const MOVES = {
   // too and launches into a knockdown.
   uppercut: {
     pose: 'uppercut', startup: 6, active: 5, recovery: 20, lunge: 2.5,
-    damage: 12, hitstun: 0, blockstun: 12, push: 3, launch: 9,
+    // Launches the opponent up and back: they fly across the floor and skid.
+    damage: 12, hitstun: 0, blockstun: 12, push: 3, launch: 13, launchX: 9,
     limb: 'handF', radius: 18, height: 'mid', sound: 'heavy', knockdown: true,
   },
   airKick: {
@@ -231,14 +248,17 @@ class Fighter {
 
     if (this.shield > 0) {
       this.shield--;
-      if (this.shield === 0) this.shieldCooldown = SHIELD_COOLDOWN;
+      if (this.shield === 0) this.shieldCooldown = this.field.cooldown;
     } else if (this.shieldCooldown > 0) {
       this.shieldCooldown--;
     }
     if (this.isFree && this.shield === 0 && this.shieldCooldown === 0 && this.consume('shield')) {
-      this.shield = SHIELD_FRAMES;
-      Sfx.shield();
+      this.shield = this.field.frames;
+      this.repelled = false;
+      Sfx.shield(this.field.frames / 60);
     }
+    // Skidding along the floor after being launched.
+    if (this.downTime > 0 && Math.abs(this.vx) > 2.5 && this.time % 3 === 0) game.effects.dust(this.x, GROUND, -Math.sign(this.vx));
 
     const back = this.facing === 1 ? input.left : input.right;
     const fwd = this.facing === 1 ? input.right : input.left;
@@ -318,11 +338,11 @@ class Fighter {
       if (fwd) {
         this.vx = s.walk * this.facing;
         this.state = 'walk';
-        this.walkPhase += 0.2;
+        this.walkPhase += 0.2 * (s.walk / 5); // stride rate follows walking speed
       } else if (back) {
         this.vx = -s.backWalk * this.facing;
         this.state = 'walk';
-        this.walkPhase -= 0.16;
+        this.walkPhase -= 0.16 * (s.walk / 5);
       } else {
         this.vx = 0;
         this.state = 'idle';
@@ -346,14 +366,46 @@ class Fighter {
 
   // A move's data: the shared MOVES entry with this character's overrides
   // (e.g. a saber swing in place of a punch) merged on top.
+  // Then scaled by the character's rating for it.
   moveDef(name) {
     const own = this.char.moves && this.char.moves[name];
-    return own ? { ...MOVES[name], ...own } : MOVES[name];
+    const def = own ? { ...MOVES[name], ...own } : MOVES[name];
+    const key = RATED_MOVES[name];
+    if (!key) return { ...def, name };
+    const rating = (this.char.ratings && this.char.ratings[key]) || 2;
+    const k = RATING[rating];
+    return {
+      ...def,
+      name,
+      rating,
+      damage: Math.round(def.damage * k.damage),
+      push: def.push * k.push,
+      hitstun: def.hitstun ? def.hitstun + k.hitstun : 0,
+      launch: def.launch && def.launch * (0.75 + 0.25 * rating) / 1.25,
+      launchX: def.launchX && def.launchX * k.push,
+      sound: rating === 3 ? 'heavy' : rating === 1 ? 'light' : def.sound,
+    };
   }
 
-  // This character's projectile: FIREBALL with its own tuning merged on top.
+  // This character's projectile: FIREBALL with its own tuning merged on top,
+  // scaled by its shot rating (damage and size).
   get shotDef() {
-    return this.char.shot ? { ...FIREBALL, ...this.char.shot } : FIREBALL;
+    const def = this.char.shot ? { ...FIREBALL, ...this.char.shot } : FIREBALL;
+    const rating = (this.char.ratings && this.char.ratings.shot) || 2;
+    const k = RATING[rating];
+    return { ...def, rating, damage: Math.round(def.damage * k.damage), radius: def.radius * k.shotSize, push: def.push * k.push };
+  }
+
+  // Whether this fighter's force field stops an attack: a shot (has a speed)
+  // or a punch or kick (by move name).
+  fieldBlocks(def) {
+    const blocks = this.field.blocks;
+    if (def.speed) return blocks.includes('shots');
+    return blocks.includes(PUNCHES.includes(def.name) ? 'punches' : 'kicks');
+  }
+
+  get field() {
+    return this.char.field ? { ...DEFAULT_FIELD, ...this.char.field } : DEFAULT_FIELD;
   }
 
   startMove(name) {
@@ -393,7 +445,7 @@ class Fighter {
 
   physics(game) {
     if (this.y > 0 || this.vy > 0) {
-      this.vy -= GRAVITY;
+      this.vy -= GRAVITY * (this.char.stats.gravity || 1);
       this.y += this.vy;
       if (this.y <= 0) {
         this.y = 0;
@@ -429,6 +481,26 @@ class Fighter {
     if (this.invuln > 0 || this.downTime > 0 || this.state === 'ko') return null;
     const dir = attacker.x < this.x ? 1 : -1;
 
+    // Vader's Force field turns any punch or kick that reaches it into a shove
+    // that throws the attacker back.
+    if (this.shield > 0 && this.field.repel && !def.speed) {
+      attacker.vx = -dir * 11;
+      attacker.move = null;
+      attacker.blockstun = Math.max(attacker.blockstun, 14);
+      attacker.state = 'block';
+      game.effects.spark(hitPoint.x, hitPoint.y, this.field.color, 22, 8, 50);
+      game.shake = 6;
+      Sfx.shieldHit();
+      return 'block';
+    }
+    // A force field that blocks this kind of attack stops it cold.
+    if (this.shield > 0 && this.fieldBlocks(def)) {
+      game.effects.spark(hitPoint.x, hitPoint.y, this.field.color, 18, 7);
+      game.hitstop = 4;
+      Sfx.shieldHit();
+      return 'block';
+    }
+
     if (this.canBlock(def.height)) {
       this.hp = Math.max(1, this.hp - (def.chip || 0));
       this.blockstun = def.blockstun;
@@ -445,21 +517,26 @@ class Fighter {
     this.move = null;
     this.flash = 6;
     this.vx = dir * def.push * pushScale(attacker);
-    game.effects.spark(hitPoint.x, hitPoint.y, def.sound === 'heavy' ? '#ffcf4d' : '#ffffff', 14, 7);
-    game.hitstop = def.sound === 'heavy' ? 8 : 5;
-    game.shake = def.sound === 'heavy' ? 8 : 4;
+    // Strong moves (rating 3) hit with a bigger burst, a longer freeze and more shake.
+    const rating = def.rating || 2;
+    const color = rating === 3 ? attacker.char.colors.energy || '#ffcf4d' : def.sound === 'heavy' ? '#ffcf4d' : '#ffffff';
+    game.effects.spark(hitPoint.x, hitPoint.y, color, [8, 14, 24][rating - 1], [5, 7, 10][rating - 1], [18, 28, 46][rating - 1]);
+    if (rating === 3) game.effects.spark(hitPoint.x, hitPoint.y, '#ffffff', 6, 4, 64);
+    game.hitstop = [4, def.sound === 'heavy' ? 8 : 5, 11][rating - 1];
+    game.shake = [3, def.sound === 'heavy' ? 8 : 4, 13][rating - 1];
     Sfx[def.sound || 'light']();
 
     if (this.hp <= 0) {
       this.state = 'ko';
-      this.vy = 8;
+      this.vy = def.launch || 8;
       this.y = Math.max(this.y, 0.01);
-      this.vx = dir * 6;
+      this.vx = dir * (def.launchX || 6);
       this.hitstun = 0;
       game.onKO(this);
     } else if (def.knockdown || !this.grounded) {
       this.hitstun = 30;
-      this.vy = this.grounded ? def.launch || 6 : Math.max(this.vy, 4);
+      this.vy = this.grounded ? def.launch || 6 : Math.max(this.vy, def.launch || 4);
+      if (def.launchX) this.vx = dir * def.launchX;
       this.y = Math.max(this.y, 0.01);
       this.knockedAirborne = true;
       this.state = 'hit';
@@ -575,7 +652,8 @@ class Fighter {
   // The force field bubble around the body, in world coordinates.
   shieldEllipse() {
     const hb = this.hurtbox();
-    return { cx: this.x, cy: hb.y + hb.h / 2, rx: hb.w / 2 + 34 * this.scale, ry: hb.h / 2 + 14 * this.scale };
+    const k = this.field.size;
+    return { cx: this.x, cy: hb.y + hb.h / 2, rx: (hb.w / 2 + 34 * this.scale) * k, ry: (hb.h / 2 + 14 * this.scale) * (0.85 + 0.15 * k) };
   }
 
   // Hit radius of the current attack, grown with the character.
