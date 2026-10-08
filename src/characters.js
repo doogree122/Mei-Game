@@ -148,7 +148,7 @@ CHARACTERS.seven = {
   paint: {
     suit: [[22, 38, 78], [46, 78, 138], [100, 140, 202]], // dark, mid, light
     sleeve: [[86, 90, 102], [138, 142, 152], [192, 196, 204]],
-    skin: [[188, 138, 112], [232, 192, 168], [248, 222, 204]],
+    skin: [[150, 106, 92], [198, 154, 138], [226, 188, 172]], // matched to her neck in the picture
     sole: [24, 26, 38],
     // Limb radii at each joint, in skeleton units.
     widths: { hip: 9.4, knee: 5.8, ankle: 3.1, shoulder: 5.0, elbow: 4.0, wrist: 3.0, neck: 3.5 },
@@ -157,12 +157,14 @@ CHARACTERS.seven = {
     torsoFront: [[-0.12, 6.8], [0.1, 8.6], [0.34, 6.9], [0.52, 8.8], [0.66, 12.6], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
     raglan: [[1.04, -3.6], [0.94, -7], [0.8, -9.1], [0.72, -8.4], [0.7, -3.6], [0.86, 0.6], [0.98, 2.9], [1.04, 3.4]],
     waistSeam: [[0.46, -7.7], [0.42, -2.4], [0.36, 3.6], [0.38, 7]],
-    // Collar band around the neck, as a closed loop, and its top edge.
-    collar: [[0.93, -7.6], [1.06, -6], [1.14, -3.4], [1.16, 0], [1.12, 3.2], [1.04, 5.6], [0.92, 6.8], [0.9, 2.6], [0.92, -1.6], [0.9, -5.4]],
-    collarTrim: [[1.06, -6], [1.14, -3.4], [1.16, 0], [1.12, 3.2], [1.04, 5.6]],
+    // The suit's low round neckline: a thin band at the base of the neck, as a
+    // closed loop, and its top edge.
+    collar: [[0.97, -6.4], [1.03, -4.6], [1.05, -1.4], [1.03, 2], [0.99, 4.6], [0.94, 5.6], [0.97, 2], [0.99, -1.4], [0.97, -4.6]],
+    collarTrim: [[1.03, -4.6], [1.05, -1.4], [1.03, 2], [0.99, 4.6]],
     grain: 0.3, // texture tile pixels to skeleton units
     pieceScale: 0.19, // fists
     headScale: 0.19,
+    neckLift: 3.5, // how far up the neck the head piece sits
   },
   scale: 2.0,
   projectile: 'laser', // special fires a big red laser blast from her rifle

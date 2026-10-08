@@ -164,8 +164,8 @@ function paintTorso(ctx, art, paint, sk, grain) {
   ctx.globalAlpha = 1;
 }
 
-// The suit's collar: a band of fabric around the base of the neck, drawn over
-// the bottom of the head piece so the join never shows.
+// The suit's neckline: a thin band of fabric at the base of the neck, over the
+// bottom edge of the head piece (whose own neck runs down to it).
 function paintCollar(ctx, art, paint, sk, grain) {
   const at = torsoFrame(sk);
   const band = paint.collar.map(([t, x]) => at(t, x));
@@ -265,12 +265,13 @@ function paintedBody(ctx, sk, f, art) {
   leg('B', FAR);
   paintTorso(ctx, art, p, sk, grain);
   leg('F', 1);
-  // Neck, then the head piece over it.
+  // A painted neck in her skin tones (it shows only if the head tilts away),
+  // the head piece with her own neck over it, then the neckline.
   const up = sub(sk.neck, sk.head);
   const ul = Math.hypot(up.x, up.y) || 1;
-  const neckTop = { x: sk.neck.x + (up.x / ul) * 5, y: sk.neck.y + (up.y / ul) * 5 };
-  paintLimb(ctx, art, p.skin, 'sleeve', { x: sk.neck.x - (up.x / ul) * 2, y: sk.neck.y - (up.y / ul) * 2 }, neckTop, W.neck, W.neck * 0.9, {}, 1, grain);
-  drawPiece(ctx, art.pieces.head, { x: sk.neck.x + (up.x / ul) * 3, y: sk.neck.y + (up.y / ul) * 3 }, up, p.headScale);
+  const along = (d) => ({ x: sk.neck.x + (up.x / ul) * d, y: sk.neck.y + (up.y / ul) * d });
+  paintLimb(ctx, art, p.skin, 'sleeve', along(-1), along(p.neckLift + 5), W.neck, W.neck * 0.92, {}, 1, grain);
+  drawPiece(ctx, art.pieces.head, along(p.neckLift), up, p.headScale);
   paintCollar(ctx, art, p, sk, grain);
   if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
   arm('F', 1, 'fist');

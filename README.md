@@ -148,7 +148,7 @@ Drawn fighters (B. FETT, WORF, VADER) are rendered from their skeleton on a scra
 Their grid follows the display but stops at 0.75 game pixels (`MIN_FIGHTER_PIXEL`) to keep that per-pixel pass quick on phones.
 
 **Painted fighters** (SEVEN, `look: 'painted'`, `src/painted.js`) are drawn at full resolution as smooth shaded shapes, one per limb with rounded joints so the body reads as one figure in any pose.
-Each shape gets a light-to-shadow gradient and the real fabric grain from a reference picture (the suit's scales, the sleeve knit) laid over it; the torso has the gray raglan shoulders and the waist seam, a fabric collar covers where the head joins the neck, and the boots are heeled.
+Each shape gets a light-to-shadow gradient and the real fabric grain from a reference picture (the suit's scales, the sleeve knit) laid over it; the torso has the gray raglan shoulders and the waist seam, the head piece keeps her own neck down to a thin painted neckline (with a painted neck behind it for when the head tilts), and the boots are heeled.
 The head and fists come from the picture (`tools/make_painted_assets.py` cuts them with soft edges into `src/painted-<id>.js`) and are pinned to the neck and wrists. The character's `paint` block sets the colors, limb widths, torso outline and piece sizes.
 
 **Cut-out fighters** (`look: 'cutout'`, not used by anyone right now) are built from a picture. `tools/make_cutout.py` removes the background and cuts the figure into head, torso, upper arm, forearm, thigh and shin.
