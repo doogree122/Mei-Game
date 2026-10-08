@@ -294,8 +294,87 @@ CHARACTERS.worf.altColors = {
   sashLight: '#ffe07a', sashDark: '#6b5410',
 };
 
+// The beskar-armored bounty hunter, painted entirely in code from a reference picture.
+CHARACTERS.mando = {
+  id: 'mando',
+  name: 'MANDO',
+  blurb: 'Beskar armor · blaster',
+  look: 'painted',
+  fallbackLook: 'armored',
+  scale: 1.95,
+  projectile: 'bolt',
+  shot: { speed: 9, damage: 12 },
+  paint: {
+    suit: [[30, 22, 18], [64, 50, 42], [106, 86, 72]], // dark brown flight suit
+    beskar: [[36, 38, 44], [112, 116, 124], [206, 210, 216]],
+    leather: [[46, 28, 18], [98, 64, 42], [150, 106, 74]],
+    boot: [[62, 40, 28], [118, 82, 56], [168, 126, 92]],
+    shoe: [[40, 26, 18], [96, 66, 46], [170, 130, 100]],
+    skin: [[14, 14, 16], [36, 34, 34], [72, 68, 66]], // the dark cowl under the helmet
+    glove: [[16, 14, 14], [44, 40, 38], [96, 92, 88]],
+    gun: [[14, 14, 16], [52, 52, 58], [120, 120, 128]],
+    wood: [[34, 22, 16], [72, 48, 34], [120, 88, 64]],
+    widths: { hip: 10.5, knee: 6.8, ankle: 5.0, shoulder: 6.4, elbow: 5.4, wrist: 4.2, neck: 4.8 },
+    legSwell: { thigh: { front: [0.6, 0.4], back: [0.9, 0.25] }, shin: { back: [0.6, 0.35] } },
+    torsoBack: [[-0.12, -10.5], [0, -13.4], [0.15, -12.6], [0.34, -11], [0.55, -11], [0.8, -11.4], [0.94, -9.2], [1.04, -4.8]],
+    torsoFront: [[-0.12, 8.4], [0.1, 10.2], [0.34, 10.6], [0.52, 11.6], [0.66, 12.8], [0.8, 12.2], [0.92, 8.6], [1.04, 4.8]],
+    torso: ['suit', null],
+    torsoLayers: [
+      { shape: [[0.97, -1], [0.97, 14], [0.56, 14], [0.53, 7], [0.6, -2]], fabric: ['beskar', null] }, // chest plate
+      { shape: [[0.51, 3], [0.51, 14], [0.4, 14], [0.4, 4.5]], fabric: ['beskar', null] }, // belly plate
+      { shape: [[0.385, -16], [0.385, 16], [0.28, 16], [0.28, -16]], fabric: ['leather', null] }, // belt
+      { shape: [[1.08, -5], [0.42, 14], [0.35, 14], [1.0, -10]], fabric: ['leather', null] }, // bandolier
+    ],
+    torsoLines: [{ pts: [[0.6, -2], [0.53, 7], [0.56, 14]], color: [40, 42, 48], width: 0.5 }],
+    torsoBadges: [
+      { shape: [[0.375, 8.4], [0.375, 11.4], [0.29, 11.4], [0.29, 8.4]], colors: [[90, 92, 98], [220, 222, 228]] }, // buckle
+      { shape: [[0.86, 2.0], [0.84, 3.4], [0.81, 3.2], [0.83, 1.8]], colors: [[90, 92, 98], [220, 222, 228]] }, // bandolier cartridges
+      { shape: [[0.81, 3.6], [0.79, 5.0], [0.76, 4.8], [0.78, 3.4]], colors: [[90, 92, 98], [220, 222, 228]] },
+      { shape: [[0.76, 5.2], [0.74, 6.6], [0.71, 6.4], [0.73, 5.0]], colors: [[90, 92, 98], [220, 222, 228]] },
+    ],
+    arm: ['suit', null],
+    leg: ['suit', null],
+    foot: 'shoe',
+    hands: { front: 'glove', back: 'glove', shot: 'blaster' },
+    // Beskar plates and leather boots wrapped over the limbs: `from`/`to` along
+    // the bone, `extra` radius over the limb.
+    armor: [
+      { limb: 'forearm', from: 0.42, to: 0.95, extra: 0.6, fabric: ['beskar', null], swell: { flat: 'both' } }, // vambrace
+      { limb: 'upperArm', from: -0.1, to: 0.36, extra: 1.4, fabric: ['beskar', null], swell: { flat: 'b' } }, // pauldron
+      { limb: 'thigh', from: 0.3, to: 0.72, extra: 0.5, fabric: ['beskar', null], swell: { flat: 'both', front: [0.6, 0.5] } }, // thigh plate
+      { limb: 'shin', from: 0.45, to: 1.0, extra: 0.8, fabric: ['boot', null], swell: { flat: 'a' } }, // boot
+      { limb: 'shin', from: -0.08, to: 0.18, extra: 1.0, fabric: ['beskar', null], swell: { flat: 'both', front: [0.8, 0.4] } }, // knee plate
+    ],
+    jetpack: { colors: 'beskar' }, // rocket pack on his back
+    backWeapon: { from: [-0.15, -13], to: [1.42, -9.5], width: 1.7, colors: 'wood' }, // the forked rifle on his back
+    collarFabric: ['skin', null],
+    collarTrim: [20, 20, 22],
+    collar: [[0.92, -8.4], [1.08, -6.8], [1.16, -3], [1.16, 1.8], [1.1, 5.2], [0.94, 6.6], [0.9, 2], [0.92, -2], [0.9, -6]],
+    collarTop: [[1.08, -6.8], [1.16, -3], [1.16, 1.8], [1.1, 5.2]],
+    grain: 0.3,
+    neckLift: 3,
+    gloveSize: 1.3,
+    face: { style: 'helmet', size: 1.75, drop: 3.5, metal: [[40, 42, 48], [124, 128, 136], [222, 226, 232]] },
+  },
+  // Drawn fallback (the armored style), until the painted art is ready.
+  colors: {
+    suit: '#4a3a30', suitShade: '#30241d', suitLight: '#6e5848',
+    armor: '#a8aab2', armorShade: '#6c6e76', armorLight: '#e4e6ea',
+    accent: '#8a8c94', accentShade: '#5c5e66', accentLight: '#c8cad0',
+    visor: '#0a0b0e', visorFrame: '#3a3c42', visorFrameLight: '#6a6c72',
+    helmetGold: '#a8aab2', helmetGoldShade: '#6c6e76',
+    glove: '#2c2826', gloveShade: '#161412', boot: '#5e3e2a',
+    belt: '#62402a', beltShade: '#3e2818',
+    pack: '#4a3a30', packShade: '#30241d', packLight: '#6e5848',
+    rocket: '#8a8c94', rocketShade: '#5c5e66', rocketLight: '#c8cad0',
+    metal: '#24252b', metalLight: '#b9bbc2', energy: '#ff6a2a',
+  },
+  altColors: {},
+  stats: { walk: 5.0, backWalk: 3.6, jumpV: 15.2, jumpVX: 6.0, power: 1.05 },
+};
+
 // Order on the character select screen.
-const ROSTER = ['fett', 'worf', 'vader', 'seven'];
+const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando'];
 
 // The character as player 2 sees it in a mirror match: same fighter, alternate colors.
 function altVersion(char) {

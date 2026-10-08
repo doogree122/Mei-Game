@@ -13,7 +13,9 @@ const paintedCache = {};
 
 // The picture pieces and texture tiles, once their images have loaded.
 function paintedArt(id) {
-  if (typeof PAINTED === 'undefined' || !PAINTED[id]) return null;
+  const data = typeof PAINTED !== 'undefined' && PAINTED[id];
+  // A character painted entirely in code has no picture pieces to wait for.
+  if (!data) return (paintedCache[id] ||= { pieces: {}, textures: {}, patterns: new WeakMap() });
   if (!paintedCache[id]) {
     const load = (src) => {
       const img = new Image();
@@ -93,9 +95,12 @@ function limbPath(ctx, a, b, rA, rB, swell = {}) {
   ctx.beginPath();
   ctx.moveTo(front[0].x, front[0].y);
   for (const p of front) ctx.lineTo(p.x, p.y);
-  ctx.arc(b.x, b.y, rB, an, an + Math.PI);
+  // `swell.flat` squares off an end ('a', 'b' or 'both'), for armor bands.
+  const flat = swell.flat || '';
+  if (flat === 'b' || flat === 'both') ctx.lineTo(back[N].x, back[N].y);
+  else ctx.arc(b.x, b.y, rB, an, an + Math.PI);
   for (let i = N; i >= 0; i--) ctx.lineTo(back[i].x, back[i].y);
-  ctx.arc(a.x, a.y, rA, an + Math.PI, an + Math.PI * 2);
+  if (!(flat === 'a' || flat === 'both')) ctx.arc(a.x, a.y, rA, an + Math.PI, an + Math.PI * 2);
   ctx.closePath();
   const r = Math.max(rA, rB) + 1.5;
   return { from: { x: a.x - n.x * r, y: a.y - n.y * r }, to: { x: a.x + n.x * r, y: a.y + n.y * r } };
@@ -497,6 +502,228 @@ function paintKlingonFace(ctx, sk, paint) {
   ctx.restore();
 }
 
+// ---- Armored characters ----
+
+// A gloved fist at the wrist, pointing along the forearm (`dir`); with
+// `blaster` it grips a pistol pointing forward along the arm.
+function paintGlove(ctx, paint, wrist, dir, blaster) {
+  const len = Math.hypot(dir.x, dir.y) || 1;
+  const k = paint.gloveSize || 1;
+  const d = { x: (dir.x / len) * k, y: (dir.y / len) * k };
+  const n = { x: d.y, y: -d.x };
+  const at = ([u, v]) => ({ x: wrist.x + d.x * u + n.x * v, y: wrist.y + d.y * u + n.y * v });
+  const [gd, gm, gl] = paint.glove;
+  if (blaster) {
+    // Pistol: barrel ahead of the fist, grip in the hand, a scope on top.
+    const [md, mm, ml] = paint.gun;
+    ctx.beginPath();
+    [[0.5, 1.2], [11, 1.4], [11.4, 3.2], [1.0, 3.6]].forEach((pt, i) => (i ? ctx.lineTo(at(pt).x, at(pt).y) : ctx.moveTo(at(pt).x, at(pt).y)));
+    ctx.closePath();
+    const g = ctx.createLinearGradient(at([5, 1.2]).x, at([5, 1.2]).y, at([5, 3.6]).x, at([5, 3.6]).y);
+    g.addColorStop(0, rgb(md));
+    g.addColorStop(0.6, rgb(mm));
+    g.addColorStop(1, rgb(ml));
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.fillStyle = rgb(md);
+    ctx.beginPath();
+    [[3, 3.6], [6.5, 3.6], [6.2, 4.6], [3.4, 4.6]].forEach((pt, i) => (i ? ctx.lineTo(at(pt).x, at(pt).y) : ctx.moveTo(at(pt).x, at(pt).y)));
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.beginPath();
+  curveThrough(ctx, [[-0.6, -2.1], [2.6, -2.5], [4.6, -1.6], [5.0, 0.4], [4.4, 2.2], [2.0, 2.4], [-0.6, 2.0], [-0.6, -2.1]].map(at), true);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(at([2, -2.5]).x, at([2, -2.5]).y, at([2, 2.4]).x, at([2, 2.4]).y);
+  g.addColorStop(0, rgb(gd));
+  g.addColorStop(0.6, rgb(gm));
+  g.addColorStop(1, rgb(gl));
+  ctx.fillStyle = g;
+  ctx.fill();
+  // Knuckles and finger creases.
+  ctx.strokeStyle = rgb(gd);
+  ctx.lineWidth = 0.3;
+  for (const v of [-0.9, 0.3, 1.4]) {
+    ctx.beginPath();
+    const a = at([3.0, v]);
+    const b = at([4.7, v + 0.1]);
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+}
+
+// A long weapon slung across the back: a staff from low behind the hip to
+// above the shoulder, ending in a two-pronged fork.
+function paintBackWeapon(ctx, paint, sk) {
+  const at = torsoFrame(sk);
+  const w = paint.backWeapon;
+  const a = at(w.from[0], w.from[1]);
+  const b = at(w.to[0], w.to[1]);
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const n = { x: dy / len, y: -dx / len };
+  const [cd, cm, cl] = paint[w.colors];
+  ctx.lineCap = 'round';
+  const line = (p0, p1, width, color) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.stroke();
+  };
+  line(a, b, w.width + 0.6, rgb(cd));
+  line(a, b, w.width, rgb(cm));
+  line({ x: a.x + n.x * 0.4, y: a.y + n.y * 0.4 }, { x: b.x + n.x * 0.4, y: b.y + n.y * 0.4 }, w.width * 0.3, rgb(cl));
+  // The fork: two prongs splaying from the tip.
+  const tip = { x: b.x + (dx / len) * 6, y: b.y + (dy / len) * 6 };
+  for (const s of [-1, 1]) {
+    const end = { x: tip.x + (dx / len) * 3 + n.x * s * 3.2, y: tip.y + (dy / len) * 3 + n.y * s * 3.2 };
+    line(b, end, w.width * 0.8, rgb(cm));
+  }
+}
+
+// A rocket pack on the back, in the torso's frame: a rounded steel case with a
+// dark center panel, twin thrusters along its back edge with nozzles at the
+// bottom, and a dome on top. The nozzles glow while airborne.
+function paintJetpack(ctx, paint, sk, f) {
+  const at = torsoFrame(sk);
+  const J = paint.jetpack;
+  const [md, mm, ml] = paint[J.colors];
+  const poly = (pts) => {
+    ctx.beginPath();
+    pts.forEach(([t, x], i) => {
+      const q = at(t, x);
+      if (i === 0) ctx.moveTo(q.x, q.y);
+      else ctx.lineTo(q.x, q.y);
+    });
+    ctx.closePath();
+  };
+  const metal = (from, to) => {
+    const a = at(...from);
+    const b = at(...to);
+    const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+    g.addColorStop(0, rgb(md));
+    g.addColorStop(0.55, rgb(mm));
+    g.addColorStop(0.85, rgb(ml));
+    g.addColorStop(1, rgb(mm));
+    return g;
+  };
+  // Thrusters: two cylinders behind the case, then their nozzles.
+  for (const x of [-19.5, -16.5]) {
+    poly([[0.98, x - 1.6], [0.98, x + 1.6], [0.36, x + 1.6], [0.36, x - 1.6]]);
+    ctx.fillStyle = metal([0.6, x - 1.6], [0.6, x + 1.6]);
+    ctx.fill();
+    poly([[0.37, x - 1.4], [0.37, x + 1.4], [0.28, x + 2.1], [0.28, x - 2.1]]);
+    ctx.fillStyle = rgb(md);
+    ctx.fill();
+    if (!f.grounded) {
+      // Exhaust flame while in the air.
+      const q = at(0.27, x);
+      const flick = 0.8 + Math.sin(f.time * 0.9 + x) * 0.2;
+      for (const [dy, r] of [[3, 6], [8, 8], [14, 6]]) {
+        const g = ctx.createRadialGradient(q.x, q.y + dy, 0, q.x, q.y + dy, r * flick);
+        g.addColorStop(0, 'rgba(255,250,220,0.9)');
+        g.addColorStop(0.35, 'rgba(255,170,60,0.75)');
+        g.addColorStop(1, 'rgba(255,90,20,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(q.x, q.y + dy, r * flick, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  // The case.
+  ctx.beginPath();
+  curveThrough(ctx, [[1.0, -9], [1.03, -13], [0.98, -16.8], [0.7, -17.6], [0.44, -16.6], [0.4, -12], [0.44, -9], [0.7, -8.6], [1.0, -9]].map(([t, x]) => at(t, x)), true);
+  ctx.closePath();
+  ctx.fillStyle = metal([0.7, -17.6], [0.7, -8.6]);
+  ctx.fill();
+  ctx.strokeStyle = rgb(md);
+  ctx.lineWidth = 0.4;
+  ctx.stroke();
+  // Center panel and rivets.
+  poly([[0.9, -11], [0.9, -15.2], [0.54, -15.2], [0.54, -11]]);
+  ctx.fillStyle = rgb(md, 0.8);
+  ctx.fill();
+  for (const [t, x] of [[0.86, -11.8], [0.86, -14.4], [0.58, -11.8], [0.58, -14.4]]) {
+    const q = at(t, x);
+    ctx.beginPath();
+    ctx.arc(q.x, q.y, 0.45, 0, Math.PI * 2);
+    ctx.fillStyle = rgb(ml);
+    ctx.fill();
+  }
+  // Dome on top.
+  const top = at(1.04, -14.5);
+  ctx.beginPath();
+  ctx.arc(top.x, top.y, 2.4, 0, Math.PI * 2);
+  ctx.fillStyle = metal([1.04, -17], [1.04, -12]);
+  ctx.fill();
+  ctx.strokeStyle = rgb(md);
+  ctx.stroke();
+}
+
+// A T-visor helmet in profile: rounded dome, flat face plate with the slot of
+// the visor across the eyes and down the front, a flared jaw, an ear cap, and a
+// chrome-like finish (a bright sky reflection over a dark horizon band).
+const HELMET = [
+  [-6.4, -1], [-6.7, 3], [-5.3, 6.8], [-2, 8.9], [2, 8.7], [5.0, 6.7], [6.4, 3.7], [6.75, 0.8], [6.75, -3.4], [7.4, -5.6],
+  [6.6, -6.9], [2, -7.1], [-1.6, -6.5], [-4.9, -5.5], [-6.3, -3.4],
+];
+
+function paintHelmet(ctx, sk, paint) {
+  const F = paint.face;
+  const H = headFrame(sk, F.size, F.drop);
+  const [md, mm, ml] = F.metal;
+  shapeThrough(ctx, H, HELMET);
+  const g = ctx.createLinearGradient(H([0, 9]).x, H([0, 9]).y, H([0, -7]).x, H([0, -7]).y);
+  g.addColorStop(0, rgb(ml));
+  g.addColorStop(0.3, rgb(mm));
+  g.addColorStop(0.47, rgb(md));
+  g.addColorStop(0.56, rgb(mm));
+  g.addColorStop(0.85, rgb(ml, 0.9));
+  g.addColorStop(1, rgb(md));
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // Front-to-back shading and a hot highlight on the dome.
+  const s = ctx.createLinearGradient(H([-7, 0]).x, H([-7, 0]).y, H([7, 0]).x, H([7, 0]).y);
+  s.addColorStop(0, 'rgba(10,12,16,0.45)');
+  s.addColorStop(0.6, 'rgba(10,12,16,0)');
+  s.addColorStop(1, 'rgba(10,12,16,0.15)');
+  ctx.fillStyle = s;
+  ctx.fill();
+  softSpot(ctx, H([1.5, 6.4]), 3.2 * F.size, 'rgb(255,255,255)', 0.7);
+  ctx.restore();
+  ctx.strokeStyle = rgb(md, 0.6);
+  ctx.lineWidth = 0.25 * F.size;
+  ctx.stroke();
+
+  // Visor: the slot across the eyes and the strip of it down the front.
+  const visor = 'rgb(8,9,12)';
+  shapeThrough(ctx, H, [[1.4, 2.4], [6.8, 2.2], [6.8, 0.6], [1.6, 0.8]]);
+  ctx.fillStyle = visor;
+  ctx.fill();
+  shapeThrough(ctx, H, [[5.75, 0.9], [6.8, 0.9], [7.0, -5.1], [6.15, -5.1]]);
+  ctx.fill();
+  strokeThrough(ctx, H, [[1.8, 1.9], [6.5, 1.8]], 'rgba(110,150,200,0.35)', 0.18 * F.size);
+  // Jaw panel line, the ear cap, and the rim along the bottom.
+  strokeThrough(ctx, H, [[0.6, -0.6], [2.2, -3.0], [4.4, -4.8], [6.2, -5.4]], rgb(md), 0.22 * F.size);
+  const ear = H([-1.4, -0.6]);
+  ctx.beginPath();
+  ctx.arc(ear.x, ear.y, 1.9 * F.size, 0, Math.PI * 2);
+  ctx.fillStyle = rgb(mm, 0.85);
+  ctx.fill();
+  ctx.strokeStyle = rgb(md);
+  ctx.lineWidth = 0.3 * F.size;
+  ctx.stroke();
+  softSpot(ctx, H([-1.0, 0.2]), 1 * F.size, 'rgb(255,255,255)', 0.6);
+  strokeThrough(ctx, H, [[7.3, -5.7], [6.5, -6.8], [2, -7.0], [-1.6, -6.4], [-4.9, -5.4]], rgb(md), 0.35 * F.size);
+}
+
 // A flat shoe in the same frame: rounded toe, low heel, glossy.
 function paintShoe(ctx, art, paint, knee, foot, k) {
   const len = Math.hypot(foot.x - knee.x, foot.y - knee.y) || 1;
@@ -580,13 +807,35 @@ function paintedBody(ctx, sk, f, art) {
 
   const [armColors, armTexture] = p.arm;
   const [legColors, legTexture] = p.leg;
+  // Armor and boots: bands wrapped over part of a limb (`armor` entries).
+  const armor = (limb, a, b, rA, rB, k) => {
+    for (const plate of p.armor || []) {
+      if (plate.limb !== limb) continue;
+      const at = (t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      const r = (t) => rA + (rB - rA) * Math.min(1, Math.max(0, t)) + plate.extra;
+      paintLimb(ctx, art, p[plate.fabric[0]], plate.fabric[1], at(plate.from), at(plate.to), r(plate.from), r(plate.to), plate.swell || {}, k, grain);
+      if (plate.edge) {
+        // A darker rim along the plate's lower edge.
+        const e = at(plate.to);
+        ctx.strokeStyle = rgb(p[plate.fabric[0]][0], k);
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r(plate.to), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  };
   const arm = (side, k, hand) => {
     const elbow = sk['elbow' + side];
     const wrist = sk['hand' + side];
     paintLimb(ctx, art, p[armColors], armTexture, sk.shoulder, elbow, W.shoulder, W.elbow, { front: [0.5, 0.35] }, k, grain);
     paintLimb(ctx, art, p[armColors], armTexture, elbow, wrist, W.elbow * 0.95, W.wrist, { front: [0.45, 0.3] }, k, grain);
+    armor('forearm', elbow, wrist, W.elbow * 0.95, W.wrist, k);
+    armor('upperArm', sk.shoulder, elbow, W.shoulder, W.elbow, k);
     if (k < 1) ctx.filter = `${base} brightness(${k})`;
-    drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
+    if (art.pieces[hand]) drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
+    else if (hand === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true);
+    else paintGlove(ctx, p, wrist, sub(elbow, wrist), false);
     ctx.filter = base || 'none';
   };
   // A stripe down the outside of the leg (trouser piping).
@@ -606,8 +855,10 @@ function paintedBody(ctx, sk, f, art) {
     if (p.foot === 'shoe') paintShoe(ctx, art, p, knee, foot, k);
     paintLimb(ctx, art, p[legColors], legTexture, sk.hip, knee, W.hip, W.knee, swell.thigh, k, grain);
     stripe(sk.hip, knee, k);
+    armor('thigh', sk.hip, knee, W.hip, W.knee, k);
     paintLimb(ctx, art, p[legColors], legTexture, knee, foot, W.knee * 0.95, W.ankle, swell.shin, k, grain);
     stripe(knee, foot, k);
+    armor('shin', knee, foot, W.knee * 0.95, W.ankle, k);
     if (p.foot !== 'shoe') paintBoot(ctx, art, p, knee, foot, k, grain);
   };
   const shooting = !!(f.move && f.move.def.projectile);
@@ -616,6 +867,8 @@ function paintedBody(ctx, sk, f, art) {
   const rifle = f.char.armPose ? rifleMode(f) : null;
   arm('B', FAR, p.hands.back);
   if (rifle === 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
+  if (p.jetpack) paintJetpack(ctx, p, sk, f);
+  if (p.backWeapon) paintBackWeapon(ctx, p, sk);
   leg('B', FAR);
   paintTorso(ctx, art, p, sk, grain);
   leg('F', 1);
@@ -626,6 +879,7 @@ function paintedBody(ctx, sk, f, art) {
   const along = (d) => ({ x: sk.neck.x + (up.x / ul) * d, y: sk.neck.y + (up.y / ul) * d });
   paintLimb(ctx, art, p.skin, armTexture, along(-1), along(p.neckLift + 5), W.neck, W.neck * 0.92, {}, 1, grain);
   if (p.face && p.face.style === 'klingon') paintKlingonFace(ctx, sk, p);
+  else if (p.face && p.face.style === 'helmet') paintHelmet(ctx, sk, p);
   else if (p.face) paintFace(ctx, sk, p);
   else drawPiece(ctx, art.pieces.head, along(p.neckLift), up, p.headScale);
   if (p.collar) paintCollar(ctx, art, p, sk, grain);
