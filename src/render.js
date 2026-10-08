@@ -1199,6 +1199,10 @@ function drawCutoutFighter(ctx, f) {
     ctx.scale(f.facing, 1);
   }
   if (f.flash > 0) ctx.filter = 'brightness(2.2)';
+  // Smooth scaling keeps the picture's soft, feathered edges (the drawn
+  // fighters are scaled without it to stay crisp).
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   drawCutoutBody(ctx, sk, f);
   ctx.restore();
 }

@@ -17,7 +17,7 @@ import json
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 CONFIGS = {
     # 329x1024 front-view drawing on white.
@@ -26,6 +26,9 @@ CONFIGS = {
         'width': 0.19,  # skeleton units per source pixel, across each part
         'head': 1.3,  # head drawn bigger than the picture's proportions
         'resize': 1.0,
+        'feather': 3,  # blur radius (source pixels) for the cut edges where parts overlap
+        'seam': 40,  # how far from a part's joint its edges are feathered
+        'soften': 0.6,  # blur radius for the outline against the background
         # Where the hand holding the phaser covers the body.
         'fill': [((62, 322, 142, 400), (200, 150, 12)), ((62, 400, 142, 420), (10, 10, 12))],
         'parts': {
@@ -54,7 +57,11 @@ CONFIGS = {
         'gaps': [(905, 318, 968, 528), (988, 820, 1006, 968), (845, 380, 874, 500)],
         'width': 0.185,
         'head': 1.25,
-        'resize': 0.6,  # the picture is far bigger than the game needs
+        'resize': 1.0,
+        'webp': True,  # a photo-like picture: smaller as WebP
+        'feather': 6,
+        'seam': 70,  # how far from a part's joint its edges are feathered
+        'soften': 1.0,
         # The far hand resting on her stomach: covered with suit copied from just behind it.
         'copy': [((1028, 392, 1048, 474), (-24, 0))],
         'parts': {
@@ -138,22 +145,44 @@ def main(char_id, src, out):
     for (x0, y0, x1, y1), (dx, dy) in cfg.get('copy', []):
         im.paste(im.crop((x0 + dx, y0 + dy, x1 + dx, y1 + dy)), (x0, y0))
     k = cfg['resize']
+    # The outline: shaved by a pixel so no backdrop fringe is left, then
+    # softened so it isn't jagged.
+    figure = im.getchannel('A')
+    outline = figure.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(cfg['soften']))
+    f = cfg['feather']
+    # How far inside the body a pixel is: 1 well inside, falling to 0 near the
+    # outline. Cut edges are feathered only inside, so the outline stays sharp.
+    inside = figure.filter(ImageFilter.MinFilter(4 * f + 1)).filter(ImageFilter.GaussianBlur(f))
     parts = {}
     for name, spec in cfg['parts'].items():
-        mask = Image.new('L', im.size, 0)
-        ImageDraw.Draw(mask).polygon(spec['poly'], fill=255)
-        cut = Image.new('RGBA', im.size, (0, 0, 0, 0))
-        cut.paste(im, (0, 0), mask)
-        box = cut.getbbox()
+        # A part fades out over its cut edge at its joint (neck, shoulder, elbow,
+        # hip, knee), where it is drawn over the part it hangs from, so the two
+        # blend into one body. Its other edges stay solid, because the part
+        # drawn on top of them covers them; the torso, under everything, has no
+        # feathering at all. Near the outline every cut stays hard, pushed a
+        # little outward so the outline alone sets the edge there.
+        hard = Image.new('L', im.size, 0)
+        ImageDraw.Draw(hard).polygon(spec['poly'], fill=255)
+        soft = hard.filter(ImageFilter.GaussianBlur(f))
+        edge = hard.filter(ImageFilter.MaxFilter(2 * f + 1))
+        seam = Image.new('L', im.size, 0)
+        if name != 'torso':
+            (px, py), r = spec['pivot'], cfg['seam']
+            ImageDraw.Draw(seam).ellipse((px - r, py - r, px + r, py + r), fill=255)
+            seam = seam.filter(ImageFilter.GaussianBlur(r / 4))
+        mask = Image.composite(soft, edge, ImageChops.multiply(inside, seam))
+        cut = im.copy()
+        cut.putalpha(ImageChops.multiply(mask, outline))
+        box = cut.getchannel('A').point(lambda v: 255 if v > 2 else 0).getbbox()
         cut = cut.crop(box)
         if k != 1:
             cut = cut.resize((round(cut.width * k), round(cut.height * k)), Image.LANCZOS)
         buf = io.BytesIO()
-        if k != 1:
-            cut.save(buf, 'WEBP', quality=88)
+        if cfg.get('webp'):
+            cut.save(buf, 'WEBP', quality=90)
             mime = 'image/webp'
         else:
-            cut.save(buf, 'PNG', optimize=True)
+            cut.save(buf, 'PNG', optimize=True)  # pixel art stays exact
             mime = 'image/png'
         parts[name] = {
             'src': f'data:{mime};base64,' + base64.b64encode(buf.getvalue()).decode(),

@@ -148,6 +148,7 @@ Drawn fighters (B. FETT, WORF, VADER) are rendered from their skeleton on a scra
 Their grid follows the display but stops at 0.75 game pixels (`MIN_FIGHTER_PIXEL`) to keep that per-pixel pass quick on phones.
 
 **Cut-out fighters** (SEVEN, `look: 'cutout'`) are built from a picture. `tools/make_cutout.py` removes the background and cuts the figure into head, torso, upper arm, forearm, thigh and shin.
+Each part's outline is shaved of any backdrop fringe and lightly softened, and its edge at its joint (neck, shoulder, elbow, hip, knee) is feathered so it blends into the part beneath; edges that another part covers stay solid, so bending joints don't open see-through gaps.
 The game pins each part to its bone every frame (the near arm and leg serve for both sides, the far ones drawn darker) and draws them straight onto the canvas at full resolution.
 The best pictures are a side view facing right, full body on a plain background, with the arms and legs clear of the body.
 `src/cutout-<id>.js` holds the parts; `fallbackLook` is the drawn style used until they load.
