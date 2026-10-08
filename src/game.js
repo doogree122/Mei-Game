@@ -814,6 +814,13 @@ class Game {
     ctx.translate(sx - camX, sy);
     if (this.mode !== 'select') for (const f of order) drawFighter(ctx, f);
     ctx.restore();
+    // The level's foreground (the bridge's front chairs) over the fighters.
+    if (this.mode !== 'select') {
+      ctx.save();
+      ctx.translate(sx, sy);
+      drawStageForeground(ctx, this.stage, camX);
+      ctx.restore();
+    }
 
     // Layer 3, low-res: attack trails, projectiles, particles, debug boxes.
     if (!title) {

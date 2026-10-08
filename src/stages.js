@@ -5,16 +5,30 @@
 // `floor` (in picture pixels) lines up with the fighters' feet. As the camera
 // crosses the stage the picture pans from its left edge to its right, so it
 // scrolls slower than the fighters, like a distant view. `top` and `bottom`
-// fill the space above and below the arena on tall phone screens.
+// fill the space above and below the arena on tall phone screens. With `front`,
+// assets/stages/<id>-front.png holds the parts in front of the fighters (the
+// bridge's front chairs and consoles), drawn over them in the same place.
 
 const STAGES = [
   { id: 'hood', name: 'USS HOOD', top: '#03040c', bottom: '#0a1230' },
   { id: 'desert', name: 'DESERT TOWN', image: true, height: 600, floor: 650, dim: 0.08, top: '#565753', bottom: '#a08065' },
-  { id: 'bridge', name: 'THE BRIDGE', image: true, height: 600, floor: 600, dim: 0.12, top: '#635b51', bottom: '#c2b495' },
+  { id: 'bridge', name: 'THE BRIDGE', image: true, front: true, height: 600, floor: 580, dim: 0.12, top: '#635b51', bottom: '#c2b495' },
   { id: 'corridor', name: 'BATTLE STATION', image: true, height: 600, floor: 690, dim: 0.1, top: '#2f2f31', bottom: '#3e3f3f' },
 ];
 
 const stageImages = {};
+
+function loadImage(key, src) {
+  if (!stageImages[key]) {
+    const img = new Image();
+    img.src = src;
+    stageImages[key] = img;
+  }
+  const img = stageImages[key];
+  return img.complete && img.naturalWidth ? img : null;
+}
+
+const stageSrc = (key, ext) => (typeof STAGE_DATA !== 'undefined' ? STAGE_DATA[key] : `assets/stages/${key}.${ext}`);
 
 function stageDef(id) {
   return STAGES.find((s) => s.id === id) || STAGES[0];
@@ -23,18 +37,44 @@ function stageDef(id) {
 // The backdrop picture, once it has loaded (or null).
 function stageImage(def) {
   if (!def.image) return null;
-  if (!stageImages[def.id]) {
-    const img = new Image();
-    img.src = typeof STAGE_DATA !== 'undefined' ? STAGE_DATA[def.id] : `assets/stages/${def.id}.jpg`;
-    stageImages[def.id] = img;
-  }
-  const img = stageImages[def.id];
-  return img.complete && img.naturalWidth ? img : null;
+  return loadImage(def.id, stageSrc(def.id, 'jpg'));
+}
+
+function stageFrontImage(def) {
+  if (!def.front) return null;
+  return loadImage(`${def.id}-front`, stageSrc(`${def.id}-front`, 'png'));
 }
 
 // Start loading every backdrop now so the select screen can show them.
 function preloadStages() {
-  for (const def of STAGES) stageImage(def);
+  for (const def of STAGES) {
+    stageImage(def);
+    stageFrontImage(def);
+  }
+}
+
+// Where a level's picture sits on screen for a camera position.
+function stagePlacement(def, img, camX) {
+  const s = def.height / img.naturalHeight;
+  const w = img.naturalWidth * s;
+  const pan = Math.max(0, Math.min(1, camX / (WORLD_W - W)));
+  return { x: -(w - W) * pan, y: GROUND - def.floor * s, w, h: def.height };
+}
+
+// The parts of a level in front of the fighters, drawn over them.
+function drawStageForeground(ctx, id, camX) {
+  const def = stageDef(id);
+  const img = stageImage(def);
+  const front = stageFrontImage(def);
+  if (!img || !front) return;
+  const at = stagePlacement(def, img, camX);
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  // Dimmed like the background's lower half, so the cut-outs match it.
+  ctx.filter = `brightness(${1 - def.dim - 0.1})`;
+  ctx.drawImage(front, at.x, at.y, at.w, at.h);
+  ctx.restore();
 }
 
 // Everything behind the fighters, in screen coordinates (camX = the world x
@@ -47,15 +87,11 @@ function drawStageBackground(ctx, id, camX, frame) {
     Stage.drawBackground(ctx, camX, frame);
     return;
   }
-  const s = def.height / img.naturalHeight;
-  const w = img.naturalWidth * s;
-  const pan = Math.max(0, Math.min(1, camX / (WORLD_W - W)));
-  const x = -(w - W) * pan;
-  const y = GROUND - def.floor * s;
+  const at = stagePlacement(def, img, camX);
   ctx.save();
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, x, y, w, def.height);
+  ctx.drawImage(img, at.x, at.y, at.w, at.h);
   ctx.restore();
   // A slight dimming so the fighters stand out, a little darker at the bottom.
   const g = ctx.createLinearGradient(0, 0, 0, H);
