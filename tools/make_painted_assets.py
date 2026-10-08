@@ -21,8 +21,9 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 PIECES = {
     # pivot: where it attaches (base of the neck, the wrist); tip: a point the
     # renderer lines up with the bone (the top of the head, the knuckles).
-    'head': {'poly': [(948, 28), (1062, 28), (1092, 80), (1086, 124), (1075, 140), (1069, 176), (1044, 204), (986, 204), (952, 150)],
-             'pivot': (1012, 196), 'tip': (1010, 40)},
+    # Down to where the neck meets the suit's neckline, so her own neck is kept.
+    'head': {'poly': [(948, 28), (1062, 28), (1092, 80), (1086, 124), (1075, 140), (1066, 176), (1040, 196), (1036, 218), (1002, 216), (984, 200), (970, 186), (952, 150)],
+             'pivot': (1002, 212), 'tip': (1010, 40)},
     'fist': {'poly': [(1071, 164), (1140, 164), (1140, 206), (1121, 229), (1098, 223), (1077, 213), (1071, 195)],
              'pivot': (1097, 220), 'tip': (1106, 170)},
     'borgFist': {'poly': [(1170, 174), (1244, 174), (1244, 230), (1224, 250), (1199, 250), (1179, 238), (1170, 216)],
