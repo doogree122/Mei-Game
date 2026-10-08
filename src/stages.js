@@ -61,6 +61,36 @@ function stagePlacement(def, img, camX) {
   return { x: -(w - W) * pan, y: GROUND - def.floor * s, w, h: def.height };
 }
 
+// The darkening laid over a level picture: `dim` at the top of the screen,
+// a little more toward the bottom.
+function stageShade(def, ctx) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, `rgba(0,0,0,${def.dim})`);
+  g.addColorStop(1, `rgba(0,0,0,${def.dim + 0.12})`);
+  return g;
+}
+
+// The foreground cut-out with exactly the background's darkening baked in
+// (the picture never moves vertically, so this is done once).
+const bakedFronts = {};
+function bakedFront(def, img, front) {
+  if (bakedFronts[def.id]) return bakedFronts[def.id];
+  const cv = document.createElement('canvas');
+  cv.width = front.naturalWidth;
+  cv.height = front.naturalHeight;
+  const c = cv.getContext('2d');
+  c.drawImage(front, 0, 0);
+  c.globalCompositeOperation = 'source-atop';
+  // Picture rows map to screen rows: screenY = y + row * s.
+  const s = def.height / img.naturalHeight;
+  const y = GROUND - def.floor * s;
+  c.setTransform(1 / s, 0, 0, 1 / s, 0, -y / s);
+  c.fillStyle = stageShade(def, c);
+  c.fillRect(0, y, cv.width * s, def.height);
+  bakedFronts[def.id] = cv;
+  return cv;
+}
+
 // The parts of a level in front of the fighters, drawn over them.
 function drawStageForeground(ctx, id, camX) {
   const def = stageDef(id);
@@ -71,9 +101,7 @@ function drawStageForeground(ctx, id, camX) {
   ctx.save();
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  // Dimmed like the background's lower half, so the cut-outs match it.
-  ctx.filter = `brightness(${1 - def.dim - 0.1})`;
-  ctx.drawImage(front, at.x, at.y, at.w, at.h);
+  ctx.drawImage(bakedFront(def, img, front), at.x, at.y, at.w, at.h);
   ctx.restore();
 }
 
@@ -94,10 +122,7 @@ function drawStageBackground(ctx, id, camX, frame) {
   ctx.drawImage(img, at.x, at.y, at.w, at.h);
   ctx.restore();
   // A slight dimming so the fighters stand out, a little darker at the bottom.
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, `rgba(0,0,0,${def.dim})`);
-  g.addColorStop(1, `rgba(0,0,0,${def.dim + 0.12})`);
-  ctx.fillStyle = g;
+  ctx.fillStyle = stageShade(def, ctx);
   ctx.fillRect(0, 0, W, H);
 }
 
@@ -111,7 +136,10 @@ function drawStageThumb(ctx, id, x, y, w, h, frame) {
   ctx.clip();
   if (img) {
     const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-    ctx.drawImage(img, x + (w - img.naturalWidth * s) / 2, y + (h - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
+    const box = [x + (w - img.naturalWidth * s) / 2, y + (h - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s];
+    ctx.drawImage(img, ...box);
+    const front = stageFrontImage(def);
+    if (front) ctx.drawImage(front, ...box);
   } else {
     // The drawn ship room, shrunk to fit.
     ctx.translate(x, y);
