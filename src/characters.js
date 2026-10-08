@@ -157,11 +157,14 @@ CHARACTERS.seven = {
     torsoFront: [[-0.12, 6.8], [0.1, 8.6], [0.34, 6.9], [0.52, 8.8], [0.66, 12.6], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
     raglan: [[1.04, -3.6], [0.94, -7], [0.8, -9.1], [0.72, -8.4], [0.7, -3.6], [0.86, 0.6], [0.98, 2.9], [1.04, 3.4]],
     waistSeam: [[0.46, -7.7], [0.42, -2.4], [0.36, 3.6], [0.38, 7]],
+    // Collar band around the neck, as a closed loop, and its top edge.
+    collar: [[0.93, -7.6], [1.06, -6], [1.14, -3.4], [1.16, 0], [1.12, 3.2], [1.04, 5.6], [0.92, 6.8], [0.9, 2.6], [0.92, -1.6], [0.9, -5.4]],
+    collarTrim: [[1.06, -6], [1.14, -3.4], [1.16, 0], [1.12, 3.2], [1.04, 5.6]],
     grain: 0.3, // texture tile pixels to skeleton units
     pieceScale: 0.19, // fists
     headScale: 0.19,
   },
-  scale: 1.85,
+  scale: 2.0,
   projectile: 'laser', // special fires a big red laser blast from her rifle
   colors: {
     suit: '#2b2f86',

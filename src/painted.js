@@ -164,6 +164,23 @@ function paintTorso(ctx, art, paint, sk, grain) {
   ctx.globalAlpha = 1;
 }
 
+// The suit's collar: a band of fabric around the base of the neck, drawn over
+// the bottom of the head piece so the join never shows.
+function paintCollar(ctx, art, paint, sk, grain) {
+  const at = torsoFrame(sk);
+  const band = paint.collar.map(([t, x]) => at(t, x));
+  ctx.beginPath();
+  curveThrough(ctx, band, true);
+  ctx.closePath();
+  shadeSurface(ctx, art, paint.sleeve, 'sleeve', at(1, -6), at(1, 6), 1, grain);
+  // A thin blue trim along the neckline's edge.
+  ctx.strokeStyle = rgb(paint.suit[1]);
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  curveThrough(ctx, paint.collarTrim.map(([t, x]) => at(t, x)), true);
+  ctx.stroke();
+}
+
 // A boot in the shin's frame at the ankle: heeled, with a pointed toe that
 // reaches the floor (4 units below the ankle joint). BOOT_LENGTH stretches the
 // foot front to back.
@@ -254,6 +271,7 @@ function paintedBody(ctx, sk, f, art) {
   const neckTop = { x: sk.neck.x + (up.x / ul) * 5, y: sk.neck.y + (up.y / ul) * 5 };
   paintLimb(ctx, art, p.skin, 'sleeve', { x: sk.neck.x - (up.x / ul) * 2, y: sk.neck.y - (up.y / ul) * 2 }, neckTop, W.neck, W.neck * 0.9, {}, 1, grain);
   drawPiece(ctx, art.pieces.head, { x: sk.neck.x + (up.x / ul) * 3, y: sk.neck.y + (up.y / ul) * 3 }, up, p.headScale);
+  paintCollar(ctx, art, p, sk, grain);
   if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
   arm('F', 1, 'fist');
 }
