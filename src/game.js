@@ -19,6 +19,12 @@ const CARD_W = Math.min(200, (W - 40 - (ROSTER.length - 1) * CARD_GAP) / ROSTER.
 const CARD_TOP = 104;
 const CARD_H = 330;
 const CARD_X0 = (W - (ROSTER.length * CARD_W + (ROSTER.length - 1) * CARD_GAP)) / 2;
+// Level select thumbnails (16:9), in a row.
+const STAGE_GAP = 22;
+const STAGE_TW = Math.min(240, (W - 60 - (STAGES.length - 1) * STAGE_GAP) / STAGES.length);
+const STAGE_TH = Math.round(STAGE_TW * 9 / 16);
+const STAGE_TOP = 190;
+const STAGE_X0 = (W - (STAGES.length * STAGE_TW + (STAGES.length - 1) * STAGE_GAP)) / 2;
 
 class Game {
   constructor(canvas) {
@@ -45,6 +51,7 @@ class Game {
     // One idle model per roster entry for the select screen.
     this.previews = ROSTER.map((id) => new Fighter({ char: CHARACTERS[id], x: 0, facing: 1, side: 0 }));
     this.lobbyChar = 'fett'; // the fighter this player brings online
+    this.stage = 'hood'; // the level (src/stages.js)
     this.controllers = [new KeyboardController(KEYMAPS.p1), new AIController(0.5)];
     // 'splash' waits for the first tap or key press, which browsers require
     // before any sound can play; it's skipped when the music autoplays.
@@ -83,6 +90,9 @@ class Game {
       cursor: [0, 1],
       locked: [false, false],
       timer: 0,
+      phase: 'fighters', // then 'stage': choose the level
+      stageCursor: Math.max(0, STAGES.findIndex((s) => s.id === this.stage)),
+      stageLocked: false,
     };
     for (const p of this.previews) p.won = false;
   }
@@ -94,6 +104,7 @@ class Game {
       this.mode = 'title';
       return;
     }
+    if (sel.phase === 'stage') return this.updateStageSelect();
     const move = (i, left, right) => {
       if (sel.locked[i]) return;
       if (left.some(keyPressed)) sel.cursor[i] = (sel.cursor[i] + n - 1) % n;
@@ -133,8 +144,79 @@ class Game {
         this.showLobby();
       } else {
         this.setFighters(a, b);
-        this.startMatch(sel.kind);
+        sel.phase = 'stage';
+        sel.timer = 0;
       }
+    }
+  }
+
+  // Level select: either player moves the cursor and picks; the background
+  // shows the level under the cursor.
+  updateStageSelect() {
+    const sel = this.select;
+    const n = STAGES.length;
+    for (const p of this.previews) {
+      p.time++;
+      p.updatePose();
+    }
+    if (!sel.stageLocked) {
+      if (['KeyA', 'ArrowLeft'].some(keyPressed)) sel.stageCursor = (sel.stageCursor + n - 1) % n;
+      if (['KeyD', 'ArrowRight'].some(keyPressed)) sel.stageCursor = (sel.stageCursor + 1) % n;
+      this.stage = STAGES[sel.stageCursor].id;
+      if (['KeyJ', 'Enter', 'Space', 'Comma', 'Numpad1'].some(keyPressed)) {
+        sel.stageLocked = true;
+        Sfx.announce();
+      }
+    } else if (++sel.timer > 30) {
+      this.startMatch(sel.kind);
+    }
+  }
+
+  // Which level thumbnail is under an arena point, or -1.
+  stageAt(x, y) {
+    if (y < STAGE_TOP || y > STAGE_TOP + STAGE_TH) return -1;
+    const i = Math.floor((x - STAGE_X0) / (STAGE_TW + STAGE_GAP));
+    const inThumb = x - STAGE_X0 - i * (STAGE_TW + STAGE_GAP) <= STAGE_TW;
+    return i >= 0 && i < STAGES.length && inThumb ? i : -1;
+  }
+
+  drawStageSelect() {
+    const ctx = this.ctx;
+    const sel = this.select;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'italic 900 44px system-ui, sans-serif';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#1a0b22';
+    ctx.strokeText('CHOOSE THE ARENA', W / 2, 58);
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillText('CHOOSE THE ARENA', W / 2, 58);
+    STAGES.forEach((def, i) => {
+      const x = STAGE_X0 + i * (STAGE_TW + STAGE_GAP);
+      const on = sel.stageCursor === i;
+      ctx.fillStyle = 'rgba(12,16,32,0.85)';
+      ctx.beginPath();
+      ctx.roundRect(x - 6, STAGE_TOP - 6, STAGE_TW + 12, STAGE_TH + 46, 14);
+      ctx.fill();
+      drawStageThumb(ctx, def.id, x, STAGE_TOP, STAGE_TW, STAGE_TH, this.frame);
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillStyle = on ? '#ffd34d' : '#fff';
+      ctx.fillText(def.name, x + STAGE_TW / 2, STAGE_TOP + STAGE_TH + 20);
+      if (on) {
+        ctx.strokeStyle = '#ffd34d';
+        ctx.lineWidth = sel.stageLocked ? 6 : 3;
+        ctx.setLineDash(sel.stageLocked ? [] : [10, 6]);
+        ctx.beginPath();
+        ctx.roundRect(x - 6, STAGE_TOP - 6, STAGE_TW + 12, STAGE_TH + 46, 14);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+    if (Math.floor(this.frame / 30) % 2 === 0 || sel.stageLocked) {
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillStyle = '#fff';
+      const hint = sel.stageLocked ? 'GET READY!' : this.touch ? 'Tap an arena' : 'A/D or ←/→ to choose · J or ENTER to pick · Esc back';
+      ctx.fillText(hint, W / 2, STAGE_TOP + STAGE_TH + 80);
     }
   }
 
@@ -147,6 +229,7 @@ class Game {
   }
 
   drawSelect() {
+    if (this.select.phase === 'stage') return this.drawStageSelect();
     const ctx = this.ctx;
     const sel = this.select;
     ctx.fillStyle = 'rgba(8,10,24,0.55)';
@@ -248,6 +331,8 @@ class Game {
     if (kind === 'lobby') return this.showLobby();
     this.training = kind === 'training';
     this.online = kind === 'online' ? 'host' : null;
+    // Online matches skip the level select: the host's game picks one.
+    if (kind === 'online') this.stage = STAGES[Math.floor(Math.random() * STAGES.length)].id;
     this.controllers[1] = kind === 'versus' ? new KeyboardController(KEYMAPS.p2)
       : kind === 'training' ? new DummyController()
         : kind === 'online' ? new RemoteController()
@@ -498,7 +583,14 @@ class Game {
 
   // Canvas taps (touch screens): pick menu items, continue, resume.
   onTap(x, y) {
-    if (this.mode === 'select') {
+    if (this.mode === 'select' && this.select.phase === 'stage') {
+      const i = this.stageAt(x, y);
+      if (i >= 0 && !this.select.stageLocked) {
+        this.select.stageCursor = i;
+        virtualKeyDown('Enter');
+        setTimeout(() => virtualKeyUp('Enter'), 50);
+      }
+    } else if (this.mode === 'select') {
       const i = this.cardAt(x, y);
       if (i >= 0 && !this.select.locked[0]) {
         this.select.cursor[0] = i;
@@ -665,7 +757,10 @@ class Game {
   draw() {
     const ctx = this.ctx;
     ctx.setTransform(RES, 0, 0, RES, 0, 0);
-    if (this.viewH > H) {
+    if (this.viewH > H && stageDef(this.stage).image) {
+      // A picture level: its own sky and floor colors above and below.
+      drawStageSurround(ctx, this.stage, this.viewOY, this.viewH);
+    } else if (this.viewH > H) {
       const camX = Math.round(this.camX / PIXEL) * PIXEL;
       Exterior.draw(this.extctx, camX, this.frame, this.viewOY, this.viewH);
       ctx.imageSmoothingEnabled = false;
@@ -699,7 +794,7 @@ class Game {
 
     // Layer 1, low-res: stage and shadows.
     b.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, 0, 0);
-    Stage.drawBackground(b, camX, this.frame);
+    drawStageBackground(b, this.stage, camX, this.frame);
     if (title) {
       b.fillStyle = 'rgba(10,5,20,0.35)';
       b.fillRect(0, 0, W, H);
@@ -859,5 +954,6 @@ Music.tryAutoplay().then((playing) => {
 window.addEventListener('pointerdown', () => {
   if (game.mode === 'splash') game.mode = 'title';
 });
+preloadStages();
 initOnline(game);
 document.getElementById('game').focus();

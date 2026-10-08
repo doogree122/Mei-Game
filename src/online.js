@@ -170,6 +170,7 @@ const r1 = (v) => Math.round(v * 10) / 10;
 function snapshotGame(game) {
   return {
     cs: game.fighters.map((f) => f.char.id),
+    sg: game.stage,
     m: game.mode,
     mt: game.modeTime,
     r: game.round,
@@ -225,6 +226,7 @@ function applySnapshot(game) {
     game.setFighters(s.cs[0], s.cs[1]);
   }
 
+  if (typeof s.sg === 'string' && STAGES.some((st) => st.id === s.sg)) game.stage = s.sg;
   if (s.m !== game.mode) {
     if (s.m === 'intro') {
       for (const f of game.fighters) f.reset();

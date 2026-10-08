@@ -2,11 +2,13 @@
 
 usage: python3 tools/build_single.py <out.html>
 
-Inlines css/style.css and every script index.html loads, and embeds both music
-tracks as data URIs (MUSIC_DATA) so the page needs no other files. The output omits
+Inlines css/style.css and every script index.html loads, and embeds the music
+tracks (MUSIC_DATA) and level backdrops (STAGE_DATA) as data URIs so the page
+needs no other files. The output omits
 <!doctype>/<html>/<head>/<body>: the artifact host adds that skeleton.
 """
 import base64
+import os
 import re
 import sys
 
@@ -25,6 +27,10 @@ fight1 = data_uri('assets/music/arcade_march.mp3')
 fight2 = data_uri('assets/music/arcade_march_2.mp3')
 music = menu + fight1 + fight2
 js = f"const MUSIC_DATA = {{ menu: '{menu}', fight1: '{fight1}', fight2: '{fight2}' }};\n"
+# Level backdrops as data URIs too.
+stages = {name[:-4]: 'data:image/jpeg;base64,' + base64.b64encode(open(f'assets/stages/{name}', 'rb').read()).decode()
+          for name in sorted(os.listdir('assets/stages')) if name.endswith('.jpg')}
+js += 'const STAGE_DATA = {' + ', '.join(f"{k}: '{v}'" for k, v in stages.items()) + '};\n'
 js += '\n'.join(f'// ---- {p} ----\n' + open(p).read() for p in scripts)
 assert '</script' not in js
 with open(out, 'w') as f:

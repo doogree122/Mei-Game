@@ -102,7 +102,14 @@ The music gets quieter while the game is paused and stops while the tab is hidde
 The round that decides the match gets the full versions instead: a fanfare for the winner, a sad trombone for the loser. The music stops while they play: the next round starts a fresh fight song, and after the match it stays quiet until you return to the menu.
 "You" is player 1 against the CPU and your own fighter online. With 2 players on one keyboard, the winner's fanfare plays.
 
-## Stage
+## Levels
+
+After character select, **CHOOSE THE ARENA** picks the level (A/D or ←/→ and J/Enter, or tap); the background previews the one under the cursor. Online matches get a random level from the host's game, and the joining player sees the same one.
+
+- **USS HOOD**: the drawn spaceship room described below.
+- **DESERT TOWN**, **THE BRIDGE** and **BATTLE STATION**: backdrop pictures in `assets/stages/` (prepared by `tools/prep_stages.py`, which crops, resizes and samples each picture's edge colors). `src/stages.js` lists the levels: each picture is scaled to a set height, lined up so its floor row sits under the fighters' feet, and pans from its left edge to its right as the camera crosses the stage, slower than the fighters. On tall phone screens the space around the arena takes the picture's sky and floor colors.
+
+## The USS Hood
 
 The fight takes place inside a spaceship. The room is about two screens wide (`WORLD_W`), and the camera follows the fighters,
 who can't walk off screen. The view of space through the windows scrolls slower than the room, which gives a sense of depth.
@@ -115,6 +122,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
 | `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
+| `src/stages.js` | The level list, backdrop pictures, the arena thumbnails |
 | `src/exterior.js` | Ship exterior shown above and below the arena on tall (portrait) screens |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |
