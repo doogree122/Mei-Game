@@ -143,8 +143,24 @@ CHARACTERS.seven = {
   id: 'seven',
   name: 'SEVEN',
   blurb: 'High kick · laser rifle',
-  look: 'cutout', // body parts cut from a picture (src/cutout-seven.js)
-  fallbackLook: 'agent', // drawn version: catsuited officer with an eye implant
+  look: 'painted', // painted body with head and fists from a picture (src/painted.js)
+  fallbackLook: 'agent', // drawn version, until the picture pieces load
+  paint: {
+    suit: [[22, 38, 78], [46, 78, 138], [100, 140, 202]], // dark, mid, light
+    sleeve: [[86, 90, 102], [138, 142, 152], [192, 196, 204]],
+    skin: [[188, 138, 112], [232, 192, 168], [248, 222, 204]],
+    sole: [24, 26, 38],
+    // Limb radii at each joint, in skeleton units.
+    widths: { hip: 9.4, knee: 5.8, ankle: 3.1, shoulder: 5.0, elbow: 4.0, wrist: 3.0, neck: 3.5 },
+    // Torso outline as [t, x]: t from hip (0) to neck (1), x forward (+) or back (-).
+    torsoBack: [[-0.12, -9], [0, -13], [0.15, -12], [0.34, -7.6], [0.55, -8], [0.8, -9], [0.94, -6.8], [1.04, -3.6]],
+    torsoFront: [[-0.12, 6.8], [0.1, 8.6], [0.34, 6.9], [0.52, 8.8], [0.66, 12.6], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
+    raglan: [[1.04, -3.6], [0.94, -7], [0.8, -9.1], [0.72, -8.4], [0.7, -3.6], [0.86, 0.6], [0.98, 2.9], [1.04, 3.4]],
+    waistSeam: [[0.46, -7.7], [0.42, -2.4], [0.36, 3.6], [0.38, 7]],
+    grain: 0.3, // texture tile pixels to skeleton units
+    pieceScale: 0.19, // fists
+    headScale: 0.19,
+  },
   scale: 1.85,
   projectile: 'laser', // special fires a big red laser blast from her rifle
   colors: {
@@ -210,5 +226,5 @@ const ROSTER = ['fett', 'worf', 'vader', 'seven'];
 
 // The character as player 2 sees it in a mirror match: same fighter, alternate colors.
 function altVersion(char) {
-  return { ...char, colors: { ...char.colors, ...(char.altColors || {}) }, altFilter: char.look === 'cutout' ? 'hue-rotate(150deg) saturate(1.2)' : '' };
+  return { ...char, colors: { ...char.colors, ...(char.altColors || {}) }, altFilter: char.look === 'cutout' || char.look === 'painted' ? 'hue-rotate(150deg) saturate(1.2)' : '' };
 }
