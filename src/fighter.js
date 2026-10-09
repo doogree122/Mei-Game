@@ -18,6 +18,8 @@ const SHIELD_COOLDOWN = 90;
 // opponent back while up. `style` picks its look in render.js.
 const DEFAULT_FIELD = { color: '#6fd8ff', style: 'bubble', frames: SHIELD_FRAMES, cooldown: SHIELD_COOLDOWN, blocks: ['shots'], repel: false, size: 1 };
 const PUNCHES = ['punch', 'lowPunch', 'uppercut'];
+// How high the Force choke holds its victim off the floor.
+const CHOKE_LIFT = 70;
 // Vader's Force push: launch speed sideways and up.
 const FORCE_PUSH = { vx: 19, vy: 12 };
 
@@ -79,8 +81,10 @@ const MOVES = {
   // Hidden move (Vader: back, back, down, punch): the Force grips the
   // opponent's throat from anywhere in front, lifting them off the floor.
   forceChoke: {
-    pose: 'forceChoke', startup: 14, active: 1, recovery: 46, choke: true,
-    damage: 4, hitstun: 70, blockstun: 0, push: 0, height: 'unblockable', sound: 'light',
+    // Vader holds his hand out for the whole 3-second grip (`hold`), letting go
+    // as the victim drops; a miss ends it early (Game.forceChoke).
+    pose: 'forceChoke', startup: 14, active: 1, recovery: 186, choke: true, hold: 12,
+    damage: 4, hitstun: 180, blockstun: 0, push: 0, height: 'unblockable', sound: 'light',
   },
 };
 
@@ -285,7 +289,7 @@ class Fighter {
     if (this.choked > 0) {
       this.choked--;
       if (this.hitstun > 0) {
-        this.y += (24 - this.y) * 0.2;
+        this.y += (CHOKE_LIFT - this.y) * 0.12;
         this.vy = 0;
         this.vx = 0;
       } else {
@@ -687,7 +691,10 @@ class Fighter {
     const base = def.air ? POSES.jump : def.crouching ? POSES.crouch : POSES.idle;
     if (frame < def.startup) return lerpPose(windup, hit, Math.max(0, frame / def.startup - 0.4) / 0.6);
     if (frame < def.startup + def.active) return hit;
-    const t = (frame - def.startup - def.active) / def.recovery;
+    // A held move keeps its pose until its last `hold` frames, then eases back.
+    const after = frame - def.startup - def.active;
+    if (def.hold) return lerpPose(hit, base, Math.max(0, after - (def.recovery - def.hold)) / def.hold);
+    const t = after / def.recovery;
     return lerpPose(hit, base, t);
   }
 

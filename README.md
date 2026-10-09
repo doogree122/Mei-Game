@@ -40,7 +40,7 @@ The standing kick is a high kick that lands at chest height.
 
 Entered as a quick sequence (within about ¾ of a second), where *back* means away from your opponent:
 
-- **VADER, Force choke:** back, back, down, punch. Vader reaches out and the opponent, anywhere in front of him, is lifted off the floor clutching their throat for about a second and loses 4 health. It can't be blocked and goes through force fields, but it misses someone who is already down or flying. A punch or kick on the choked fighter breaks the grip.
+- **VADER, Force choke:** back, back, down, punch. Vader reaches out and holds his hand there while the opponent, anywhere in front of him, is lifted into the air clutching their throat for 3 seconds and loses 4 health; then they drop and he lowers his hand. If it misses, he lowers it right away. It can't be blocked and goes through force fields, but it misses someone who is already down or flying. A punch or kick on the choked fighter breaks the grip.
 
 Characters list their hidden moves in `secrets` in `src/characters.js` (directions `b`, `f`, `d`, then a button).
 

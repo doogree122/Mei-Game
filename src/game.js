@@ -666,9 +666,13 @@ class Game {
   forceChoke(att, def) {
     const target = this.fighters.find((f) => f !== att);
     const inFront = Math.sign(target.x - att.x) === att.facing;
-    if (!inFront || target.isKO || target.downTime > 0 || target.knockedAirborne || target.invuln > 0) return;
+    const miss = () => {
+      // Nothing to hold: Vader lowers his hand after a moment.
+      att.move.frame = Math.max(att.move.frame, def.startup + def.active + def.recovery - 24);
+    };
+    if (!inFront || target.isKO || target.downTime > 0 || target.knockedAirborne || target.invuln > 0) return miss();
     const hb = target.hurtbox();
-    target.takeHit(def, att, this, { x: target.x, y: hb.y + hb.h * 0.2 });
+    if (target.takeHit(def, att, this, { x: target.x, y: hb.y + hb.h * 0.2 }) !== 'hit' || target.isKO) miss();
   }
 
   // Vader's Force field shoves the opponent away while it is up: anyone
