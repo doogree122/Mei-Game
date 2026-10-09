@@ -35,10 +35,11 @@ ANCHORS = {
         'upperArm': {'pivot': (60, 52), 'tip': (72, 330)},
         'forearm': {'pivot': (56, 40), 'tip': (56, 340)},
         'glove': {'pivot': (66, 6), 'tip': (74, 194), 'file': 'fist'},  # bare fist
-        'thigh': {'pivot': (70, 60), 'tip': (76, 390)},
-        'shin': {'pivot': (72, 50), 'tip': (66, 400)},
+        'thigh': {'pivot': (72, 40), 'tip': (72, 350)},  # the knee: the faded bottom runs on past it, over the lower leg
+        'shin': {'pivot': (46, 25), 'tip': (52, 410)},  # one piece, knee to ankle
+        'armStraight': {'pivot': (68, 45), 'tip': (100, 545)},  # the whole arm, shoulder to wrist, used when it's straight
         'foot': {'pivot': (62, 100), 'tip': (62, 138)},
-        'torso': {'pivot': (140, 476), 'tip': (120, 28)},
+        'torso': {'pivot': (140, 440), 'tip': (120, 28)},  # its faded trouser bottom laps over the thighs
         'helmet': {'pivot': (180, 266), 'tip': (140, 8), 'file': 'head'},  # head and mane, from the neck to the top
     },
 }

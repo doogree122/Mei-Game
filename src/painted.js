@@ -1042,17 +1042,36 @@ function paintedParts(ctx, sk, f, P) {
     const fa = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - (fit.gloveTilt || 0);
     const len = fit.gloveLength || 14;
     drawPart(ctx, P.glove, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
+    // A nearly straight arm uses the one-piece straight-arm picture.
+    const bend = Math.abs(Math.atan2(Math.sin(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x)), Math.cos(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x))));
+    if (P.armStraight && bend < (fit.straightBelow || 0.5)) {
+      drawPart(ctx, P.armStraight, sk.shoulder, wrist, (W.shoulder + W.wrist) * (fit.armStraight || 1.1), k);
+      return;
+    }
     drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
     drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
   };
-  const leg = (side, k) => {
+  // A leg in two passes so the front thigh can go under the torso (a
+  // seamless seat): `upper` draws the thigh, `lower` the one-piece lower leg
+  // and then the boot over its hem. With `thighFirst` the lower leg goes
+  // first and the thigh covers the knee.
+  const leg = (side, k, part = 'all') => {
     const knee = sk['knee' + side];
     const foot = sk['foot' + side];
-    // The boot: its ankle on the ankle joint, sole 4 units below, the toe forward.
     const down = toward(foot, { x: foot.x * 2 - knee.x, y: foot.y * 2 - knee.y }, 4);
-    drawPart(ctx, P.foot, foot, down, null, k);
-    drawPart(ctx, P.thigh, sk.hip, knee, (W.hip + W.knee) * (fit.thigh || 1.25), k);
-    drawPart(ctx, P.shin, knee, foot, (W.knee + W.ankle) * (fit.shin || 1.3), k);
+    const thigh = () => drawPart(ctx, P.thigh, sk.hip, knee, (W.hip + W.knee) * (fit.thigh || 1.25), k);
+    const shin = () => drawPart(ctx, P.shin, knee, foot, (W.knee + W.ankle) * (fit.shin || 1.3), k);
+    const boot = () => drawPart(ctx, P.foot, foot, down, null, k);
+    if (!fit.bootLast) {
+      // Mando: the boot sits under the leg armor.
+      if (part !== 'upper') boot();
+      if (part !== 'lower') thigh();
+      if (part !== 'upper') shin();
+      return;
+    }
+    if (part !== 'upper') shin();
+    if (part !== 'lower') thigh();
+    if (part !== 'upper') boot();
   };
   const at = torsoFrame(sk);
   arm('B', FAR);
@@ -1065,8 +1084,16 @@ function paintedParts(ctx, sk, f, P) {
   }
   if (p.backWeapon) paintBackWeapon(ctx, p, sk);
   leg('B', FAR);
-  drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
-  leg('F', 1);
+  if (fit.thighUnderTorso) {
+    // The near leg's lower part first (its knee goes under the thigh), then
+    // the thigh, then the torso over the hip.
+    leg('F', 1, 'lower');
+    leg('F', 1, 'upper');
+    drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
+  } else {
+    drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
+    leg('F', 1);
+  }
   // The helmet, its neck opening on the neck and dome toward the head.
   const up = sub(sk.neck, sk.head);
   const ul = Math.hypot(up.x, up.y) || 1;
