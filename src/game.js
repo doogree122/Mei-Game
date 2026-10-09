@@ -264,9 +264,9 @@ class Game {
       drawFighter(ctx, f);
       ctx.restore();
       // Name and what they bring.
-      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.font = nameFont(f.char, 22);
       ctx.fillStyle = '#fff';
-      ctx.fillText(f.char.name, x + CARD_W / 2, CARD_TOP + CARD_H - 30);
+      ctx.fillText(nameText(f.char), x + CARD_W / 2, CARD_TOP + CARD_H - 30);
       ctx.font = 'bold 12px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.fillText(f.char.blurb, x + CARD_W / 2, CARD_TOP + CARD_H - 10);
@@ -876,12 +876,12 @@ class Game {
       else drawBanner(ctx, 'FIGHT!', null, 1 - Math.max(0, this.modeTime - 100) / 10);
     } else if (this.mode === 'roundEnd') {
       if (this.modeTime < 80) drawBanner(ctx, this.roundLabel);
-      else drawBanner(ctx, this.roundWinner ? `${this.roundWinner.char.name} WINS` : 'DRAW');
+      else drawBanner(ctx, this.roundWinner ? `${this.roundWinner.char.name} WINS` : 'DRAW', null, 1, this.roundWinner && this.roundWinner.char);
     } else if (this.mode === 'matchEnd') {
       const cont = this.online === 'guest' ? 'Waiting for the host · Esc to leave'
         : this.online === 'host' ? (this.touch ? 'Tap for a rematch · ☰ to leave' : 'Enter for a rematch · Esc to leave')
           : this.touch ? 'Tap to continue' : 'Press Enter to continue';
-      drawBanner(ctx, `${this.champion.char.name} WINS!`, this.modeTime > 60 ? cont : null);
+      drawBanner(ctx, `${this.champion.char.name} WINS!`, this.modeTime > 60 ? cont : null, 1, this.champion.char);
     } else if (this.mode === 'paused') {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(0, 0, W, H);
@@ -893,7 +893,7 @@ class Game {
     const ctx = this.ctx;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = 'italic 900 88px system-ui, sans-serif';
+    ctx.font = `84px ${TITLE_FONT}`;
     ctx.lineWidth = 10;
     ctx.strokeStyle = '#1a0b22';
     ctx.strokeText('WARS VS. TREK', W / 2, 130);

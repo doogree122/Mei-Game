@@ -8,6 +8,25 @@
 // canvas with a FIGHTER_PIXEL grid, then given hard edges and a dark 1-pixel
 // outline so they read like hand-made sprites.
 
+// Display fonts (css/style.css): the game title, and fighter names in their
+// franchise's lettering. Star Jedi's capitals are swash variants, so its names
+// are drawn in lowercase (the classic logo letters). `size` evens out how big
+// each face looks at the same pixel size.
+const TITLE_FONT = '"Final Frontier", system-ui, sans-serif';
+const NAME_FONTS = {
+  wars: { family: '"Star Jedi"', lower: true, size: 0.86 },
+  trek: { family: '"TNG Title"', lower: false, size: 1 },
+};
+if (document.fonts) for (const f of ['Final Frontier', 'Star Jedi', 'TNG Title']) document.fonts.load(`40px "${f}"`).catch(() => {});
+function nameFont(char, px) {
+  const s = char && NAME_FONTS[char.franchise];
+  return s ? `${Math.round(px * s.size)}px ${s.family}, system-ui, sans-serif` : `italic 900 ${px}px system-ui, sans-serif`;
+}
+function nameText(char, text = char.name) {
+  const s = char && NAME_FONTS[char.franchise];
+  return s && s.lower ? text.toLowerCase() : text;
+}
+
 let RES = 1;
 let PIXEL = 1;
 let FIGHTER_PIXEL = 1;
@@ -1637,15 +1656,15 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
 
-  ctx.font = 'italic 900 32px system-ui, sans-serif';
+  ctx.font = nameFont(f.char, 32);
   ctx.textBaseline = 'top';
   ctx.textAlign = flip ? 'right' : 'left';
   ctx.lineJoin = 'round';
   ctx.lineWidth = 5;
   ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-  ctx.strokeText(f.char.name, flip ? x + w : x, y + h + 7);
+  ctx.strokeText(nameText(f.char), flip ? x + w : x, y + h + 7);
   ctx.fillStyle = '#fff';
-  ctx.fillText(f.char.name, flip ? x + w : x, y + h + 7);
+  ctx.fillText(nameText(f.char), flip ? x + w : x, y + h + 7);
   if (you) {
     ctx.font = 'bold 15px system-ui, sans-serif';
     ctx.fillStyle = '#ffd34d';
@@ -1705,12 +1724,14 @@ function drawHUD(ctx, game) {
   }
 }
 
-function drawBanner(ctx, text, sub, alpha = 1) {
+// `char`: the banner is about that fighter (a win), so it's in their lettering.
+function drawBanner(ctx, text, sub, alpha = 1, char = null) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'italic 900 72px system-ui, sans-serif';
+  ctx.font = nameFont(char, 72);
+  text = nameText(char, text);
   ctx.lineWidth = 8;
   ctx.strokeStyle = '#1a0b22';
   ctx.strokeText(text, W / 2, H / 2 - 40);

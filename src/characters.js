@@ -390,6 +390,10 @@ CHARACTERS.mando = {
   flight: { frames: 180, ceiling: 150, climb: 4.5, speed: 5.5 },
 };
 
+// Which franchise's lettering their name is shown in (src/render.js NAME_FONTS).
+for (const id of ['fett', 'mando', 'vader']) CHARACTERS[id].franchise = 'wars';
+for (const id of ['worf', 'seven']) CHARACTERS[id].franchise = 'trek';
+
 // Shot sounds: the blaster-carrying bounty hunters fire a "pew"; the
 // Starfleet officers fire a whining phaser beam.
 for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'phaser'], ['seven', 'phaser']]) {

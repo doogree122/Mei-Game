@@ -15,6 +15,9 @@ import sys
 out = sys.argv[1]
 html = open('index.html').read()
 css = open('css/style.css').read()
+# Fonts the stylesheet loads, embedded as data URIs.
+css = re.sub(r"url\('\.\./assets/fonts/([^']+)'\)",
+             lambda m: "url('data:font/ttf;base64," + base64.b64encode(open('assets/fonts/' + m.group(1), 'rb').read()).decode() + "')", css)
 body = html[html.index('<body>') + len('<body>'):html.index('</body>')]
 scripts = re.findall(r'<script src="([^"]+)"></script>', body)
 body = re.sub(r'\s*<script src="[^"]+"></script>', '', body)

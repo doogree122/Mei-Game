@@ -54,6 +54,8 @@ Characters list their hidden moves in `secrets` in `src/characters.js` (directio
 
 **Shot sounds and guns:** B. Fett and Mando fire a classic blaster "pew"; Worf and Seven fire the recorded TNG phaser (`assets/sfx/phaser.mp3`, embedded in the single-file build); Vader's Force lightning crackles and buzzes; his lightsaber swings with a humming swoosh that bends in pitch as the blade passes. Each shot sounds the moment it leaves the gun. Fett's carbine and Mando's blaster pistol are drawn large and outlined, with a muzzle flash, and the bolt leaves from the end of the barrel.
 
+**Lettering:** the title is set in Final Frontier; Star Wars fighters' names (health bars, select cards, win banners) in Star Jedi, Star Trek fighters' in the TNG title font (`assets/fonts/`, embedded in the single-file build). Star Jedi's capitals are swash variants, so its names are drawn in lowercase. The Star Jedi file's glyph-name table was rewritten (fontTools, `post` format 3) because browsers reject the original.
+
 **Health:** each fighter has 120 health, so every hit takes a sixth less of the bar than at the old 100 and matches last about 20% longer. Hidden moves still do their 4 damage.
 
 Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.
