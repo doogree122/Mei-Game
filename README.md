@@ -42,7 +42,9 @@ Entered as a quick sequence (within about ¾ of a second), where *back* means aw
 
 - **VADER, Force choke:** back, back, down, punch. Vader reaches out and holds his hand there while the opponent, anywhere in front of him, is lifted into the air clutching their throat for 3 seconds and loses 4 health; then they drop and he lowers his hand. If it misses, he lowers it right away. It can't be blocked and goes through force fields, but it misses someone who is already down or flying. A punch or kick on the choked fighter breaks the grip.
 
-Characters list their hidden moves in `secrets` in `src/characters.js` (directions `b`, `f`, `d`, then a button).
+- **WORF, Bat'leth swing:** back, jump, kick (press kick in the air). Worf leaps toward the opponent, raises his bat'leth over his head and brings it down in a wide arc in front of him for 4 damage, with a heavy whoosh and a ring of steel. It finishes even if he lands during the swing. Stand-block it. The bat'leth is cut from a reference picture by `tools/make_prop.py` into `src/props.js`.
+
+Characters list their hidden moves in `secrets` in `src/characters.js` (directions `b`, `f`, `d`, `u` for jump, then a button). A sequence with a jump in it ends in an air move (`air: true`).
 
 ### Fighters compared
 

@@ -818,6 +818,29 @@ function drawPiece(ctx, piece, at, dir, scale) {
   ctx.restore();
 }
 
+// Weapons cut from pictures (src/props.js), loaded on first use: the piece,
+// or null until its image is ready.
+const propCache = {};
+function propPiece(name) {
+  if (typeof PROPS === 'undefined' || !PROPS[name]) return null;
+  if (!propCache[name]) {
+    const img = new Image();
+    img.src = PROPS[name].src;
+    propCache[name] = { ...PROPS[name], img };
+  }
+  const piece = propCache[name];
+  return piece.img.complete && piece.img.naturalWidth ? piece : null;
+}
+
+// Worf's bat'leth, gripped in his front hand with the blades pointing out
+// along his forearm, about 75 body units from tip to tip.
+const BATLETH_SCALE = 0.18;
+function paintBatleth(ctx, sk) {
+  const piece = propPiece('batleth');
+  if (!piece) return;
+  drawPiece(ctx, piece, sk.handF, { x: sk.handF.x - sk.elbowF.x, y: sk.handF.y - sk.elbowF.y }, BATLETH_SCALE);
+}
+
 function paintedBody(ctx, sk, f, art) {
   const p = f.char.paint;
   const W = p.widths;
@@ -906,6 +929,7 @@ function paintedBody(ctx, sk, f, art) {
   else drawPiece(ctx, art.pieces.head, along(p.neckLift), up, p.headScale);
   if (p.collar) paintCollar(ctx, art, p, sk, grain);
   if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
+  if (f.move && f.move.name === 'batleth') paintBatleth(ctx, sk);
   arm('F', 1, frontHand);
 }
 

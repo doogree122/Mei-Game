@@ -86,6 +86,14 @@ const MOVES = {
     pose: 'forceChoke', startup: 14, active: 1, recovery: 186, choke: true, hold: 12,
     damage: 4, hitstun: 180, blockstun: 0, push: 0, height: 'unblockable', sound: 'light',
   },
+  // Hidden move (Worf: back, jump, kick): in mid-air he whirls his bat'leth
+  // up over his head and brings it down in a wide arc in front of him. It
+  // finishes even if he lands during it (`landFinish`).
+  batleth: {
+    pose: 'batleth', startup: 10, active: 8, recovery: 16, air: true, landFinish: true, hop: 7, lunge: 4.5,
+    damage: 4, hitstun: 22, blockstun: 12, push: 9,
+    limb: 'batleth', radius: 34, height: 'high', sound: 'heavy', sfx: 'batleth', trail: 'overhead',
+  },
 };
 
 const FIREBALL = {
@@ -143,6 +151,9 @@ const POSES = {
   forceChoke: { torso: 0.1, head: -0.1, uaF: 0.3, faF: 0.55, uaB: 1.85, faB: 2.05, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
   // Being choked: both hands clawing at the throat, head back, feet dangling.
   choked: { torso: -0.15, head: -0.45, uaF: 1.15, faF: 3.55, uaB: 1.0, faB: 3.45, thF: 0.15, shF: 0.05, thB: -0.1, shB: 0.15 },
+  // Bat'leth: raised high over the head with both hands, then swung down and out.
+  batleth_windup: { torso: -0.35, head: 0.2, uaF: 3.0, faF: 3.55, uaB: 2.8, faB: 3.4, thF: 1.2, shF: -0.4, thB: 0.4, shB: -1.0 },
+  batleth: { torso: 0.35, head: -0.2, uaF: 1.55, faF: 1.25, uaB: 1.35, faB: 1.2, thF: 1.0, shF: 0.2, thB: 0.1, shB: -0.6 },
   forceLightning: { torso: 0.25, head: -0.15, uaF: 0.5, faF: 1.0, uaB: 1.55, faB: 1.6, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
   // Very high kick: the foot rises to head height.
   highKick_windup: { torso: -0.2, head: 0.1, ...GUARD, thF: 1.9, shF: 0.6, thB: -0.1, shB: 0 },
@@ -194,6 +205,12 @@ const SABER_LENGTH = 46;
 function saberAngle(sk) {
   return Math.atan2(sk.handF.y - sk.elbowF.y, sk.handF.x - sk.elbowF.x) - 0.35;
 }
+// The middle of the bat'leth's blades: straight out past the front hand.
+const BATLETH_REACH = 30;
+function batlethPoint(sk) {
+  const a = Math.atan2(sk.handF.y - sk.elbowF.y, sk.handF.x - sk.elbowF.x);
+  return { x: sk.handF.x + Math.cos(a) * BATLETH_REACH, y: sk.handF.y + Math.sin(a) * BATLETH_REACH };
+}
 function saberTip(sk) {
   const a = saberAngle(sk);
   return { x: sk.handF.x + Math.cos(a) * SABER_LENGTH, y: sk.handF.y + Math.sin(a) * SABER_LENGTH };
@@ -232,7 +249,7 @@ class Fighter {
     this.uppercutWindow = 0;
     this.dirs = []; // recent direction presses, for hidden moves
     this.pushed = 0; // frames left of being thrown by Vader's Force field
-    this.wasBack = this.wasFwd = this.wasDown = false;
+    this.wasBack = this.wasFwd = this.wasDown = this.wasUp = false;
     this.choked = 0;
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
@@ -285,7 +302,7 @@ class Fighter {
     const fwd = this.facing === 1 ? input.right : input.left;
     this.holdBack = back && !fwd;
     this.holdDown = input.down;
-    this.recordDirections(back, fwd, input.down);
+    this.recordDirections(back, fwd, input.down, input.up);
     if (this.pushed > 0) this.pushed--;
     // Choked: held a little off the floor until it lets go.
     if (this.choked > 0) {
@@ -344,7 +361,7 @@ class Fighter {
       // No attacking from inside the force field.
       const canAttack = this.shield === 0;
       // Hidden moves: a direction sequence finished with a button.
-      const secret = canAttack && this.secretMove();
+      const secret = canAttack && this.secretMove(false);
       if (secret) return this.startMove(secret);
       if (input.down) {
         this.vx = 0;
@@ -386,6 +403,12 @@ class Fighter {
       }
     } else {
       this.state = 'jump';
+      // Hidden moves that end in mid-air (a sequence with a jump in it).
+      const secret = this.shield === 0 && !this.airAttackUsed && this.secretMove(true);
+      if (secret) {
+        this.airAttackUsed = true;
+        return this.startMove(secret);
+      }
       if (this.shield === 0 && !this.airAttackUsed && (this.consume('kick') || this.consume('punch'))) {
         this.airAttackUsed = true;
         this.startMove('airKick');
@@ -393,12 +416,14 @@ class Fighter {
     }
   }
 
-  // Remember when back, forward and down are first pressed, for hidden moves.
-  recordDirections(back, fwd, down) {
+  // Remember when back, forward, down and up (jump) are first pressed, for hidden moves.
+  recordDirections(back, fwd, down, up) {
     const now = this.time;
     if (back && !this.wasBack) this.dirs.push({ k: 'b', t: now });
     if (fwd && !this.wasFwd) this.dirs.push({ k: 'f', t: now });
     if (down && !this.wasDown) this.dirs.push({ k: 'd', t: now });
+    if (up && !this.wasUp) this.dirs.push({ k: 'u', t: now });
+    this.wasUp = up;
     this.wasBack = back;
     this.wasFwd = fwd;
     this.wasDown = down;
@@ -408,8 +433,9 @@ class Fighter {
   // A hidden move whose sequence (characters.js `secrets`) was just entered:
   // the directions in order, the whole thing within about ¾ of a second,
   // ending with the button. Returns the move's name.
-  secretMove() {
+  secretMove(air) {
     for (const s of this.char.secrets || []) {
+      if (!!MOVES[s.move].air !== air) continue;
       if (!(this.buffer[s.button] > 0)) continue;
       const tail = this.dirs.slice(-s.input.length);
       if (tail.length < s.input.length || tail.some((d, i) => d.k !== s.input[i])) continue;
@@ -523,6 +549,11 @@ class Fighter {
     this.move = { name, def, frame: 0, hasHit: false };
     this.state = 'attack';
     if (!def.air) this.vx = (def.lunge || 0) * this.facing;
+    if (def.hop) {
+      // A little extra lift, and a leap toward the opponent even out of a back jump.
+      this.vy = Math.max(this.vy, def.hop);
+      this.vx = (def.lunge || 0) * this.facing;
+    }
     // A shot's sound plays as it leaves the gun (updateMove).
     if (!def.projectile) Sfx[def.sfx || 'whiff']();
   }
@@ -536,7 +567,9 @@ class Fighter {
       Sfx[d.sfx || 'special']();
     }
     if (d.choke && m.frame === d.startup) game.forceChoke(this, d);
-    if (d.air && this.grounded) {
+    if (d.air && d.landFinish && this.grounded) {
+      this.vx = 0; // lands and finishes the swing on the spot
+    } else if (d.air && this.grounded) {
       // Landing cancels the air attack.
       this.move = null;
       this.state = 'idle';
@@ -694,7 +727,7 @@ class Fighter {
     const { def, frame } = this.move;
     const windup = POSES[def.pose + '_windup'];
     const hit = POSES[def.pose];
-    const base = def.air ? POSES.jump : def.crouching ? POSES.crouch : POSES.idle;
+    const base = def.air && !this.grounded ? POSES.jump : def.crouching ? POSES.crouch : POSES.idle;
     if (frame < def.startup) return lerpPose(windup, hit, Math.max(0, frame / def.startup - 0.4) / 0.6);
     if (frame < def.startup + def.active) return hit;
     // A held move keeps its pose until its last `hold` frames, then eases back.
@@ -782,6 +815,7 @@ class Fighter {
   hitPoint() {
     const sk = skeleton(this.hitPose());
     const limb = this.move.def.limb;
-    return this.toWorld(limb === 'saberTip' ? saberTip(sk) : sk[limb], sk);
+    const pt = limb === 'saberTip' ? saberTip(sk) : limb === 'batleth' ? batlethPoint(sk) : sk[limb];
+    return this.toWorld(pt, sk);
   }
 }
