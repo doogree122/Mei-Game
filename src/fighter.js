@@ -257,6 +257,7 @@ class Fighter {
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
     this.fuel = this.char.flight ? this.char.flight.frames : 0; // jetpack flight frames left
+    this.tilt = 0; // whole-body lean in flight, radians (positive = forward)
     this.time = 0;
     this.walkPhase = 0;
     this.flash = 0;
@@ -343,6 +344,7 @@ class Fighter {
     }
 
     this.physics(game);
+    this.updateTilt();
     this.updatePose();
   }
 
@@ -436,9 +438,23 @@ class Fighter {
     const target = this.y < fl.ceiling ? fl.climb : Math.sin(this.time * 0.15) * 0.6 - (this.y - fl.ceiling) * 0.2;
     this.vy += (target - this.vy) * 0.18 + g; // physics() takes gravity back off
     const steer = fwd ? 1 : back ? -1 : 0;
-    this.vx += (steer * fl.speed * this.facing - this.vx) * 0.1;
+    this.vx += (steer * fl.speed * this.facing - this.vx) * 0.12;
     if (Math.abs(opp.x - this.x) > 30) this.facing = opp.x > this.x ? 1 : -1;
     if (this.time % 9 === 0) Sfx.thrust();
+  }
+
+  // Jetpack flyers lean the whole body into the jump: forward as they're
+  // propelled forward, upright or back when braking with the back button.
+  updateTilt() {
+    const fl = this.char.flight;
+    const flying = fl && !this.grounded && this.hitstun === 0 && this.state !== 'ko' && !this.won;
+    let target = 0;
+    if (flying) {
+      const ahead = Math.max(-1, Math.min(1, (this.vx * this.facing) / fl.speed));
+      target = ahead * 0.34 + (this.thrusting ? 0.12 : 0.06);
+    }
+    this.tilt += (target - this.tilt) * 0.12;
+    if (Math.abs(this.tilt) < 0.002) this.tilt = 0;
   }
 
   // Remember when back, forward, down and up (jump) are first pressed, for hidden moves.
