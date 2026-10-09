@@ -16,7 +16,7 @@ on:
 env:
   PROJECT_ID: wars-v-trek
   SERVICE_ACCOUNT: firebase-adminsdk-fbsvc@wars-v-trek.iam.gserviceaccount.com
-  WIF_PROVIDER: ${{ vars.FIREBASE_WIF_PROVIDER || '' }}
+  WIF_PROVIDER: ${{ vars.FIREBASE_WIF_PROVIDER || 'projects/646665675269/locations/global/workloadIdentityPools/github/providers/mei-game' }}
 
 jobs:
   deploy:
