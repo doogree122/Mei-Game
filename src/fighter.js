@@ -354,6 +354,7 @@ class Fighter {
 
     this.physics(game);
     this.updateTilt();
+    this.updateHair();
     this.updatePose();
   }
 
@@ -450,6 +451,38 @@ class Fighter {
     this.vx += (steer * fl.speed * this.facing - this.vx) * 0.12;
     if (Math.abs(opp.x - this.x) > 30) this.facing = opp.x > this.x ? 1 : -1;
     if (this.time % 9 === 0) Sfx.thrust();
+  }
+
+  // Long hair on a spring (drawn by paintCurlyMane): it trails behind as the
+  // body moves, floats up while falling, is flung down on landing and bounces
+  // back, and springs a little with each step. Worked out from how the body
+  // actually moved (position changes), so an online guest's copy matches.
+  // `hair.x` is backward-forward along facing, `hair.y` up, in head units.
+  updateHair() {
+    const h = this.hair || (this.hair = { x: 0, y: 0, vx: 0, vy: 0, px: this.x, py: this.y, pvx: 0, pvy: 0 });
+    const vx = (this.x - h.px) * this.facing; // forward speed this frame
+    const vy = this.y - h.py; // upward speed
+    // In the air, gravity pulls hair and body alike: only other changes count.
+    const falling = this.y > 0 && h.py > 0 ? GRAVITY * (this.char.stats.gravity || 1) : 0;
+    h.px = this.x;
+    h.py = this.y;
+    const clamp = (v, m) => Math.max(-m, Math.min(m, v));
+    // A sudden change of speed throws the hair the other way.
+    const ax = clamp(vx - h.pvx, 6);
+    const ay = clamp(vy - h.pvy + falling, 8);
+    h.pvx = vx;
+    h.pvy = vy;
+    // Where it settles: behind when moving forward, lifted while dropping.
+    const tx = clamp(-vx * 0.28, 2.6);
+    const ty = clamp(-vy * 0.16, 2.4);
+    h.vx += (tx - h.x) * 0.09 - ax * 0.32;
+    h.vy += (ty - h.y) * 0.11 - ay * 0.38;
+    // A little spring with each footfall.
+    if (this.state === 'walk' && Math.sin(this.walkPhase) * Math.sin(this.walkPhase - 0.2) < 0) h.vy -= 0.35;
+    h.vx *= 0.88;
+    h.vy *= 0.86;
+    h.x = clamp(h.x + h.vx, 3.2);
+    h.y = clamp(h.y + h.vy, 3.2);
   }
 
   // Jetpack flyers lean the whole body into the jump: forward as they're

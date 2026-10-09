@@ -555,6 +555,7 @@ class Game {
       f.time++;
       if (f.flash > 0) f.flash--;
       f.displayHp += (f.hp - f.displayHp) * 0.08;
+      f.updateHair();
       f.updatePose();
     }
     this.updateCamera(false);
