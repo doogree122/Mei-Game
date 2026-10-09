@@ -267,7 +267,7 @@ const FACE_HAIR = [
   [-5.4, -2.4], [-4.1, -2.0], [-2.8, 0.6], [-1.1, 2.8], [1.2, 4.0], [3.0, 4.8],
 ];
 
-function paintFace(ctx, sk, paint) {
+function paintFace(ctx, sk, paint, f) {
   const F = paint.face;
   const H = headFrame(sk, F.size, F.drop);
   const [sd, sm, sl] = F.skin;
@@ -349,7 +349,7 @@ function paintFace(ctx, sk, paint) {
   softSpot(ctx, H([6.05, -4.5]), 0.45 * F.size, 'rgb(255,220,210)', 0.5);
 
   if (F.mane) {
-    paintCurlyMane(ctx, H, F);
+    paintCurlyMane(ctx, H, F, f);
     return;
   }
 
@@ -405,7 +405,15 @@ const CURLY_MANE = [
   [-12.2, -10.4], [-11.6, -16.6], [-10.0, -21.6], [-7.0, -24.4], [-3.6, -24.0], [-1.4, -21.0], [-0.2, -16.6], [0.6, -12.0],
   [0.9, -7.8], [0.5, -4.6], [0.2, -1.6], [0.5, 1.2], [1.6, 3.4], [3.2, 4.9], [4.4, 5.6],
 ];
-function paintCurlyMane(ctx, H, F) {
+function paintCurlyMane(ctx, Hhead, F, f) {
+  // Bounce (Fighter.updateHair): the hanging length bends with the hair's
+  // spring, more toward the ends, plus a slow idle sway. The crown stays put.
+  const hair = (f && f.hair) || { x: 0, y: 0 };
+  const sway = f ? Math.sin(f.time * 0.06) * 0.25 : 0;
+  const H = ([x, y]) => {
+    const w = Math.pow(Math.max(0, Math.min(1, (6 - y) / 30)), 1.25);
+    return Hhead([x + (hair.x + sway) * w * 2.0, y + hair.y * w * 1.7]);
+  };
   const [hd, hm, hl] = F.hair;
   shapeThrough(ctx, H, CURLY_MANE);
   const g = ctx.createLinearGradient(H([-12, 0]).x, H([-12, 0]).y, H([4, 12]).x, H([4, 12]).y);
@@ -1026,7 +1034,7 @@ function paintedBody(ctx, sk, f, art) {
   paintLimb(ctx, art, p.skin, armTexture, along(-1), along(p.neckLift + 5), W.neck, W.neck * 0.92, {}, 1, grain);
   if (p.face && p.face.style === 'klingon') paintKlingonFace(ctx, sk, p);
   else if (p.face && p.face.style === 'helmet') paintHelmet(ctx, sk, p);
-  else if (p.face) paintFace(ctx, sk, p);
+  else if (p.face) paintFace(ctx, sk, p, f);
   else drawPiece(ctx, art.pieces.head, along(p.neckLift), up, p.headScale);
   if (p.collar) paintCollar(ctx, art, p, sk, grain);
   if (rifle && rifle !== 'rest') drawPhaserRifle(ctx, sk, f, f.char.colors);
