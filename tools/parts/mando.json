@@ -1,0 +1,40 @@
+{
+ "style": "Game art asset for a 2D side-view fighting game. The character this part belongs to is an original armored space mercenary in a dark brown flight suit with dark polished gunmetal steel armor plates and brown leather boots. Paint with rich texture and substance: richly rendered, semi-realistic painterly style; polished dark gunmetal steel with bright specular highlights, slightly worn with soft reflections, small scratches and dents; dark brown heavy woven fabric with visible weave, stitched seams and soft folds; aged leather with creases and edge wear. Paint ONE isolated component only, in strict side view (the character faces to the RIGHT of the image). A single key light from the upper right, soft fill from the left, so the right edge is lit and the left edge falls into shadow. Pure flat white background (#FFFFFF). No cast shadow, no floor, no other body parts, no text, no border.",
+ "ref": null,
+ "parts": {
+  "upperArm": {
+   "aspect": "9:16",
+   "prompt": "The component: the UPPER ARM, drawn straight and vertical, centered, filling about 85% of the image height. The top end is the rounded shoulder joint, the bottom end the rounded elbow joint. The limb is about one third as wide as it is tall. Dark brown flight-suit sleeve, with a large, curved, polished silver shoulder pauldron covering the top third of it."
+  },
+  "forearm": {
+   "aspect": "9:16",
+   "prompt": "The component: the FOREARM, drawn straight and vertical, centered, filling about 85% of the image height. The top end is the rounded elbow, the bottom end the wrist. About one quarter as wide as it is tall, tapering slightly toward the wrist. Dark brown sleeve at the top; a silver steel vambrace (bracer) with small panel lines and rivets covers the lower 60%. No hand."
+  },
+  "thigh": {
+   "aspect": "9:16",
+   "prompt": "The component: the THIGH, drawn straight and vertical, centered, filling about 85% of the image height. The top end is the wide, rounded hip joint, the bottom end the narrower rounded knee. About 40% as wide as it is tall at the top, narrowing toward the knee. Dark brown flight-suit trousers with fabric folds, and a curved polished silver thigh plate strapped over the front-middle."
+  },
+  "shin": {
+   "aspect": "9:16",
+   "prompt": "The component: the LOWER LEG from knee to ankle, drawn straight and vertical, centered, filling about 85% of the image height. The top end is the rounded knee, the bottom end the ankle (no foot). About one third as wide as it is tall. A rounded silver steel knee plate at the very top, dark brown trouser fabric below it, and a tall brown leather boot shaft covering the lower 55%."
+  },
+  "foot": {
+   "aspect": "4:3",
+   "prompt": "The component: the BOOT FOOT in side view: a brown leather boot from the ankle down, the sole flat along the bottom, the toe pointing to the RIGHT. Worn leather, stitched welt, a dark rubber sole. Centered, filling about 70% of the width."
+  },
+  "torso": {
+   "aspect": "9:16",
+   "prompt": "The component: the TORSO only, in STRICT SIDE VIEW (exact profile) with the chest facing RIGHT: no head, no neck, no arms, no legs, no arm holes visible. Drawn upright and centered, filling about 85% of the image height, about 40% as wide as tall. The top is the base of the neck, the bottom is the hips. Dark brown padded, quilted flight-suit fabric with folds. Over the chest, a large angular dark gunmetal steel CHEST PLATE that juts forward over the pectorals with a sharp edge, then a smaller steel abdomen plate beneath it. At the waist a wide brown leather belt with a rectangular metal buckle and small pouches. A brown leather bandolier with a row of metal ammunition cartridges crosses diagonally from the back of the shoulder down to the front of the waist."
+  },
+  "glove": {
+   "aspect": "1:1",
+   "prompt": "The component: a GLOVED FIST ONLY (no forearm, no sleeve, no armor): seen from the side, the wrist opening at the TOP of the image and the knuckles pointing DOWN. Black worn leather glove with a padded brown leather back panel, closed fist, visible knuckle folds and stitching. Centered, filling about 60% of the image."
+  },
+  "jetpack": {
+   "aspect": "2:3",
+   "ref": "refs/jetpack.png",
+   "prompt": "The component: redraw the jetpack in the attached reference image as a game asset in STRICT SIDE VIEW (profile), as if strapped to a back on the RIGHT side of the image, so its flat mounting face is on the right. Keep its design: the tall angular central body with vents, the capped dome on top, the slanted side panels, and the long cylindrical rocket tube with its collar ring and bell-shaped nozzle pointing down (in profile only one tube is visible, the far one slightly behind it). Drawn upright, centered, filling about 85% of the image height. Dark gunmetal steel with brushed texture, wear and soft reflections."
+  }
+ },
+ "notes": "Helmet: the API refuses to repaint it; the game uses the isolated reference photo (refs/helmet.png). Torso: a second pass edited the first result to close the arm hole and end it at the hips."
+}

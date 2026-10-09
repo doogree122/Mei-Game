@@ -921,6 +921,143 @@ function propPiece(name) {
   return piece.img.complete && piece.img.naturalWidth ? piece : null;
 }
 
+// ---- Painted body parts (src/parts-<id>.js) ----
+// A fighter with generated parts draws each one pinned to the skeleton: the
+// part's `pivot` on one joint and `tip` on the other, stretched to the bone's
+// length and to the limb's thickness. Far-side limbs use a darker copy.
+
+const partCache = {};
+function partSet(id) {
+  if (typeof PARTS === 'undefined' || !PARTS[id]) return null;
+  if (!partCache[id]) {
+    const set = {};
+    for (const [name, p] of Object.entries(PARTS[id])) {
+      const img = new Image();
+      img.src = p.src;
+      set[name] = { ...p, img, dark: null };
+    }
+    partCache[id] = set;
+  }
+  const set = partCache[id];
+  for (const p of Object.values(set)) if (!(p.img.complete && p.img.naturalWidth)) return null;
+  return set;
+}
+
+// The part darkened for the far side of the body (made once).
+function darkPart(part, k) {
+  if (part.dark) return part.dark;
+  const cv = document.createElement('canvas');
+  cv.width = part.img.naturalWidth;
+  cv.height = part.img.naturalHeight;
+  const c = cv.getContext('2d');
+  c.drawImage(part.img, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height);
+  for (let i = 0; i < d.data.length; i += 4) {
+    d.data[i] *= k;
+    d.data[i + 1] *= k;
+    d.data[i + 2] *= k;
+  }
+  c.putImageData(d, 0, 0);
+  part.dark = cv;
+  return cv;
+}
+
+// Draw `part` with its pivot at `a` and its tip at `b`. `width` (skeleton
+// units) fits its thickness; without it the part keeps its proportions.
+function drawPart(ctx, part, a, b, width, k = 1) {
+  const [px, py] = part.pivot;
+  const [tx, ty] = part.tip;
+  const img = k < 1 ? darkPart(part, k) : part.img;
+  const along = Math.hypot(b.x - a.x, b.y - a.y) / (Math.hypot(tx - px, ty - py) || 1);
+  const across = width ? width / part.mid : along;
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x));
+  ctx.scale(along, across);
+  ctx.rotate(-Math.atan2(ty - py, tx - px));
+  ctx.translate(-px, -py);
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}
+
+// Where a point of a part's picture lands when drawn with drawPart (uniform).
+function partPoint(part, a, b, pt) {
+  const [px, py] = part.pivot;
+  const [tx, ty] = part.tip;
+  const s = Math.hypot(b.x - a.x, b.y - a.y) / (Math.hypot(tx - px, ty - py) || 1);
+  const r = Math.atan2(b.y - a.y, b.x - a.x) - Math.atan2(ty - py, tx - px);
+  const x = (pt[0] - px) * s;
+  const y = (pt[1] - py) * s;
+  return { x: a.x + x * Math.cos(r) - y * Math.sin(r), y: a.y + x * Math.sin(r) + y * Math.cos(r) };
+}
+
+// A jetpack exhaust plume at `q` (pointing down), longer while thrusting.
+function paintExhaust(ctx, q, f, size) {
+  const flick = (0.8 + Math.sin(f.time * 0.9) * 0.2) * (f.thrusting ? 1.5 : 1);
+  const plume = f.thrusting ? [[3, 6], [9, 8], [17, 7], [26, 5]] : [[3, 6], [8, 8], [14, 6]];
+  for (const [dy, r] of plume) {
+    const y = q.y + dy * size;
+    const g = ctx.createRadialGradient(q.x, y, 0, q.x, y, r * flick * size);
+    g.addColorStop(0, 'rgba(255,250,220,0.9)');
+    g.addColorStop(0.35, 'rgba(255,170,60,0.75)');
+    g.addColorStop(1, 'rgba(255,90,20,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(q.x, y, r * flick * size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// The whole figure from generated parts, in the same order as paintedBody.
+function paintedParts(ctx, sk, f, P) {
+  const p = f.char.paint;
+  const W = p.widths;
+  const fit = p.partFit || {};
+  const FAR = 0.62;
+  const sub = (a, b) => ({ x: b.x - a.x, y: b.y - a.y });
+  const toward = (a, b, len) => {
+    const d = sub(a, b);
+    const l = Math.hypot(d.x, d.y) || 1;
+    return { x: a.x + (d.x / l) * len, y: a.y + (d.y / l) * len };
+  };
+  const arm = (side, k) => {
+    const elbow = sk['elbow' + side];
+    const wrist = sk['hand' + side];
+    drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
+    drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
+    const shooting = f.move && f.move.def.projectile && side === 'F';
+    if (shooting) paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
+    drawPart(ctx, P.glove, wrist, toward(wrist, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.gloveLength || 10), null, k);
+  };
+  const leg = (side, k) => {
+    const knee = sk['knee' + side];
+    const foot = sk['foot' + side];
+    // The boot: its ankle on the ankle joint, sole 4 units below, the toe forward.
+    const down = toward(foot, { x: foot.x * 2 - knee.x, y: foot.y * 2 - knee.y }, 4);
+    drawPart(ctx, P.foot, foot, down, null, k);
+    drawPart(ctx, P.thigh, sk.hip, knee, (W.hip + W.knee) * (fit.thigh || 1.25), k);
+    drawPart(ctx, P.shin, knee, foot, (W.knee + W.ankle) * (fit.shin || 1.3), k);
+  };
+  const at = torsoFrame(sk);
+  arm('B', FAR);
+  // Jetpack on the back, its mounting face against the spine.
+  const lo = at(0.4, -10.5);
+  const hi = at(0.93, -9.6);
+  drawPart(ctx, P.jetpack, lo, hi, null);
+  if (!f.grounded && f.state !== 'ko') paintExhaust(ctx, partPoint(P.jetpack, lo, hi, P.jetpack.nozzle), f, 1.1);
+  if (p.backWeapon) paintBackWeapon(ctx, p, sk);
+  leg('B', FAR);
+  drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
+  leg('F', 1);
+  // The helmet, its neck opening on the neck and dome toward the head.
+  const up = sub(sk.neck, sk.head);
+  const ul = Math.hypot(up.x, up.y) || 1;
+  const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1), y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) };
+  const top = { x: base.x + (up.x / ul) * (fit.helmetHeight || 26), y: base.y + (up.y / ul) * (fit.helmetHeight || 26) };
+  drawPart(ctx, P.helmet, base, top, null);
+  arm('F', 1);
+}
+
 // Worf's bat'leth, gripped in his front hand with the blades pointing out
 // along his forearm, about 75 body units from tip to tip.
 const BATLETH_SCALE = 0.18;
@@ -951,6 +1088,9 @@ function paintHeldPhaser(ctx, art, p, wrist, dir) {
 
 function paintedBody(ctx, sk, f, art) {
   const p = f.char.paint;
+  // Generated parts, once they have loaded (src/parts-<id>.js).
+  const parts = p.parts && partSet(f.char.id);
+  if (parts) return paintedParts(ctx, sk, f, parts);
   const W = p.widths;
   const grain = p.grain;
   const FAR = 0.68;

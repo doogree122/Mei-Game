@@ -365,6 +365,10 @@ CHARACTERS.mando = {
     neckLift: 3,
     gloveSize: 1.3,
     face: { style: 'helmet', size: 1.75, drop: 3.5, metal: [[40, 42, 48], [124, 128, 136], [222, 226, 232]] },
+    // Painted parts generated with Nano Banana (src/parts-mando.js), used once loaded;
+    // `partFit` tunes how thick each sits on its limb.
+    parts: true,
+    partFit: {},
   },
   // Drawn fallback (the armored style), until the painted art is ready.
   colors: {
