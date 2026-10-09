@@ -296,7 +296,11 @@ function applySnapshot(game) {
     }
     if (sf.mv && (!f.move || f.move.name !== sf.mv) && MOVES[sf.mv]) {
       const def = f.moveDef(sf.mv);
-      Sfx[def.sfx || (def.projectile ? 'special' : 'whiff')]();
+      const play = () => Sfx[def.sfx || (def.projectile ? 'special' : 'whiff')]();
+      // A shot sounds as it leaves the gun, a few frames into the move.
+      const wait = def.projectile ? Math.max(0, def.startup - (Number(sf.mf) || 0)) : 0;
+      if (wait) setTimeout(play, (wait * 1000) / 60);
+      else play();
     }
     // Ease toward the host's position so 30 updates a second look smooth.
     const nx = Number(sf.x) || f.x;

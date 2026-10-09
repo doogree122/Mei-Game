@@ -8,6 +8,7 @@ const CHARACTERS = {
     look: 'armored', // jetpack bounty hunter
     scale: 1.9,
     projectile: 'bolt', // special fires a blaster bolt
+    muzzle: 46, // from his carbine's barrel
     colors: {
       suit: '#a2a4ac', // gray flight suit
       suitShade: '#74767f',
@@ -267,7 +268,7 @@ CHARACTERS.seven = {
   // Her kick goes above head height (short reach, wide hit zone).
   moves: {
     kick: { pose: 'highKick', radius: 30, damage: 11, startup: 8, active: 4, recovery: 16, lunge: 3.5 },
-    special: { sfx: 'laser' },
+    special: { sfx: 'phaser' },
   },
   shot: { speed: 9, radius: 22, damage: 13 },
   ratings: { punch: 1, kick: 3, lowKick: 2, uppercut: 3, shot: 2 },
@@ -296,6 +297,7 @@ CHARACTERS.mando = {
   fallbackLook: 'armored',
   scale: 2.12, // as tall as Seven (her hair rises above his helmet's top), shorter than Worf
   projectile: 'bolt',
+  muzzle: 30, // from his pistol's barrel
   shot: { speed: 9, damage: 12 },
   paint: {
     suit: [[30, 22, 18], [64, 50, 42], [106, 86, 72]], // dark brown flight suit
@@ -369,6 +371,13 @@ CHARACTERS.mando = {
   // Jetpack: floaty jumps.
   stats: { walk: 4.8, backWalk: 3.6, jumpV: 14.4, jumpVX: 6.0, gravity: 0.82, power: 1 },
 };
+
+// Shot sounds: the blaster-carrying bounty hunters fire a "pew"; the
+// Starfleet officers fire a whining phaser beam.
+for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'phaser'], ['seven', 'phaser']]) {
+  const c = CHARACTERS[id];
+  c.moves = { ...(c.moves || {}), special: { ...((c.moves || {}).special || {}), sfx } };
+}
 
 // Order on the character select screen.
 const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando'];

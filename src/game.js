@@ -390,10 +390,12 @@ class Game {
     const sk = skeleton(POSES[move.pose]);
     const hand = owner.toWorld(sk[move.spawnLimb || 'handF'], sk);
     const def = owner.shotDef;
+    // Shots leave from the muzzle of a held gun (char.muzzle, in body units ahead of the hand).
+    const x = hand.x + owner.facing * (owner.char.muzzle ? owner.char.muzzle * owner.scale : 12);
     this.projectiles.push({
-      owner, def, x: hand.x + owner.facing * 12, y: hand.y, vx: def.speed * owner.facing, dead: false,
+      owner, def, x, y: hand.y, vx: def.speed * owner.facing, dead: false,
     });
-    this.effects.spark(hand.x + owner.facing * 12, hand.y, owner.char.colors.energy, 6, 3);
+    this.effects.spark(x, hand.y, owner.char.colors.energy, 6, 3);
   }
 
   updateProjectiles() {
