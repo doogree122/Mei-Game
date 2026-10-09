@@ -219,7 +219,7 @@ function snapshotGame(game) {
       x: r1(f.x), y: r1(f.y), vy: r1(f.vy), fc: f.facing,
       hp: f.hp, st: f.state,
       mv: f.move ? f.move.name : null, mf: f.move ? f.move.frame : 0,
-      th: f.thrusting ? 1 : 0, tl: Math.round((f.tilt || 0) * 100) / 100, hs: f.hitstun, bs: f.blockstun, dt: f.downTime, fl: f.flash, ck: f.choked,
+      th: f.thrusting ? 1 : 0, tl: Math.round((f.tilt || 0) * 100) / 100, hs: f.hitstun, bs: f.blockstun, dt: f.downTime, fl: f.flash, ck: f.choked, pn: f.pained,
       w: f.wins, won: f.won ? 1 : 0, ka: f.knockedAirborne ? 1 : 0,
       hb: f.holdBack ? 1 : 0, hd: f.holdDown ? 1 : 0, nt: f.nearThreat ? 1 : 0,
       wp: r1(f.walkPhase), sh: f.shield, sc: f.shieldCooldown,
@@ -316,6 +316,7 @@ function applySnapshot(game) {
     f.hitstun = Number(sf.hs) || 0;
     if (Number(sf.ck) > 0 && !(f.choked > 0)) Sfx.choke();
     f.choked = Number(sf.ck) || 0;
+    f.pained = Number(sf.pn) || 0;
     f.thrusting = sf.th === 1;
     f.tilt = Number(sf.tl) || 0;
     if (f.thrusting && !(performance.now() - (f.lastThrust || 0) < 150)) {

@@ -248,6 +248,12 @@ const Sfx = (() => {
       src.connect(bp).connect(wg).connect(ac.destination);
       src.start(t);
     },
+    // Troi's empathic strike: an eerie, shimmering rise with a low pulse.
+    empathy: () => {
+      note('sine', 440, 0, 0.6, 0.07, { vibrato: 14, slideTo: 880 });
+      note('triangle', 660, 0.05, 0.55, 0.04, { vibrato: 20, slideTo: 1320 });
+      note('sine', 110, 0, 0.5, 0.08, { slideTo: 70 });
+    },
     // Jetpack thrust: a short rushing roar, repeated while flying.
     thrust: () => {
       noise(0.2, 700, 0.12);

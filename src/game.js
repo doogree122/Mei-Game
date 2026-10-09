@@ -267,7 +267,7 @@ class Game {
       ctx.font = nameFont(f.char, 22);
       ctx.fillStyle = '#fff';
       ctx.fillText(nameText(f.char), x + CARD_W / 2, CARD_TOP + CARD_H - 30);
-      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.font = 'bold 11px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.fillText(f.char.blurb, x + CARD_W / 2, CARD_TOP + CARD_H - 10);
       // Player cursors: P1 gold, P2/CPU cyan; solid once locked in.
@@ -678,6 +678,22 @@ class Game {
     if (target.takeHit(def, att, this, { x: target.x, y: hb.y + hb.h * 0.2 }) !== 'hit' || target.isKO) miss();
   }
 
+  // Troi's empathic strike: the opponent in front of her, within the move's
+  // range, is struck with pain (blockable; a force field that stops punches
+  // stops it too). A hit leaves them clutching their head for its hitstun.
+  mindBlast(att, def) {
+    const target = this.fighters.find((f) => f !== att);
+    const inFront = Math.sign(target.x - att.x) === att.facing;
+    if (!inFront || Math.abs(target.x - att.x) > def.range || target.isKO || target.downTime > 0 || target.knockedAirborne) return;
+    const sk = skeleton(target.pose);
+    const head = target.toWorld(sk.head, sk);
+    const result = target.takeHit(def, att, this, head);
+    if (result === 'hit' && !target.isKO && target.hitstun > 0) {
+      target.pained = target.hitstun;
+      this.effects.spark(head.x, head.y, '#d6a4ff', 16, 5, 40);
+    }
+  }
+
   // Vader's Force field shoves the opponent away while it is up: anyone
   // inside it is thrown back out, and their attack is cut off.
   resolveRepel(f, opp) {
@@ -861,6 +877,8 @@ class Game {
       for (const f of order) drawAttackTrail(fx, f);
       for (const f of this.fighters) drawShield(fx, f, this.frame);
       for (const f of this.fighters) drawChokeGrip(fx, f, this.frame);
+      for (const f of this.fighters) drawEmpathyWaves(fx, f, this.frame);
+      for (const f of this.fighters) drawPain(fx, f, this.frame);
       for (const p of this.projectiles) drawProjectile(fx, p, this.frame);
       this.effects.draw(fx);
       if (this.showBoxes) for (const f of this.fighters) drawFighterBoxes(fx, f);

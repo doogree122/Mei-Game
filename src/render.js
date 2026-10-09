@@ -1483,6 +1483,65 @@ function drawChokeGrip(ctx, f, frame) {
   ctx.restore();
 }
 
+// Troi's empathic strike: lavender ripples spreading out from her head toward
+// the opponent while she concentrates.
+function drawEmpathyWaves(ctx, f, frame) {
+  const m = f.move;
+  if (!m || !m.def.mind) return;
+  const since = m.frame - m.def.startup + 6;
+  if (since < 0 || since > 26) return;
+  const sk = skeleton(f.pose);
+  const head = f.toWorld(sk.head, sk);
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 4; i++) {
+    const t = since / 26 + i * 0.12;
+    if (t > 1) continue;
+    const r = (14 + t * 90) * f.scale;
+    ctx.globalAlpha = (1 - t) * 0.8;
+    ctx.strokeStyle = i % 2 ? '#f2d6ff' : '#b07cf0';
+    ctx.lineWidth = 3 * (1 - t) + 1;
+    ctx.beginPath();
+    const mid = f.facing > 0 ? 0 : Math.PI;
+    ctx.arc(head.x, head.y, r, mid - 0.55, mid + 0.55);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Struck by Troi: pulsing lavender rings and jagged pain marks around the head.
+function drawPain(ctx, f, frame) {
+  if (!(f.pained > 0) || f.hitstun <= 0) return;
+  const sk = skeleton(f.pose);
+  const head = f.toWorld(sk.head, sk);
+  const s = f.scale;
+  ctx.save();
+  for (let i = 0; i < 3; i++) {
+    const t = ((frame * 0.04 + i / 3) % 1);
+    ctx.globalAlpha = (1 - t) * 0.8;
+    ctx.strokeStyle = '#c08cff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(head.x, head.y, (10 + t * 18) * s, (7 + t * 12) * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Little zigzag pain marks flicking out around the head.
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    const a = -Math.PI / 2 + (i - 1.5) * 0.7 + Math.sin(frame * 0.3 + i) * 0.1;
+    const r0 = 16 * s;
+    const r1 = 24 * s;
+    ctx.beginPath();
+    ctx.moveTo(head.x + Math.cos(a) * r0, head.y + Math.sin(a) * r0);
+    ctx.lineTo(head.x + Math.cos(a + 0.12) * (r0 + r1) / 2, head.y + Math.sin(a + 0.12) * (r0 + r1) / 2);
+    ctx.lineTo(head.x + Math.cos(a) * r1, head.y + Math.sin(a) * r1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // Swoosh arc at the striking limb while an attack is out.
 // A big overhead swing (Worf's bat'leth): a wide steel-white arc from above
 // his head down to in front of him, growing as the blade comes down.
@@ -1510,7 +1569,7 @@ function drawOverheadTrail(ctx, f, since, def) {
 }
 
 function drawAttackTrail(ctx, f) {
-  if (!f.move || f.move.def.projectile || f.move.def.choke) return;
+  if (!f.move || f.move.def.projectile || f.move.def.choke || f.move.def.mind) return;
   const { def, frame } = f.move;
   const since = frame - def.startup;
   if (since < 0 || since > def.active + 3) return;

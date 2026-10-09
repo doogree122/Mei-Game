@@ -153,6 +153,11 @@ const POSES = {
   // Force choke: the free hand reaches out and pinches; the saber hangs low.
   forceChoke_windup: { torso: -0.05, head: 0, uaF: 0.35, faF: 0.5, uaB: 1.0, faB: 1.4, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
   forceChoke: { torso: 0.1, head: -0.1, uaF: 0.3, faF: 0.55, uaB: 1.85, faB: 2.05, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  // Troi's empathic strike: both hands to her temples, eyes on the opponent.
+  empathy_windup: { torso: 0.0, head: 0.05, uaF: 1.6, faF: 3.4, uaB: 1.4, faB: 3.3, ...STANCE },
+  empathy: { torso: -0.08, head: -0.12, uaF: 2.15, faF: 4.05, uaB: 1.95, faB: 3.95, thF: 0.4, shF: -0.08, thB: -0.32, shB: -0.02 },
+  // Struck by it: doubled over, both hands clutching the head.
+  pain: { torso: 0.42, head: 0.35, uaF: 2.0, faF: 4.15, uaB: 1.85, faB: 4.05, thF: 0.32, shF: -0.25, thB: -0.3, shB: -0.1 },
   // Being choked: both hands clawing at the throat, head back, feet dangling.
   choked: { torso: -0.15, head: -0.45, uaF: 1.15, faF: 3.55, uaB: 1.0, faB: 3.45, thF: 0.15, shF: 0.05, thB: -0.1, shB: 0.15 },
   // Bat'leth: raised high over the head with both hands, then swung down and out.
@@ -255,6 +260,7 @@ class Fighter {
     this.pushed = 0; // frames left of being thrown by Vader's Force field
     this.wasBack = this.wasFwd = this.wasDown = this.wasUp = false;
     this.choked = 0;
+    this.pained = 0; // frames left clutching the head after an empathic strike
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
@@ -312,6 +318,7 @@ class Fighter {
     this.recordDirections(back, fwd, input.down, input.up);
     if (this.pushed > 0) this.pushed--;
     // Choked: held a little off the floor until it lets go.
+    if (this.pained > 0 && (--this.pained === 0 || this.hitstun === 0)) this.pained = 0;
     if (this.choked > 0) {
       this.choked--;
       if (this.hitstun > 0) {
@@ -610,6 +617,7 @@ class Fighter {
       Sfx[d.sfx || 'special']();
     }
     if (d.choke && m.frame === d.startup) game.forceChoke(this, d);
+    if (d.mind && m.frame === d.startup) game.mindBlast(this, d);
     if (d.air && d.landFinish && this.grounded) {
       this.vx = 0; // lands and finishes the swing on the spot
     } else if (d.air && this.grounded) {
@@ -627,7 +635,7 @@ class Fighter {
   get attackActive() {
     if (!this.move || this.move.hasHit) return false;
     const d = this.move.def;
-    return !d.projectile && !d.choke && this.move.frame >= d.startup && this.move.frame < d.startup + d.active;
+    return !d.projectile && !d.choke && !d.mind && this.move.frame >= d.startup && this.move.frame < d.startup + d.active;
   }
 
   faceOpponent(opp) {
@@ -710,6 +718,7 @@ class Fighter {
     this.move = null;
     this.flash = 6;
     this.choked = 0; // a real hit breaks the Force's grip
+    this.pained = 0;
     this.vx = dir * def.push * pushScale(attacker);
     // Strong moves (rating 3) hit with a bigger burst, a longer freeze and more shake.
     const rating = def.rating || 2;
@@ -756,7 +765,7 @@ class Fighter {
   basePose() {
     if (this.state === 'ko' || this.state === 'down') return POSES.lying;
     if (this.won) return POSES[this.char.victoryPose] || POSES.victory;
-    if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : this.choked > 0 ? POSES.choked : POSES.hit;
+    if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : this.choked > 0 ? POSES.choked : this.pained > 0 ? POSES.pain : POSES.hit;
     if (this.blockstun > 0 || (this.state !== 'attack' && this.isFree && this.grounded && this.holdBack && this.nearThreat)) {
       return this.holdDown ? POSES.crouchBlock : POSES.block;
     }

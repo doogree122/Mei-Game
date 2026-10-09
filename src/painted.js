@@ -306,11 +306,13 @@ function paintFace(ctx, sk, paint) {
   ctx.lineWidth = 0.18 * F.size;
   ctx.stroke();
 
-  // Ear.
-  shapeThrough(ctx, H, [[-1.0, 1.7], [-0.2, 0.6], [-0.4, -1.6], [-1.3, -2.4], [-2.4, -1.3], [-2.5, 0.8]]);
-  ctx.fillStyle = rgb(sm, 0.93);
-  ctx.fill();
-  strokeThrough(ctx, H, [[-1.2, 1.1], [-0.8, 0.0], [-1.0, -1.4], [-1.7, -1.6]], rgb(sd, 0.85), 0.28 * F.size);
+  // Ear (hidden under a long mane).
+  if (!F.mane) {
+    shapeThrough(ctx, H, [[-1.0, 1.7], [-0.2, 0.6], [-0.4, -1.6], [-1.3, -2.4], [-2.4, -1.3], [-2.5, 0.8]]);
+    ctx.fillStyle = rgb(sm, 0.93);
+    ctx.fill();
+    strokeThrough(ctx, H, [[-1.2, 1.1], [-0.8, 0.0], [-1.0, -1.4], [-1.7, -1.6]], rgb(sd, 0.85), 0.28 * F.size);
+  }
 
   // Eye: lid, white, iris, lashes.
   shapeThrough(ctx, H, [[3.75, 1.55], [4.6, 1.85], [5.2, 1.55], [4.85, 1.05], [4.2, 1.1]]);
@@ -345,6 +347,11 @@ function paintFace(ctx, sk, paint) {
   ctx.fill();
   strokeThrough(ctx, H, [[5.6, -4.1], [6.3, -4.05]], 'rgba(90,40,35,0.7)', 0.18 * F.size);
   softSpot(ctx, H([6.05, -4.5]), 0.45 * F.size, 'rgb(255,220,210)', 0.5);
+
+  if (F.mane) {
+    paintCurlyMane(ctx, H, F);
+    return;
+  }
 
   // The Borg implant: a silver piece curling over the brow, around the
   // outside of the eye and down the cheekbone.
@@ -389,6 +396,61 @@ function paintFace(ctx, sk, paint) {
   softSpot(ctx, H([3.4, 9.8]), 3.4 * F.size, rgb(hl), 0.5);
   softSpot(ctx, H([-5.2, 2.0]), 3.6 * F.size, rgb(hd), 0.4);
   ctx.restore();
+}
+
+// Long, full black curls: over the top of the head, covering the ear, and
+// down past the shoulders, with curl loops and soft sheen.
+const CURLY_MANE = [
+  [5.2, 6.3], [6.6, 8.6], [6.2, 11.8], [3.2, 14.2], [-2.0, 14.8], [-7.0, 13.2], [-10.6, 9.2], [-12.4, 3.2], [-12.6, -3.6],
+  [-12.2, -10.4], [-11.6, -16.6], [-10.0, -21.6], [-7.0, -24.4], [-3.6, -24.0], [-1.4, -21.0], [-0.2, -16.6], [0.6, -12.0],
+  [0.9, -7.8], [0.5, -4.6], [0.2, -1.6], [0.5, 1.2], [1.6, 3.4], [3.2, 4.9], [4.4, 5.6],
+];
+function paintCurlyMane(ctx, H, F) {
+  const [hd, hm, hl] = F.hair;
+  shapeThrough(ctx, H, CURLY_MANE);
+  const g = ctx.createLinearGradient(H([-12, 0]).x, H([-12, 0]).y, H([4, 12]).x, H([4, 12]).y);
+  g.addColorStop(0, rgb(hd));
+  g.addColorStop(0.6, rgb(hm));
+  g.addColorStop(1, rgb(hl));
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // Ringlets on a jittered grid: each a fat dark spiral turn with a lit rim
+  // on top, so the mass reads as big loose curls.
+  for (let gy = 15; gy > -25; gy -= 2.3) {
+    const row = Math.round(gy / 2.3);
+    for (let gx = -13; gx < 7; gx += 2.5) {
+      const j = Math.sin(gx * 12.9 + gy * 7.3) * 0.7;
+      const c = H([gx + j + (row % 2) * 1.25, gy + Math.cos(gx * 5.1 + gy) * 0.5]);
+      const r = (1.15 + Math.abs(Math.sin(gx * 3.1 + gy * 2.3)) * 0.55) * F.size;
+      const a0 = gx * 1.7 + gy;
+      ctx.lineWidth = 0.55 * F.size;
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, r, a0, a0 + 4.6);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(${hl.map((v) => Math.min(255, v + 40)).join(',')},0.5)`;
+      ctx.lineWidth = 0.32 * F.size;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y - 0.15 * F.size, r * 0.92, a0 + 3.9, a0 + 5.9);
+      ctx.stroke();
+    }
+  }
+  // Sheen on the crown and the front lock; shade toward the back and the ends.
+  softSpot(ctx, H([2.0, 11.5]), 4 * F.size, 'rgb(130,112,120)', 0.35);
+  softSpot(ctx, H([0.0, 1.0]), 2.6 * F.size, 'rgb(110,96,104)', 0.25);
+  softSpot(ctx, H([-9.0, -8.0]), 6 * F.size, 'rgb(0,0,0)', 0.35);
+  ctx.restore();
+  // Loose ringlets breaking the outline along the back and the ends.
+  ctx.strokeStyle = rgb(hm);
+  ctx.lineWidth = 0.5 * F.size;
+  for (const [x, y, a] of [[-12.4, 2], [-12.5, -6], [-12.0, -13], [-10.8, -19.5], [-8.2, -23.6], [-4.6, -24.4], [-1.6, -21.8], [-11.6, 7.4], [-8.6, 11.8]]) {
+    const c = H([x, y]);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 0.9 * F.size, a, a + 4.4);
+    ctx.stroke();
+  }
 }
 
 // A boot in the shin's frame at the ankle: heeled, with a pointed toe that
@@ -874,7 +936,9 @@ function paintHeldPhaser(ctx, art, p, wrist, dir) {
     const grip = { x: wrist.x + ux * g + uy * lift, y: wrist.y + uy * g - ux * lift };
     drawPiece(ctx, piece, grip, dir, p.phaser.scale);
   }
-  drawPiece(ctx, art.pieces.fist, wrist, dir, p.pieceScale);
+  // The picture fist, or a painted hand for a character drawn all in code.
+  if (art.pieces.fist) drawPiece(ctx, art.pieces.fist, wrist, dir, p.pieceScale);
+  else paintGlove(ctx, p, wrist, dir, false);
 }
 
 function paintedBody(ctx, sk, f, art) {
