@@ -54,6 +54,8 @@ Characters list their hidden moves in `secrets` in `src/characters.js` (directio
 
 **Shot sounds and guns:** B. Fett and Mando fire a classic blaster "pew"; Worf and Seven fire the recorded TNG phaser (`assets/sfx/phaser.mp3`, embedded in the single-file build); Vader's Force lightning crackles and buzzes; his lightsaber swings with a humming swoosh that bends in pitch as the blade passes. Each shot sounds the moment it leaves the gun. Fett's carbine and Mando's blaster pistol are drawn large and outlined, with a muzzle flash, and the bolt leaves from the end of the barrel.
 
+**Character select:** each card shows the fighter's front-facing portrait (painted in code by `src/portraits.js`) on an orange (Star Wars) or blue (Star Trek) glow, with their name and moves below. See `previews/select-portraits.png`.
+
 **Lettering:** the title is set in Final Frontier; Star Wars fighters' names (health bars, select cards, win banners) in Star Jedi, Star Trek fighters' in the TNG title font (`assets/fonts/`, embedded in the single-file build). Star Jedi's capitals are swash variants, so its names are drawn in lowercase. The Star Jedi file's glyph-name table was rewritten (fontTools, `post` format 3) because browsers reject the original.
 
 **Health:** each fighter has 120 health, so every hit takes a sixth less of the bar than at the old 100 and matches last about 20% longer. Hidden moves still do their 4 damage.
@@ -156,6 +158,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/characters.js` | Character roster: body style (`look`), palette, projectile type, movement stats. **Edit this to restyle the fighters.** |
 | `src/fighter.js` | Move data (frame timings, damage), poses, state machine, physics, hit/block logic |
 | `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
+| `src/portraits.js` | Front-facing head-and-shoulders portraits for the character select cards, painted in code (one painter per fighter, cached at 3× resolution) |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
 | `src/stages.js` | The level list, backdrop pictures, the arena thumbnails |
 | `src/surrounds.js` | Scenery around the picture levels on tall phone screens |
