@@ -129,7 +129,7 @@ The round that decides the match gets the full versions instead: a fanfare for t
 After character select, **CHOOSE THE ARENA** picks the level (A/D or ←/→ and J/Enter, or tap); the background previews the one under the cursor. Online matches get a random level from the host's game, and the joining player sees the same one.
 
 - **USS HOOD**: the drawn spaceship room described below.
-- **DESERT TOWN**, **THE BRIDGE** and **BATTLE STATION**: backdrop pictures in `assets/stages/` (prepared by `tools/prep_stages.py`, which crops, resizes and samples each picture's edge colors). `src/stages.js` lists the levels: each picture is scaled so its doors and chairs match the fighters' size (it fills more than the screen), lined up so the fighters stand on the near part of its floor, and pans from its left edge to its right as the camera crosses the stage, slower than the fighters. On tall phone screens the space around the arena takes the picture's sky and floor colors. On THE BRIDGE the two front chairs and the consoles at the bottom corners are cut out by their color (`assets/stages/bridge-front.png`), painted out of the background picture so nothing of them is left behind, and drawn over the fighters with the same shading as the background, so they walk behind them, and the fighters can go all the way to the doors at either wall.
+- **DESERT TOWN**, **THE BRIDGE** and **BATTLE STATION**: backdrop pictures in `assets/stages/` (prepared by `tools/prep_stages.py`, which crops, resizes and samples each picture's edge colors). `src/stages.js` lists the levels: each picture is scaled so its doors and chairs match the fighters' size (it fills more than the screen), lined up so the fighters stand on the near part of its floor, and pans from its left edge to its right as the camera crosses the stage, slower than the fighters. On tall phone screens (held upright) the space around the arena is painted to match each level (`src/surrounds.js`), like the USS Hood's hull: the Death Star's hull above BATTLE STATION and its round underside curving away into space below; space above THE BRIDGE and the top of the Enterprise's saucer below, with its round, lit rim; more sky above DESERT TOWN and more of the street below, with domed huts, adobe towers, vaporators, rocks and wheel tracks. On THE BRIDGE the two front chairs and the consoles at the bottom corners are cut out by their color (`assets/stages/bridge-front.png`), painted out of the background picture so nothing of them is left behind, and drawn over the fighters with the same shading as the background, so they walk behind them, and the fighters can go all the way to the doors at either wall.
 
 ## The USS Hood
 
@@ -145,6 +145,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/render.js` | Drawing: skeleton-based character art turned into pixel sprites, projectiles, HUD |
 | `src/stage.js` | Spaceship interior: space view, walls, windows, consoles, floor |
 | `src/stages.js` | The level list, backdrop pictures, the arena thumbnails |
+| `src/surrounds.js` | Scenery around the picture levels on tall phone screens |
 | `src/exterior.js` | Ship exterior shown above and below the arena on tall (portrait) screens |
 | `src/ai.js` | CPU opponent |
 | `src/game.js` | Rounds, timer, collisions, projectiles, main loop |

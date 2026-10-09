@@ -782,8 +782,10 @@ class Game {
     const ctx = this.ctx;
     ctx.setTransform(RES, 0, 0, RES, 0, 0);
     if (this.viewH > H && stageDef(this.stage).image) {
-      // A picture level: its own sky and floor colors above and below.
-      drawStageSurround(ctx, this.stage, this.viewOY, this.viewH);
+      // A picture level: its own scenery above and below (src/surrounds.js),
+      // or its sky and floor colors.
+      if (Surrounds.has(this.stage)) Surrounds.draw(ctx, this.stage, this.camX, this.viewOY, this.viewH);
+      else drawStageSurround(ctx, this.stage, this.viewOY, this.viewH);
     } else if (this.viewH > H) {
       const camX = Math.round(this.camX / PIXEL) * PIXEL;
       Exterior.draw(this.extctx, camX, this.frame, this.viewOY, this.viewH);
