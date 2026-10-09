@@ -11,9 +11,11 @@
 
 const STAGES = [
   { id: 'hood', name: 'USS HOOD', top: '#03040c', bottom: '#0a1230' },
-  { id: 'desert', name: 'DESERT TOWN', image: true, height: 600, floor: 650, dim: 0.08, top: '#565753', bottom: '#a08065' },
-  { id: 'bridge', name: 'THE BRIDGE', image: true, front: true, height: 600, floor: 580, dim: 0.12, top: '#635b51', bottom: '#c2b495' },
-  { id: 'corridor', name: 'BATTLE STATION', image: true, height: 600, floor: 690, dim: 0.1, top: '#2f2f31', bottom: '#3e3f3f' },
+  // Each picture is shown at about the size where its doors and chairs match
+  // the fighters, with their feet on the near part of the floor.
+  { id: 'desert', name: 'DESERT TOWN', image: true, height: 797, floor: 722, dim: 0.08, top: '#565753', bottom: '#a08065' },
+  { id: 'bridge', name: 'THE BRIDGE', image: true, front: true, height: 720, floor: 640, dim: 0.12, top: '#635b51', bottom: '#c2b495' },
+  { id: 'corridor', name: 'BATTLE STATION', image: true, height: 825, floor: 752, dim: 0.1, top: '#2f2f31', bottom: '#3e3f3f' },
 ];
 
 const stageImages = {};
