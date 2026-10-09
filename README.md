@@ -38,7 +38,7 @@ The standing kick is a high kick that lands at chest height.
 
 ### Jetpack flight
 
-**B. FETT** and **MANDO** fly: keep jump held after taking off and the jetpack roars, the flames grow long, and they climb to a hover high enough to pass over the opponent. Left and right steer, and they turn to face the opponent as they cross over. Flight lasts as long as jump is held, up to 3 seconds per jump; let go (or run out) and they fall. The tank refills on the ground once jump is released. They can still jump-kick in the air. Tuning is `flight` in `src/characters.js` (`frames`, `ceiling`, `climb`, `speed`).
+**B. FETT** and **MANDO** fly: keep jump held after taking off and the jetpack roars, the flames grow long, and they climb to a hover high enough to pass over the opponent. Forward and back steer: they lean the whole body into the flight, tipped forward as the jetpack propels them ahead (and a little on any forward jump), upright or leaning back when braking or backing off. They turn to face the opponent as they cross over. Flight lasts as long as jump is held, up to 3 seconds per jump; let go (or run out) and they fall. The tank refills on the ground once jump is released. They can still jump-kick in the air. Tuning is `flight` in `src/characters.js` (`frames`, `ceiling`, `climb`, `speed`).
 
 ### Hidden moves
 

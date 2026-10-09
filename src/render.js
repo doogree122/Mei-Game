@@ -1170,6 +1170,12 @@ function renderSprite(f) {
   } else {
     ctx.translate(0, -sk.base);
     ctx.scale(f.facing, 1);
+    // A jetpack flyer leans into its flight (Fighter.tilt), turning about the hips.
+    if (f.tilt) {
+      ctx.translate(sk.hip.x, sk.hip.y);
+      ctx.rotate(f.tilt);
+      ctx.translate(-sk.hip.x, -sk.hip.y);
+    }
   }
 
   // Only post-process the area around the body: joint bounds plus room for
