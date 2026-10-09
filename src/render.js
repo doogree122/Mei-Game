@@ -1374,9 +1374,28 @@ function drawShield(ctx, f, frame) {
   ctx.restore();
 }
 
+// The Force choke's grip: a dark ring tightening around the victim's neck,
+// with a faint pulse.
+function drawChokeGrip(ctx, f, frame) {
+  if (!(f.choked > 0) || f.hitstun <= 0) return;
+  const sk = skeleton(f.pose);
+  const neck = f.toWorld({ x: (sk.neck.x + sk.head.x) / 2, y: (sk.neck.y + sk.head.y) / 2 }, sk);
+  const r = (9 + Math.sin(frame * 0.5) * 1.5) * f.scale;
+  ctx.save();
+  for (const [color, w, a] of [['#1a0f3a', 6, 0.55], ['#8f6bff', 3, 0.9], ['#ffffff', 1, 0.5]]) {
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.ellipse(neck.x, neck.y, r, r * 0.45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // Swoosh arc at the striking limb while an attack is out.
 function drawAttackTrail(ctx, f) {
-  if (!f.move || f.move.def.projectile) return;
+  if (!f.move || f.move.def.projectile || f.move.def.choke) return;
   const { def, frame } = f.move;
   const since = frame - def.startup;
   if (since < 0 || since > def.active + 3) return;

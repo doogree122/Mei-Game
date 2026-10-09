@@ -172,6 +172,8 @@ CHARACTERS.vader = {
   },
   shot: { speed: 10, radius: 20, damage: 11, hitstun: 22 },
   ratings: { punch: 1, kick: 1, lowKick: 1, uppercut: 3, shot: 3 },
+  // Hidden moves: directions (b back, f forward, d down) then a button.
+  secrets: [{ input: ['b', 'b', 'd'], button: 'punch', move: 'forceChoke' }],
   // Force field: rippling Force lines that shove the opponent back. It blocks
   // nothing itself: shots go through.
   field: { color: '#8f6bff', style: 'force', blocks: [], repel: true },
