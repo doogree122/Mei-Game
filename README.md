@@ -54,6 +54,8 @@ Characters list their hidden moves in `secrets` in `src/characters.js` (directio
 
 **Shot sounds and guns:** B. Fett and Mando fire a classic blaster "pew"; Worf and Seven fire the recorded TNG phaser (`assets/sfx/phaser.mp3`, embedded in the single-file build); Vader's Force lightning crackles and buzzes; his lightsaber swings with a humming swoosh that bends in pitch as the blade passes. Each shot sounds the moment it leaves the gun. Fett's carbine and Mando's blaster pistol are drawn large and outlined, with a muzzle flash, and the bolt leaves from the end of the barrel.
 
+**Lettering:** the title is set in Final Frontier; Star Wars fighters' names (health bars, select cards, win banners) in Star Jedi, Star Trek fighters' in the TNG title font (`assets/fonts/`, embedded in the single-file build). Star Jedi's capitals are swash variants, so its names are drawn in lowercase. The Star Jedi file's glyph-name table was rewritten (fontTools, `post` format 3) because browsers reject the original.
+
 **Health:** each fighter has 120 health, so every hit takes a sixth less of the bar than at the old 100 and matches last about 20% longer. Hidden moves still do their 4 damage.
 
 Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.
@@ -65,6 +67,7 @@ Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0
 | **VADER** | 1 | 1 | 1 | 3 | Lightning 3 | Force lines: a Force push that throws anyone who comes in close or attacks across the screen; not a hit: no damage, no knockdown, they land on their feet; shots go through | Slowest, low jump |
 | **B. FETT** | 1 | 2 | 3 | 1 | Blaster 2 | Purple bubble: stops shots and punches | Jetpack flight (hold jump, up to 3 s) |
 | **MANDO** | 2 | 2 | 1 | 3 | Blaster 2 | Brown armor plates: stop shots and kicks | Jetpack flight (hold jump, up to 3 s) |
+| **TROI** | 2 (empathic) | 2 | 2 | 2 | Phaser 1 | Pink bubble: stops shots only | Average speed |
 
 Punches are the punch, low punch and uppercut; kicks are the kick, sweep (low kick) and jump kick. The CPU raises its field when it would help: against shots, or against a close attack its field stops (Vader against any close attack).
 
@@ -210,6 +213,7 @@ The best pictures are a side view facing right, full body on a plain background,
 | **SEVEN** | Painted in code from reference pictures: blue scaled catsuit with gray raglan sleeves and a waist seam, heeled boots, a painted profile head with swept-back blonde hair and the silver Borg implant around her eye, and a Borg fist on her far arm. A gray phaser rifle rests across her shoulders behind her neck and comes down to fire | Big red laser blast. Her kick goes up to head height | 2.0× size, quickest on her feet |
 
 | **MANDO** | Painted entirely in code from a reference picture: a dark brown flight suit, polished steel (beskar) shoulder plates, vambraces, chest and belly plates, thigh and knee plates, a T-visor helmet with an ear cap, a leather belt and bandolier with cartridges, brown boots, black gloves, a steel rocket pack with twin thrusters (they fire while he's in the air), and a forked rifle slung across his back. He draws a large blaster pistol (scope, long barrel, muzzle flash) to fire | Blaster bolt | 2.12× size (as tall as Seven, shorter than Worf), hits 5% harder |
+| **TROI** | Painted entirely in code from a reference picture: a mauve jumpsuit with a deep lavender-edged V-neck and a gold comm badge, dark shoes, an olive-toned profile face and long black curls over her ears and down past her shoulders. Her **punch is empathic**: she puts both hands to her temples, lavender ripples spread out, and an opponent in front of her (up to about half the screen away) doubles over clutching their head in pain (blockable; Fett's field, which stops punches, stops it too). Her kicks are normal. She fires a TNG hand phaser like Worf's | Long red phaser beam | 1.95× size, average speed |
 
 Each character picks a body renderer with `look` (`armored`, `warrior`, `sith`, `agent`), a projectile style with `projectile` (`bolt`, `pulse`, `lightning`, `laser`), and a size with `scale`.
 `moves` overrides individual moves (Vader's saber punch, Seven's high kick), `shot` tunes the projectile's speed, size and damage, and `altColors` is the mirror-match palette. `ROSTER` sets the select-screen order.

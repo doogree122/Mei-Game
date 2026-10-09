@@ -8,6 +8,25 @@
 // canvas with a FIGHTER_PIXEL grid, then given hard edges and a dark 1-pixel
 // outline so they read like hand-made sprites.
 
+// Display fonts (css/style.css): the game title, and fighter names in their
+// franchise's lettering. Star Jedi's capitals are swash variants, so its names
+// are drawn in lowercase (the classic logo letters). `size` evens out how big
+// each face looks at the same pixel size.
+const TITLE_FONT = '"Final Frontier", system-ui, sans-serif';
+const NAME_FONTS = {
+  wars: { family: '"Star Jedi"', lower: true, size: 0.86 },
+  trek: { family: '"TNG Title"', lower: false, size: 1 },
+};
+if (document.fonts) for (const f of ['Final Frontier', 'Star Jedi', 'TNG Title']) document.fonts.load(`40px "${f}"`).catch(() => {});
+function nameFont(char, px) {
+  const s = char && NAME_FONTS[char.franchise];
+  return s ? `${Math.round(px * s.size)}px ${s.family}, system-ui, sans-serif` : `italic 900 ${px}px system-ui, sans-serif`;
+}
+function nameText(char, text = char.name) {
+  const s = char && NAME_FONTS[char.franchise];
+  return s && s.lower ? text.toLowerCase() : text;
+}
+
 let RES = 1;
 let PIXEL = 1;
 let FIGHTER_PIXEL = 1;
@@ -1464,6 +1483,65 @@ function drawChokeGrip(ctx, f, frame) {
   ctx.restore();
 }
 
+// Troi's empathic strike: lavender ripples spreading out from her head toward
+// the opponent while she concentrates.
+function drawEmpathyWaves(ctx, f, frame) {
+  const m = f.move;
+  if (!m || !m.def.mind) return;
+  const since = m.frame - m.def.startup + 6;
+  if (since < 0 || since > 26) return;
+  const sk = skeleton(f.pose);
+  const head = f.toWorld(sk.head, sk);
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 4; i++) {
+    const t = since / 26 + i * 0.12;
+    if (t > 1) continue;
+    const r = (14 + t * 90) * f.scale;
+    ctx.globalAlpha = (1 - t) * 0.8;
+    ctx.strokeStyle = i % 2 ? '#f2d6ff' : '#b07cf0';
+    ctx.lineWidth = 3 * (1 - t) + 1;
+    ctx.beginPath();
+    const mid = f.facing > 0 ? 0 : Math.PI;
+    ctx.arc(head.x, head.y, r, mid - 0.55, mid + 0.55);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Struck by Troi: pulsing lavender rings and jagged pain marks around the head.
+function drawPain(ctx, f, frame) {
+  if (!(f.pained > 0) || f.hitstun <= 0) return;
+  const sk = skeleton(f.pose);
+  const head = f.toWorld(sk.head, sk);
+  const s = f.scale;
+  ctx.save();
+  for (let i = 0; i < 3; i++) {
+    const t = ((frame * 0.04 + i / 3) % 1);
+    ctx.globalAlpha = (1 - t) * 0.8;
+    ctx.strokeStyle = '#c08cff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(head.x, head.y, (10 + t * 18) * s, (7 + t * 12) * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Little zigzag pain marks flicking out around the head.
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    const a = -Math.PI / 2 + (i - 1.5) * 0.7 + Math.sin(frame * 0.3 + i) * 0.1;
+    const r0 = 16 * s;
+    const r1 = 24 * s;
+    ctx.beginPath();
+    ctx.moveTo(head.x + Math.cos(a) * r0, head.y + Math.sin(a) * r0);
+    ctx.lineTo(head.x + Math.cos(a + 0.12) * (r0 + r1) / 2, head.y + Math.sin(a + 0.12) * (r0 + r1) / 2);
+    ctx.lineTo(head.x + Math.cos(a) * r1, head.y + Math.sin(a) * r1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // Swoosh arc at the striking limb while an attack is out.
 // A big overhead swing (Worf's bat'leth): a wide steel-white arc from above
 // his head down to in front of him, growing as the blade comes down.
@@ -1491,7 +1569,7 @@ function drawOverheadTrail(ctx, f, since, def) {
 }
 
 function drawAttackTrail(ctx, f) {
-  if (!f.move || f.move.def.projectile || f.move.def.choke) return;
+  if (!f.move || f.move.def.projectile || f.move.def.choke || f.move.def.mind) return;
   const { def, frame } = f.move;
   const since = frame - def.startup;
   if (since < 0 || since > def.active + 3) return;
@@ -1637,15 +1715,15 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
 
-  ctx.font = 'italic 900 32px system-ui, sans-serif';
+  ctx.font = nameFont(f.char, 32);
   ctx.textBaseline = 'top';
   ctx.textAlign = flip ? 'right' : 'left';
   ctx.lineJoin = 'round';
   ctx.lineWidth = 5;
   ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-  ctx.strokeText(f.char.name, flip ? x + w : x, y + h + 7);
+  ctx.strokeText(nameText(f.char), flip ? x + w : x, y + h + 7);
   ctx.fillStyle = '#fff';
-  ctx.fillText(f.char.name, flip ? x + w : x, y + h + 7);
+  ctx.fillText(nameText(f.char), flip ? x + w : x, y + h + 7);
   if (you) {
     ctx.font = 'bold 15px system-ui, sans-serif';
     ctx.fillStyle = '#ffd34d';
@@ -1705,12 +1783,14 @@ function drawHUD(ctx, game) {
   }
 }
 
-function drawBanner(ctx, text, sub, alpha = 1) {
+// `char`: the banner is about that fighter (a win), so it's in their lettering.
+function drawBanner(ctx, text, sub, alpha = 1, char = null) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'italic 900 72px system-ui, sans-serif';
+  ctx.font = nameFont(char, 72);
+  text = nameText(char, text);
   ctx.lineWidth = 8;
   ctx.strokeStyle = '#1a0b22';
   ctx.strokeText(text, W / 2, H / 2 - 40);

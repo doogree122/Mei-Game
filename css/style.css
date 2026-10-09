@@ -1,5 +1,11 @@
 * { box-sizing: border-box; }
 
+/* Display lettering drawn on the game canvas (src/render.js): the title, and
+   each fighter's name in their franchise's style. */
+@font-face { font-family: "Final Frontier"; src: url('../assets/fonts/final-frontier.ttf'); font-display: swap; }
+@font-face { font-family: "Star Jedi"; src: url('../assets/fonts/star-jedi.ttf'); font-display: swap; }
+@font-face { font-family: "TNG Title"; src: url('../assets/fonts/tng-title.ttf'); font-display: swap; }
+
 html, body {
   margin: 0;
   height: 100%;

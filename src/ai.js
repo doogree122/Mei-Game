@@ -100,6 +100,8 @@ class AIController {
         this.queuedAfterJump = true;
         this.planTimer = 3;
         if (self.char.flight && Math.random() < 0.5) this.flyFor = 50 + Math.random() * 110;
+      } else if (r < 0.22 && self.char.moves && self.char.moves.punch && self.char.moves.punch.mind && dist * self.scale < self.char.moves.punch.range) {
+        this.queued = 'punch'; // Troi's empathic strike reaches across the floor
       } else if (r < 0.2 && !game.hasProjectile(self)) {
         this.queued = 'special';
       } else if (r < 0.3) {

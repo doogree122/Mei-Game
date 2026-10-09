@@ -59,7 +59,7 @@ const CHARACTERS = {
 CHARACTERS.worf = {
   id: 'worf',
   name: 'WORF',
-  blurb: 'Heavy hitter · pulse blaster',
+  blurb: 'Heavy hitter · phaser',
   look: 'painted', // painted body and head (src/painted.js), hands from a picture
   fallbackLook: 'warrior', // drawn version, until the picture pieces load
   scale: 2.14, // the tallest of Worf, Seven and Mando
@@ -154,7 +154,7 @@ CHARACTERS.worf = {
 CHARACTERS.vader = {
   id: 'vader',
   name: 'VADER',
-  blurb: 'Lightsaber · force lightning',
+  blurb: 'Saber · Force lightning',
   look: 'sith', // black-armored, caped saber wielder
   scale: 2.05,
   projectile: 'lightning', // special shoots lightning from his free hand
@@ -390,15 +390,92 @@ CHARACTERS.mando = {
   flight: { frames: 180, ceiling: 150, climb: 4.5, speed: 5.5 },
 };
 
+// The ship's counselor, painted entirely in code from a reference picture:
+// a mauve jumpsuit with a lavender V-neck, a long black curly mane. Her punch
+// is empathic: hands to her temples, and the opponent in front of her doubles
+// over clutching their head.
+CHARACTERS.troi = {
+  id: 'troi',
+  name: 'TROI',
+  blurb: 'Empath · hand phaser',
+  look: 'painted',
+  fallbackLook: 'agent',
+  scale: 1.95,
+  projectile: 'pulse', // the same red hand-phaser beam as Worf's
+  muzzle: 33,
+  muzzleY: -3,
+  paint: {
+    suit: [[78, 56, 72], [136, 104, 120], [186, 156, 172]], // mauve jumpsuit
+    skin: [[132, 86, 64], [192, 142, 112], [222, 182, 152]],
+    glove: [[132, 86, 64], [192, 142, 112], [222, 182, 152]], // bare hands
+    shoe: [[26, 22, 24], [66, 58, 60], [128, 118, 120]],
+    widths: { hip: 9.2, knee: 5.6, ankle: 3.0, shoulder: 4.9, elbow: 3.9, wrist: 2.9, neck: 3.0 },
+    torsoBack: [[-0.12, -9], [0, -12.8], [0.15, -11.8], [0.34, -7.6], [0.55, -8], [0.8, -9], [0.94, -6.8], [1.04, -3.6]],
+    torsoFront: [[-0.12, 6.8], [0.1, 8.4], [0.34, 6.8], [0.52, 8.8], [0.66, 12.4], [0.78, 10], [0.92, 6.4], [1.04, 3.4]],
+    torso: ['suit', null],
+    torsoLayers: [
+      // The low V-neck: skin from the throat down to a point on the chest.
+      { shape: [[1.06, -0.4], [0.96, 2.4], [0.84, 6.4], [0.68, 11.4], [0.74, 13.2], [0.9, 7.8], [1.04, 3.4]], fabric: ['skin', null], smooth: true },
+    ],
+    torsoLines: [
+      { pts: [[1.06, -0.9], [0.96, 2.0], [0.84, 6.0], [0.67, 11.0]], color: [176, 128, 212], width: 2.2 }, // lavender band
+      { pts: [[0.62, 9.6], [0.4, 7.2], [0.12, 8.0]], color: [104, 76, 92], width: 0.35 }, // princess seam
+    ],
+    torsoBadges: [{ shape: [[0.86, 7.0], [0.75, 9.8], [0.78, 8.2], [0.74, 6.4]], colors: [[150, 110, 40], [246, 214, 130]] }], // comm badge
+    arm: ['suit', null],
+    leg: ['suit', null],
+    foot: 'shoe',
+    hands: { front: 'glove', back: 'glove', shot: 'phaser' },
+    phaser: { scale: 0.11, grip: 5, lift: 3 },
+    gloveSize: 0.95,
+    grain: 0.3,
+    neckLift: 3.5,
+    face: {
+      size: 1.7,
+      drop: 4.5,
+      skin: [[132, 86, 64], [194, 144, 114], [222, 184, 156]], // olive-tan
+      hair: [[8, 6, 8], [30, 22, 26], [78, 64, 70]],
+      brow: [30, 20, 18],
+      iris: [52, 34, 26],
+      lips: [168, 82, 80],
+      mane: true, // long black curls over the ears and down past the shoulders
+    },
+  },
+  // Drawn fallback (the agent style), until the painted art is ready.
+  colors: {
+    suit: '#88687a', suitShade: '#5c4250', suitLight: '#b89aaa', rimPink: '#c890f0', rimCyan: '#f0b0e0',
+    skin: '#d2a486', skinShade: '#a8785c', skinLight: '#ecc6aa', skinDark: '#8a5a44',
+    hair: '#1e161a', hairShade: '#0a0608', hairLight: '#4a3a40', implant: '#d2a486', implantDark: '#a8785c',
+    eyes: '#3a2418', lips: '#a85250', boot: '#1a1618', bootShine: '#5a5052',
+    rifle: '#8c919b', rifleLight: '#c5cad2', rifleDark: '#4b4f58', energy: '#d6a4ff',
+  },
+  altColors: {},
+  moves: {
+    // Empathic strike: hands to her temples; the opponent in front of her, up
+    // to `range` away, is struck with pain (Game.mindBlast).
+    punch: { pose: 'empathy', mind: true, range: 430, startup: 10, active: 1, recovery: 22, damage: 6, hitstun: 30, push: 1, sound: 'light', sfx: 'empathy' },
+    special: { sfx: 'phaser' },
+  },
+  shot: { speed: 9, damage: 11 },
+  ratings: { punch: 2, kick: 2, lowKick: 2, uppercut: 2, shot: 1 },
+  // Force field: a soft pink bubble, stops shots.
+  field: { color: '#ff9ad5', style: 'bubble', blocks: ['shots'] },
+  stats: { walk: 5.0, backWalk: 3.8, jumpV: 15.2, jumpVX: 6.2, gravity: 1, power: 1 },
+};
+
+// Which franchise's lettering their name is shown in (src/render.js NAME_FONTS).
+for (const id of ['fett', 'mando', 'vader']) CHARACTERS[id].franchise = 'wars';
+for (const id of ['worf', 'seven', 'troi']) CHARACTERS[id].franchise = 'trek';
+
 // Shot sounds: the blaster-carrying bounty hunters fire a "pew"; the
 // Starfleet officers fire a whining phaser beam.
-for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'phaser'], ['seven', 'phaser']]) {
+for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'phaser'], ['seven', 'phaser'], ['troi', 'phaser']]) {
   const c = CHARACTERS[id];
   c.moves = { ...(c.moves || {}), special: { ...((c.moves || {}).special || {}), sfx } };
 }
 
 // Order on the character select screen.
-const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando'];
+const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando', 'troi'];
 
 // The character as player 2 sees it in a mirror match: same fighter, alternate colors.
 function altVersion(char) {
