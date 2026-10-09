@@ -213,6 +213,34 @@ const Sfx = (() => {
       src.connect(bp).connect(wg).connect(ac.destination);
       src.start(t);
     },
+    // Bat'leth swing: a heavy, low whoosh of a big blade cutting the air,
+    // then a bright metal ring.
+    batleth: () => {
+      const ac = ensure();
+      if (!ac) return;
+      const t = ac.currentTime;
+      const dur = 0.5;
+      const len = Math.floor(ac.sampleRate * dur);
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.Q.value = 1.6;
+      bp.frequency.setValueAtTime(260, t);
+      bp.frequency.exponentialRampToValueAtTime(1300, t + 0.22);
+      bp.frequency.exponentialRampToValueAtTime(300, t + dur);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.55, t + 0.2);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(bp).connect(g).connect(ac.destination);
+      src.start(t);
+      // The blade's ring: a few inharmonic partials, like struck steel.
+      for (const [f, gain] of [[1180, 0.05], [1730, 0.035], [2610, 0.025]]) note('sine', f, 0.18, 0.5, gain);
+    },
     // Force lightning: a buzzing arc full of sharp, random electric snaps.
     lightning: () => {
       const ac = ensure();

@@ -1443,12 +1443,38 @@ function drawChokeGrip(ctx, f, frame) {
 }
 
 // Swoosh arc at the striking limb while an attack is out.
+// A big overhead swing (Worf's bat'leth): a wide steel-white arc from above
+// his head down to in front of him, growing as the blade comes down.
+function drawOverheadTrail(ctx, f, since, def) {
+  const sk = skeleton(f.pose);
+  const sh = f.toWorld(sk.shoulder, sk);
+  const r = (BODY.ua + BODY.fa + BATLETH_REACH * 0.6) * f.scale;
+  const fade = since < def.active ? 1 : 1 - (since - def.active) / 4;
+  // Angles on screen: straight up is -PI/2; forward-and-down is about +0.5 rad.
+  const end = -Math.PI / 2 + (Math.PI / 2 + 0.6) * Math.min(1, (since + 2) / def.active);
+  const from = -Math.PI / 2 - 0.5;
+  ctx.save();
+  ctx.translate(sh.x, sh.y);
+  ctx.scale(f.facing, 1);
+  ctx.lineCap = 'round';
+  for (const [color, width, alpha] of [['#9fb4c8', 30, 0.25], ['#dfe8f0', 14, 0.7], ['#ffffff', 4, 1]]) {
+    ctx.globalAlpha = alpha * fade;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, from, end);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawAttackTrail(ctx, f) {
   if (!f.move || f.move.def.projectile || f.move.def.choke) return;
   const { def, frame } = f.move;
   const since = frame - def.startup;
   if (since < 0 || since > def.active + 3) return;
   const p = f.hitPoint();
+  if (def.trail === 'overhead') return drawOverheadTrail(ctx, f, since, def);
   // A weak move (rating 1) leaves a thin, short swish; a strong one (3) a
   // wide, thick arc with a glow and an echo behind it.
   const rating = def.rating || 2;

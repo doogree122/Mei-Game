@@ -131,6 +131,8 @@ CHARACTERS.worf = {
     energy: '#ffb43a',
   },
   ratings: { punch: 2, kick: 2, lowKick: 1, uppercut: 3, shot: 1 },
+  // Hidden move: back, jump, kick swings his bat'leth over his head.
+  secrets: [{ input: ['b', 'u'], button: 'kick', move: 'batleth' }],
   // Force field: blue, stops shots only.
   field: { color: '#4aa8ff', style: 'bubble', blocks: ['shots'] },
   // Heavy and steady on his feet.
