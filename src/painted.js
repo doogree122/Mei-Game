@@ -1064,7 +1064,10 @@ function paintedParts(ctx, sk, f, P) {
     const sy = foot.y - knee.y;
     const sl = Math.hypot(sx, sy) || 1;
     const lean = Math.abs(Math.atan2(sx, sy));
-    const w = fit.flatBoots ? Math.min(1, Math.max(0, (lean - 0.55) / 0.5)) : 1;
+    // On the ground a shoe never tips past `bootTip` from flat (a kneeling
+    // back leg stands on its toes); in the air it follows the shin.
+    let w = fit.flatBoots ? Math.min(1, Math.max(0, (lean - 0.55) / 0.5)) : 1;
+    if (fit.flatBoots && f.grounded && !(f.move && f.move.def.air)) w = Math.min(w, (fit.bootTip || 0.35) / Math.max(lean, 0.01));
     const dx = (sx / sl) * w;
     const dy = (sy / sl) * w + (1 - w);
     const dl = Math.hypot(dx, dy) || 1;
@@ -1079,9 +1082,10 @@ function paintedParts(ctx, sk, f, P) {
       if (part !== 'upper') shin();
       return;
     }
+    // The trouser hem falls over the shoe (shoe first, then the lower leg).
+    if (part !== 'upper') boot();
     if (part !== 'upper') shin();
     if (part !== 'lower') thigh();
-    if (part !== 'upper') boot();
   };
   const at = torsoFrame(sk);
   arm('B', FAR);
