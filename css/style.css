@@ -234,6 +234,27 @@ body.touch.tall #game { width: 100vw; height: 100dvh; aspect-ratio: auto; }
 
 .online-note { font-size: 13px; opacity: 0.7; }
 
+#online-code { display: flex; gap: 8px; }
+#online-code[hidden] { display: none; }
+#online-code input {
+  flex: 1;
+  min-width: 0;
+  font: 800 20px system-ui, sans-serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 211, 77, 0.6);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+}
+.online-bigcode {
+  font: italic 900 44px system-ui, sans-serif;
+  letter-spacing: 0.18em;
+  text-align: center;
+  color: #ffd34d;
+}
+
 /* ---- Music toggle ---- */
 
 .music-toggle {
