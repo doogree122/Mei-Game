@@ -52,7 +52,7 @@ Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0
 |---|---|---|---|---|---|---|---|
 | **WORF** | 2 | 2 | 1 | 3 | Phaser 1 | Blue bubble: stops shots only | Heavy and steady |
 | **SEVEN** | 1 | 3 | 2 | 3 | Phaser 2 | Green Borg honeycomb: stops shots only | Fastest, highest jump |
-| **VADER** | 1 | 1 | 1 | 3 | Lightning 3 | Force lines: a Force push that throws anyone who comes in close or attacks across the screen (no damage); shots go through | Slowest, low jump |
+| **VADER** | 1 | 1 | 1 | 3 | Lightning 3 | Force lines: a Force push that throws anyone who comes in close or attacks across the screen; not a hit: no damage, no knockdown, they land on their feet; shots go through | Slowest, low jump |
 | **B. FETT** | 1 | 2 | 3 | 1 | Blaster 2 | Purple bubble: stops shots and punches | Jetpack: floaty jumps |
 | **MANDO** | 2 | 2 | 1 | 3 | Blaster 2 | Brown armor plates: stop shots and kicks | Jetpack: floaty jumps |
 

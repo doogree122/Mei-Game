@@ -231,6 +231,7 @@ class Fighter {
     this.crouchHeld = false;
     this.uppercutWindow = 0;
     this.dirs = []; // recent direction presses, for hidden moves
+    this.pushed = 0; // frames left of being thrown by Vader's Force field
     this.wasBack = this.wasFwd = this.wasDown = false;
     this.choked = 0;
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
@@ -285,6 +286,7 @@ class Fighter {
     this.holdBack = back && !fwd;
     this.holdDown = input.down;
     this.recordDirections(back, fwd, input.down);
+    if (this.pushed > 0) this.pushed--;
     // Choked: held a little off the floor until it lets go.
     if (this.choked > 0) {
       this.choked--;
@@ -487,20 +489,20 @@ class Fighter {
   }
 
   // Thrown by the Force: lifted off the feet and flung across the screen in
-  // direction `dir`, landing in a skid. No damage.
+  // direction `dir`. Not a hit: no damage, no hit flash, no knockdown. They fly
+  // back upright, land on their feet and skid to a stop.
   forcePush(dir, game) {
-    if (this.isKO || this.downTime > 0 || this.knockedAirborne) return;
+    if (this.isKO || this.downTime > 0 || this.knockedAirborne || this.pushed > 0) return;
     this.move = null;
     this.blockstun = 0;
     this.vx = dir * FORCE_PUSH.vx;
     this.vy = FORCE_PUSH.vy;
     this.y = Math.max(this.y, 0.01);
-    this.knockedAirborne = true;
-    this.hitstun = 30;
+    // Unable to act until just after landing (the air time is about 32 frames).
+    this.hitstun = 40;
+    this.pushed = 40;
     this.state = 'hit';
-    this.flash = 4;
     game.shake = 9;
-    game.hitstop = 4;
     Sfx.shieldHit();
   }
 
