@@ -1023,11 +1023,14 @@ function paintedParts(ctx, sk, f, P) {
   const arm = (side, k) => {
     const elbow = sk['elbow' + side];
     const wrist = sk['hand' + side];
-    drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
-    drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
+    // The fist goes on first, starting a little up inside the sleeve, so the
+    // forearm's cuff overlaps the wrist.
     const shooting = f.move && f.move.def.projectile && side === 'F';
     if (shooting) paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
-    drawPart(ctx, P.glove, wrist, toward(wrist, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.gloveLength || 10), null, k);
+    const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
+    drawPart(ctx, P.glove, cuff, toward(cuff, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.gloveLength || 14), null, k);
+    drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
+    drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
   };
   const leg = (side, k) => {
     const knee = sk['knee' + side];

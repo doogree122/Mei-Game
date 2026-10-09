@@ -368,7 +368,9 @@ CHARACTERS.mando = {
     // Painted parts generated with Nano Banana (src/parts-mando.js), used once loaded;
     // `partFit` tunes how thick each sits on its limb.
     parts: true,
-    partFit: {},
+    // Slim build: narrower torso, arms and legs than the shapes they replace;
+    // bigger fists (tucked into the sleeve) and boots.
+    partFit: { torsoDepth: 19.5, upperArm: 1.18, forearm: 1.05, thigh: 1.02, shin: 1.12, gloveLength: 14, gloveTuck: 3 },
   },
   // Drawn fallback (the armored style), until the painted art is ready.
   colors: {
