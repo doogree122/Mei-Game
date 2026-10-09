@@ -224,7 +224,7 @@ function snapshotGame(game) {
       hb: f.holdBack ? 1 : 0, hd: f.holdDown ? 1 : 0, nt: f.nearThreat ? 1 : 0,
       wp: r1(f.walkPhase), sh: f.shield, sc: f.shieldCooldown,
     })),
-    p: game.projectiles.map((p) => [r1(p.x), r1(p.y), p.vx, game.fighters.indexOf(p.owner)]),
+    p: game.projectiles.map((p) => [r1(p.x), r1(p.y), p.vx, game.fighters.indexOf(p.owner), r1(p.x0)]),
   };
 }
 
@@ -362,7 +362,7 @@ function applySnapshot(game) {
   }
   game.projectiles = after
     .filter((p) => Array.isArray(p) && owners[p[3]])
-    .map((p) => ({ x: Number(p[0]), y: Number(p[1]), vx: Number(p[2]), owner: owners[p[3]], def: owners[p[3]].shotDef, dead: false }));
+    .map((p) => ({ x: Number(p[0]), y: Number(p[1]), vx: Number(p[2]), owner: owners[p[3]], def: owners[p[3]].shotDef, dead: false, x0: p[4] === undefined ? undefined : Number(p[4]) }));
 }
 
 // ---- lobby panel (HTML over the canvas) ----

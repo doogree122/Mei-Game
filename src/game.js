@@ -394,7 +394,7 @@ class Game {
     const x = hand.x + owner.facing * (owner.char.muzzle ? owner.char.muzzle * owner.scale : 12);
     const y = hand.y + (owner.char.muzzleY || 0) * owner.scale; // the barrel sits above the fist
     this.projectiles.push({
-      owner, def, x, y, vx: def.speed * owner.facing, dead: false,
+      owner, def, x, y, x0: x, vx: def.speed * owner.facing, dead: false,
     });
     this.effects.spark(x, y, owner.char.colors.energy, 6, 3);
   }

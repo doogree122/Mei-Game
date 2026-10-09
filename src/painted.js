@@ -404,7 +404,9 @@ const KLINGON_SKIN = [
 ];
 const KLINGON_HAIR = [
   [1.0, 10.3], [-1.6, 11.2], [-5.0, 9.8], [-7.6, 6.0], [-8.4, 0.5], [-8.2, -5.5], [-7.4, -11.5], [-5.8, -15.5],
-  [-4.4, -15.0], [-4.1, -10.2], [-3.6, -5.2], [-2.6, -0.8], [-1.6, 3.2], [-0.6, 6.6], [0.4, 8.8],
+  // The front edge falls forward from the crest over the ear, past the
+  // jaw, and down onto the shoulder.
+  [-4.4, -15.0], [-3.5, -10.6], [-2.0, -6.2], [-0.6, -3.0], [0.7, -0.4], [1.5, 1.8], [1.3, 4.2], [0.9, 6.6], [0.9, 8.8],
 ];
 const KLINGON_BEARD = [
   [6.6, -2.4], [7.1, -3.2], [6.8, -4.6], [6.6, -6.0], [5.6, -7.6], [3.6, -8.3], [0.8, -7.0], [-2.0, -4.4],
@@ -441,6 +443,14 @@ function paintKlingonFace(ctx, sk, paint) {
   // Heavy brow shadow over the deep-set eye, cheekbone light, shadow under the jaw.
   softSpot(ctx, H([5.2, 1.8]), 1.9 * F.size, 'rgb(40,20,12)', 0.6);
   softSpot(ctx, H([4.2, -0.9]), 2.6 * F.size, rgb(sl), 0.45);
+  // Cheek definition: a lit, high cheekbone, the hollow beneath it, the fold
+  // from the nostril down to the mouth, and the hair's shadow along the jaw.
+  for (const [x, y] of [[2.9, 0.3], [3.8, 0.1], [4.7, -0.3]]) softSpot(ctx, H([x, y]), 1.2 * F.size, rgb(sl), 0.55);
+  softSpot(ctx, H([3.6, -2.3]), 1.9 * F.size, 'rgb(45,20,12)', 0.38);
+  softSpot(ctx, H([4.9, -2.0]), 0.9 * F.size, 'rgb(45,20,12)', 0.3);
+  strokeThrough(ctx, H, [[6.3, -1.7], [5.95, -2.5], [5.6, -3.3]], 'rgba(40,16,10,0.55)', 0.28 * F.size);
+  strokeThrough(ctx, H, [[6.15, -1.55], [5.8, -2.4]], 'rgba(235,180,140,0.35)', 0.22 * F.size);
+  softSpot(ctx, H([1.8, -0.4]), 2.0 * F.size, 'rgb(30,14,8)', 0.55);
   const jg = ctx.createLinearGradient(H([0, -6]).x, H([0, -6]).y, H([0, -9.5]).x, H([0, -9.5]).y);
   jg.addColorStop(0, 'rgba(30,14,8,0)');
   jg.addColorStop(0.4, 'rgba(30,14,8,0.5)');
@@ -497,6 +507,13 @@ function paintKlingonFace(ctx, sk, paint) {
     const pts = [[0.6 - o * 1.6, 10.2 - o * 0.8], [-3.4 - o * 1.4 + w, 10.0 - o * 1.4], [-6.6 + o * 1.6, 6 - o * 2], [-7.6 + o * 2.4 + w, -2 - o * 1], [-6.8 + o * 1.8, -12 - o * 2]];
     strokeThrough(ctx, H, pts, i % 3 === 0 ? 'rgba(150,112,88,0.38)' : 'rgba(5,3,2,0.35)', (0.18 + (i % 4) * 0.05) * F.size);
   }
+  // The forward lock over the ear: strands running down along its front edge.
+  for (let i = 0; i < 10; i++) {
+    const o = i * 0.32;
+    strokeThrough(ctx, H, [[0.7 - o * 0.6, 9.2], [1.1 - o, 4.4], [1.0 - o, 1.4], [0.2 - o, -1.6], [-1.6 - o * 0.8, -5.4], [-3.2 - o * 0.6, -9.6]],
+      i % 3 === 1 ? 'rgba(160,120,92,0.45)' : 'rgba(5,3,2,0.38)', (0.16 + (i % 3) * 0.05) * F.size);
+  }
+  softSpot(ctx, H([0.4, 2.2]), 1.6 * F.size, rgb(hl), 0.35);
   softSpot(ctx, H([-2.8, 9.2]), 3 * F.size, rgb(hl), 0.45);
   softSpot(ctx, H([-6.6, 1.0]), 2.6 * F.size, rgb(hl), 0.25);
   ctx.restore();
