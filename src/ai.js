@@ -91,7 +91,7 @@ class AIController {
       }
       this.planTimer = 16;
     } else if (dist > 300) {
-      if (r < 0.25 + d * 0.15 && !game.hasProjectile(self)) this.queued = 'special';
+      if (r < 0.25 + d * 0.15 && !game.hasProjectile(self) && self.ammo > 0) this.queued = 'special';
       else plan[toward] = true;
     } else if (dist > 95) {
       if (r < 0.12) {
@@ -102,7 +102,7 @@ class AIController {
         if (self.char.flight && Math.random() < 0.5) this.flyFor = 50 + Math.random() * 110;
       } else if (r < 0.22 && self.char.moves && self.char.moves.punch && self.char.moves.punch.mind && dist * self.scale < self.char.moves.punch.range) {
         this.queued = 'punch'; // Troi's empathic strike reaches across the floor
-      } else if (r < 0.2 && !game.hasProjectile(self)) {
+      } else if (r < 0.2 && !game.hasProjectile(self) && self.ammo > 0) {
         this.queued = 'special';
       } else if (r < 0.3) {
         plan[away] = true;

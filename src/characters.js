@@ -463,6 +463,14 @@ CHARACTERS.troi = {
   stats: { walk: 5.0, backWalk: 3.8, jumpV: 15.2, jumpVX: 6.2, gravity: 1, power: 1 },
 };
 
+// What the shot meter calls each fighter's ranged attack.
+Object.assign(CHARACTERS.fett, { shotName: 'BLASTER' });
+Object.assign(CHARACTERS.mando, { shotName: 'BLASTER' });
+Object.assign(CHARACTERS.worf, { shotName: 'PHASER' });
+Object.assign(CHARACTERS.troi, { shotName: 'PHASER' });
+Object.assign(CHARACTERS.seven, { shotName: 'PHASER RIFLE' });
+Object.assign(CHARACTERS.vader, { shotName: 'LIGHTNING' });
+
 // Which franchise's lettering their name is shown in (src/render.js NAME_FONTS).
 for (const id of ['fett', 'mando', 'vader']) CHARACTERS[id].franchise = 'wars';
 for (const id of ['worf', 'seven', 'troi']) CHARACTERS[id].franchise = 'trek';

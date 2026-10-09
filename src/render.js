@@ -1747,6 +1747,32 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
   ctx.textAlign = flip ? 'left' : 'right';
   ctx.fillText('FORCE FIELD', flip ? mx : mx + mw, my + 11);
 
+  // Shot meter: a longer bar of SHOT_MAX segments, one per shot left; the
+  // next one fills in as it recharges.
+  const sw = 190;
+  const sx = flip ? x : x + w - sw;
+  const sy = my + 27;
+  const seg = (sw - (SHOT_MAX - 1) * 3) / SHOT_MAX;
+  const shotColor = '#ffb43a';
+  for (let i = 0; i < SHOT_MAX; i++) {
+    // Segments fill from the bar's inner end (toward the timer).
+    const k = flip ? i : SHOT_MAX - 1 - i;
+    const px = sx + k * (seg + 3);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(px, sy, seg, 8);
+    ctx.fillStyle = shotColor;
+    if (i < f.ammo) {
+      ctx.fillRect(px, sy, seg, 8);
+    } else if (i === f.ammo) {
+      const t = f.ammoTimer / SHOT_RECHARGE;
+      ctx.globalAlpha = 0.45;
+      ctx.fillRect(flip ? px : px + seg * (1 - t), sy, seg * t, 8);
+      ctx.globalAlpha = 1;
+    }
+  }
+  ctx.fillStyle = f.ammo > 0 ? shotColor : '#ff6b6b';
+  ctx.fillText(`${f.char.shotName || 'SHOTS'} ${f.ammo}/${SHOT_MAX}`, flip ? sx : sx + sw, sy + 11);
+
   // Round wins.
   for (let i = 0; i < 2; i++) {
     const cx = flip ? x + w - 175 - i * 22 : x + 175 + i * 22;

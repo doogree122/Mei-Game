@@ -58,6 +58,8 @@ Characters list their hidden moves in `secrets` in `src/characters.js` (directio
 
 **Lettering:** the title is set in Final Frontier; Star Wars fighters' names (health bars, select cards, win banners) in Star Jedi, Star Trek fighters' in the TNG title font (`assets/fonts/`, embedded in the single-file build). Star Jedi's capitals are swash variants, so its names are drawn in lowercase. The Star Jedi file's glyph-name table was rewritten (fontTools, `post` format 3) because browsers reject the original.
 
+**Shot meter:** every fighter carries 4 shots (blaster, phaser, phaser rifle or Force lightning), shown as a long 4-segment bar under the force field meter with the count (e.g. `PHASER 3/4`). Each shot uses one; one comes back every 2.5 seconds until the bar is full again, the next segment filling in as it recharges. Out of shots, the special button just gives a dry click. The CPU waits for a shot before firing. Tuning: `SHOT_MAX` and `SHOT_RECHARGE` in `src/fighter.js`.
+
 **Health:** each fighter has 120 health, so every hit takes a sixth less of the bar than at the old 100 and matches last about 20% longer. Hidden moves still do their 4 damage.
 
 Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.

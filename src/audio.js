@@ -254,6 +254,11 @@ const Sfx = (() => {
       note('triangle', 660, 0.05, 0.55, 0.04, { vibrato: 20, slideTo: 1320 });
       note('sine', 110, 0, 0.5, 0.08, { slideTo: 70 });
     },
+    // Out of shots: a dry little click.
+    empty: () => {
+      tone('square', 260, 200, 0.05, 0.05);
+      noise(0.03, 3000, 0.08);
+    },
     // Jetpack thrust: a short rushing roar, repeated while flying.
     thrust: () => {
       noise(0.2, 700, 0.12);
