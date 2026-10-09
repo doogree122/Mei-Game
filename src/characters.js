@@ -8,36 +8,40 @@ const CHARACTERS = {
     look: 'armored', // jetpack bounty hunter
     scale: 1.9,
     projectile: 'bolt', // special fires a blaster bolt
-    muzzle: 42, // from his carbine's barrel
-    muzzleY: -9,
+    muzzle: 34, // from his carbine's barrel
+    muzzleY: -7,
+    // Dark, weathered colors after the newer live-action armor.
     colors: {
-      suit: '#a2a4ac', // gray flight suit
-      suitShade: '#74767f',
-      suitLight: '#d4d6dc',
-      armor: '#2f9e48', // green armor
-      armorShade: '#1d6c31',
-      armorLight: '#72d27e',
-      accent: '#f2cf1d', // yellow pads
-      accentShade: '#c0980c',
-      accentLight: '#fff28c',
-      visor: '#101216',
-      visorFrame: '#8e1b14', // dark red visor frame and band
-      visorFrameLight: '#c4382c',
-      helmetGold: '#cdb877', // rangefinder housing
-      helmetGoldShade: '#8f7b45',
-      glove: '#d2d3d8',
-      gloveShade: '#9a9ca3',
-      boot: '#34353b',
-      belt: '#5c3b1e',
-      beltShade: '#3a2410',
-      pack: '#2f9e48', // green jetpack
-      packShade: '#1d6c31',
-      packLight: '#72d27e',
-      rocket: '#3fae5a',
-      rocketShade: '#1d6c31',
-      rocketLight: '#a3e8ad',
-      metal: '#24252b',
-      metalLight: '#b9bbc2',
+      suit: '#3a3636', // charcoal flight suit
+      suitShade: '#262323',
+      suitLight: '#5a5452',
+      armor: '#4a6646', // weathered olive-green armor
+      armorShade: '#2f432d',
+      armorLight: '#71896a',
+      gauntlet: '#5e2a26', // maroon gauntlets
+      gauntletShade: '#3e1b18',
+      gauntletLight: '#86493f',
+      accent: '#c98a2a', // ochre shoulder and knee pads
+      accentShade: '#93611b',
+      accentLight: '#e4b25c',
+      visor: '#0c0d10',
+      visorFrame: '#5e2422', // maroon visor frame and band
+      visorFrameLight: '#82403a',
+      helmetGold: '#8f7d55', // rangefinder housing
+      helmetGoldShade: '#5f5236',
+      glove: '#262628', // black gloves
+      gloveShade: '#161617',
+      boot: '#5c2a1e', // red-brown boots
+      belt: '#6e3420',
+      beltShade: '#4a2214',
+      pack: '#4a6646', // olive jetpack
+      packShade: '#2f432d',
+      packLight: '#71896a',
+      rocket: '#4f6b4a',
+      rocketShade: '#2f432d',
+      rocketLight: '#8aa080',
+      metal: '#1a1b1f',
+      metalLight: '#85878c',
       energy: '#ff7a2a',
     },
     // Move strength, 1 (weak) to 3 (strong): damage, knockback and how big the hit looks.
@@ -85,7 +89,9 @@ CHARACTERS.worf = {
     arm: ['tunic', 'tunic'],
     leg: ['black', 'cloth'],
     foot: 'shoe',
-    hands: { front: 'fist', back: 'fist', shot: 'phaserHand' },
+    hands: { front: 'fist', back: 'fist', shot: 'phaser' },
+    // The TNG hand phaser he fires: picture scale, and how far ahead of the wrist the fist grips it.
+    phaser: { scale: 0.12, grip: 6, lift: 3.5 },
     // A black stand-up collar with a gold edge.
     collarFabric: ['black', 'cloth'],
     collarTrim: [164, 120, 44],
@@ -104,7 +110,9 @@ CHARACTERS.worf = {
       beard: [52, 32, 24],
     },
   },
-  projectile: 'pulse', // special fires a hand-blaster pulse
+  projectile: 'pulse', // special fires a hand-phaser pulse
+  muzzle: 33, // from the phaser's emitter
+  muzzleY: -3,
   victoryPose: 'armsCrossed',
   colors: {
     skin: '#9a5f45',
@@ -285,9 +293,9 @@ CHARACTERS.seven = {
 };
 
 CHARACTERS.fett.altColors = {
-  armor: '#3a6ea8', armorShade: '#24497a', armorLight: '#7fb2e8', pack: '#3a6ea8', packShade: '#24497a',
-  packLight: '#7fb2e8', rocket: '#4f86c4', rocketShade: '#24497a', rocketLight: '#b8d8ff', accent: '#e8e8ec',
-  accentShade: '#a8a8b0', accentLight: '#ffffff',
+  armor: '#2a4f79', armorShade: '#1a3558', armorLight: '#5b80a7', pack: '#2a4f79', packShade: '#1a3558',
+  packLight: '#5b80a7', rocket: '#39608d', rocketShade: '#1a3558', rocketLight: '#849cb8', accent: '#a7a7aa',
+  accentShade: '#79797f', accentLight: '#b8b8b8',
 };
 CHARACTERS.worf.altColors = {
   tunic: '#c0392b', tunicShade: '#8e2a1f', tunicLight: '#e8604f', sash: '#d4af37', sashShade: '#9c7c16',

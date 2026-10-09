@@ -843,6 +843,23 @@ function paintBatleth(ctx, sk) {
   drawPiece(ctx, piece, sk.handF, { x: sk.handF.x - sk.elbowF.x, y: sk.handF.y - sk.elbowF.y }, BATLETH_SCALE);
 }
 
+// A hand phaser cut from a picture (src/props.js) gripped in the fist: the
+// phaser first, its grip `phaser.grip` units ahead of the wrist and `phaser.lift`
+// above it (the body rides over the hand), then the fist over the grip.
+// Without the phaser picture, just the fist.
+function paintHeldPhaser(ctx, art, p, wrist, dir) {
+  const piece = propPiece('phaser');
+  if (piece) {
+    const len = Math.hypot(dir.x, dir.y) || 1;
+    const ux = dir.x / len;
+    const uy = dir.y / len;
+    const { grip: g, lift } = p.phaser;
+    const grip = { x: wrist.x + ux * g + uy * lift, y: wrist.y + uy * g - ux * lift };
+    drawPiece(ctx, piece, grip, dir, p.phaser.scale);
+  }
+  drawPiece(ctx, art.pieces.fist, wrist, dir, p.pieceScale);
+}
+
 function paintedBody(ctx, sk, f, art) {
   const p = f.char.paint;
   const W = p.widths;
@@ -880,7 +897,8 @@ function paintedBody(ctx, sk, f, art) {
     armor('forearm', elbow, wrist, W.elbow * 0.95, W.wrist, k);
     armor('upperArm', sk.shoulder, elbow, W.shoulder, W.elbow, k);
     if (k < 1) ctx.filter = `${base} brightness(${k})`;
-    if (art.pieces[hand]) drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
+    if (hand === 'phaser') paintHeldPhaser(ctx, art, p, wrist, sub(elbow, wrist));
+    else if (art.pieces[hand]) drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
     else if (hand === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
     else paintGlove(ctx, p, wrist, sub(elbow, wrist), false);
     ctx.filter = base || 'none';

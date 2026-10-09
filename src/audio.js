@@ -93,6 +93,8 @@ const Sfx = (() => {
     if (samplesRequested) return;
     samplesRequested = true;
     for (const [name, src] of Object.entries(SAMPLE_SRC)) {
+      // Opened straight from disk, files can't be fetched: keep the synthesized sounds.
+      if (!src.startsWith('data:') && location.protocol === 'file:') continue;
       // Embedded data is decoded directly (no fetch, which a host page may block).
       const bytes = src.startsWith('data:')
         ? Promise.resolve(Uint8Array.from(atob(src.slice(src.indexOf(',') + 1)), (c) => c.charCodeAt(0)).buffer)
