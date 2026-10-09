@@ -16,8 +16,10 @@ const MENU_STEP = 48;
 const CARD_GAP = 18;
 // As wide as fits the roster, up to 200.
 const CARD_W = Math.min(200, (W - 40 - (ROSTER.length - 1) * CARD_GAP) / ROSTER.length);
-const CARD_TOP = 104;
-const CARD_H = 330;
+// Each card holds a portrait (src/portraits.js, 5:6) over the name and blurb.
+const CARD_PORTRAIT_H = Math.round(CARD_W * 1.2);
+const CARD_H = CARD_PORTRAIT_H + 62;
+const CARD_TOP = Math.round(104 + (330 - CARD_H) / 2);
 const CARD_X0 = (W - (ROSTER.length * CARD_W + (ROSTER.length - 1) * CARD_GAP)) / 2;
 // Level select thumbnails (16:9), in a row.
 const STAGE_GAP = 22;
@@ -251,17 +253,18 @@ class Game {
       ctx.beginPath();
       ctx.roundRect(x, CARD_TOP, CARD_W, CARD_H, 12);
       ctx.fill();
-      // Preview model standing in the card.
+      // The fighter's portrait, facing out, on a glow in their franchise's colors.
       const f = this.previews[i];
-      const s = 0.82 * (CARD_W / 200);
       ctx.save();
       ctx.beginPath();
       ctx.roundRect(x, CARD_TOP, CARD_W, CARD_H, 12);
       ctx.clip();
-      ctx.translate(x + CARD_W / 2, CARD_TOP + CARD_H - 34);
-      ctx.scale(s, s);
-      ctx.translate(0, -GROUND);
-      drawFighter(ctx, f);
+      const glow = ctx.createRadialGradient(x + CARD_W / 2, CARD_TOP + CARD_PORTRAIT_H * 0.4, 4, x + CARD_W / 2, CARD_TOP + CARD_PORTRAIT_H * 0.4, CARD_W * 0.8);
+      glow.addColorStop(0, f.char.franchise === 'wars' ? 'rgba(255,120,60,0.45)' : 'rgba(80,160,255,0.45)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x, CARD_TOP, CARD_W, CARD_PORTRAIT_H);
+      Portraits.draw(ctx, f.char.id, x, CARD_TOP, CARD_W, CARD_PORTRAIT_H);
       ctx.restore();
       // Name and what they bring.
       ctx.font = nameFont(f.char, 22);
