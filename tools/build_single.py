@@ -3,7 +3,7 @@
 usage: python3 tools/build_single.py <out.html>
 
 Inlines css/style.css and every script index.html loads, and embeds the music
-tracks (MUSIC_DATA) and level backdrops (STAGE_DATA) as data URIs so the page
+tracks (MUSIC_DATA), sound effects (SFX_DATA) and level backdrops (STAGE_DATA) as data URIs so the page
 needs no other files. The output omits
 <!doctype>/<html>/<head>/<body>: the artifact host adds that skeleton.
 """
@@ -27,6 +27,9 @@ fight1 = data_uri('assets/music/arcade_march.mp3')
 fight2 = data_uri('assets/music/arcade_march_2.mp3')
 music = menu + fight1 + fight2
 js = f"const MUSIC_DATA = {{ menu: '{menu}', fight1: '{fight1}', fight2: '{fight2}' }};\n"
+# Recorded sound effects (assets/sfx/) too.
+sfx = {name[:-4]: data_uri(f'assets/sfx/{name}') for name in sorted(os.listdir('assets/sfx')) if name.endswith('.mp3')}
+js += 'const SFX_DATA = {' + ', '.join(f"'{k}': '{v}'" for k, v in sfx.items()) + '};\n'
 # Level backdrops as data URIs too.
 mime = {'.jpg': 'image/jpeg', '.png': 'image/png'}
 stages = {name[:-4]: f'data:{mime[name[-4:]]};base64,' + base64.b64encode(open(f'assets/stages/{name}', 'rb').read()).decode()

@@ -9,6 +9,7 @@ const Sfx = (() => {
       ctx = new AC();
     }
     if (ctx.state === 'suspended') ctx.resume();
+    loadSamples(ctx);
     return ctx;
   }
 
@@ -80,6 +81,38 @@ const Sfx = (() => {
     }
     osc.start(t);
     osc.stop(t + dur);
+  }
+
+  // Recorded sound effects (assets/sfx/; the single-file build embeds them as
+  // SFX_DATA). Each is decoded once into a buffer the first time sound is
+  // allowed; until it's ready (or if it can't load) the synthesized version plays.
+  const SAMPLE_SRC = typeof SFX_DATA !== 'undefined' ? SFX_DATA : { phaser: 'assets/sfx/phaser.mp3' };
+  const samples = {};
+  let samplesRequested = false;
+  function loadSamples(ac) {
+    if (samplesRequested) return;
+    samplesRequested = true;
+    for (const [name, src] of Object.entries(SAMPLE_SRC)) {
+      // Embedded data is decoded directly (no fetch, which a host page may block).
+      const bytes = src.startsWith('data:')
+        ? Promise.resolve(Uint8Array.from(atob(src.slice(src.indexOf(',') + 1)), (c) => c.charCodeAt(0)).buffer)
+        : fetch(src).then((r) => r.arrayBuffer());
+      bytes
+        .then((data) => new Promise((ok, fail) => ac.decodeAudioData(data, ok, fail)))
+        .then((buf) => { samples[name] = buf; })
+        .catch(() => { /* keep the synthesized sound */ });
+    }
+  }
+  function playSample(name, gain = 1) {
+    const ac = ensure();
+    if (!ac || !samples[name]) return false;
+    const src = ac.createBufferSource();
+    src.buffer = samples[name];
+    const g = ac.createGain();
+    g.gain.value = gain;
+    src.connect(g).connect(ac.destination);
+    src.start();
+    return true;
   }
 
   // Note frequencies used by the jingles.
@@ -343,9 +376,10 @@ const Sfx = (() => {
       }
       noise(0.04, 6000, 0.25);
     },
-    // Phaser: a steady, whining energy beam with a fast warble, rising a
-    // little as it fires (smoother and longer than a blaster bolt).
+    // Phaser: the recorded TNG phaser (assets/sfx/phaser.mp3). Until it has
+    // loaded, a synthesized whining beam with a fast warble.
     phaser: () => {
+      if (playSample('phaser', 0.9)) return;
       const ac = ensure();
       if (!ac) return;
       const t = ac.currentTime;
