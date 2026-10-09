@@ -36,6 +36,14 @@ The standing kick is a high kick that lands at chest height.
 
 **Uppercut hits** launch the opponent up and back: they fly across the floor, land and skid along it.
 
+### Hidden moves
+
+Entered as a quick sequence (within about ¾ of a second), where *back* means away from your opponent:
+
+- **VADER, Force choke:** back, back, down, punch. Vader reaches out and the opponent, anywhere in front of him, is lifted off the floor clutching their throat for about a second and loses 4 health. It can't be blocked and goes through force fields, but it misses someone who is already down or flying. A punch or kick on the choked fighter breaks the grip.
+
+Characters list their hidden moves in `secrets` in `src/characters.js` (directions `b`, `f`, `d`, then a button).
+
 ### Fighters compared
 
 Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.

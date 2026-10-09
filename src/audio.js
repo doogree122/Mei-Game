@@ -124,6 +124,8 @@ const Sfx = (() => {
     light: () => { noise(0.1, 1800, 0.35); tone('square', 220, 90, 0.08, 0.08); },
     heavy: () => { noise(0.18, 1200, 0.5); tone('square', 160, 50, 0.15, 0.12); },
     block: () => tone('triangle', 900, 600, 0.06, 0.15),
+    // Force choke: a low strained rumble and a choked gasp.
+    choke: () => { tone('sawtooth', 70, 55, 0.9, 0.09); noise(0.5, 900, 0.18); tone('triangle', 520, 260, 0.35, 0.05); },
     special: () => tone('sawtooth', 300, 900, 0.25, 0.08),
     jump: () => tone('sine', 300, 500, 0.08, 0.05),
     ko: () => { noise(0.5, 600, 0.5); tone('sawtooth', 200, 40, 0.8, 0.15); },

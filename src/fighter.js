@@ -76,6 +76,12 @@ const MOVES = {
   special: {
     pose: 'special', startup: 14, active: 2, recovery: 22, projectile: true,
   },
+  // Hidden move (Vader: back, back, down, punch): the Force grips the
+  // opponent's throat from anywhere in front, lifting them off the floor.
+  forceChoke: {
+    pose: 'forceChoke', startup: 14, active: 1, recovery: 46, choke: true,
+    damage: 4, hitstun: 70, blockstun: 0, push: 0, height: 'unblockable', sound: 'light',
+  },
 };
 
 const FIREBALL = {
@@ -128,6 +134,11 @@ const POSES = {
   saberSwing: { torso: 0.3, head: -0.2, uaF: 1.5, faF: 1.1, uaB: 0.4, faB: 2.2, thF: 0.6, shF: -0.05, thB: -0.5, shB: -0.1 },
   // Force lightning: the free (back) hand thrusts forward; the saber hangs low.
   forceLightning_windup: { torso: -0.1, head: 0, uaF: 0.4, faF: 0.9, uaB: -0.5, faB: 0.2, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  // Force choke: the free hand reaches out and pinches; the saber hangs low.
+  forceChoke_windup: { torso: -0.05, head: 0, uaF: 0.35, faF: 0.5, uaB: 1.0, faB: 1.4, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  forceChoke: { torso: 0.1, head: -0.1, uaF: 0.3, faF: 0.55, uaB: 1.85, faB: 2.05, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  // Being choked: both hands clawing at the throat, head back, feet dangling.
+  choked: { torso: -0.15, head: -0.45, uaF: 1.15, faF: 3.55, uaB: 1.0, faB: 3.45, thF: 0.15, shF: 0.05, thB: -0.1, shB: 0.15 },
   forceLightning: { torso: 0.25, head: -0.15, uaF: 0.5, faF: 1.0, uaB: 1.55, faB: 1.6, thF: 0.55, shF: -0.05, thB: -0.45, shB: -0.1 },
   // Very high kick: the foot rises to head height.
   highKick_windup: { torso: -0.2, head: 0.1, ...GUARD, thF: 1.9, shF: 0.6, thB: -0.1, shB: 0 },
@@ -215,6 +226,9 @@ class Fighter {
     this.knockedAirborne = false;
     this.crouchHeld = false;
     this.uppercutWindow = 0;
+    this.dirs = []; // recent direction presses, for hidden moves
+    this.wasBack = this.wasFwd = this.wasDown = false;
+    this.choked = 0;
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
@@ -266,6 +280,18 @@ class Fighter {
     const fwd = this.facing === 1 ? input.right : input.left;
     this.holdBack = back && !fwd;
     this.holdDown = input.down;
+    this.recordDirections(back, fwd, input.down);
+    // Choked: held a little off the floor until it lets go.
+    if (this.choked > 0) {
+      this.choked--;
+      if (this.hitstun > 0) {
+        this.y += (24 - this.y) * 0.2;
+        this.vy = 0;
+        this.vx = 0;
+      } else {
+        this.choked = 0;
+      }
+    }
 
     if (this.state === 'ko' || this.won) {
       // Fall to the ground and stay there (or celebrate).
@@ -311,6 +337,9 @@ class Fighter {
 
       // No attacking from inside the force field.
       const canAttack = this.shield === 0;
+      // Hidden moves: a direction sequence finished with a button.
+      const secret = canAttack && this.secretMove();
+      if (secret) return this.startMove(secret);
       if (input.down) {
         this.vx = 0;
         this.state = 'crouch';
@@ -358,6 +387,34 @@ class Fighter {
     }
   }
 
+  // Remember when back, forward and down are first pressed, for hidden moves.
+  recordDirections(back, fwd, down) {
+    const now = this.time;
+    if (back && !this.wasBack) this.dirs.push({ k: 'b', t: now });
+    if (fwd && !this.wasFwd) this.dirs.push({ k: 'f', t: now });
+    if (down && !this.wasDown) this.dirs.push({ k: 'd', t: now });
+    this.wasBack = back;
+    this.wasFwd = fwd;
+    this.wasDown = down;
+    if (this.dirs.length > 8) this.dirs.shift();
+  }
+
+  // A hidden move whose sequence (characters.js `secrets`) was just entered:
+  // the directions in order, the whole thing within about ¾ of a second,
+  // ending with the button. Returns the move's name.
+  secretMove() {
+    for (const s of this.char.secrets || []) {
+      if (!(this.buffer[s.button] > 0)) continue;
+      const tail = this.dirs.slice(-s.input.length);
+      if (tail.length < s.input.length || tail.some((d, i) => d.k !== s.input[i])) continue;
+      if (this.time - tail[0].t > 45) continue;
+      this.buffer[s.button] = 0;
+      this.dirs = [];
+      return s.move;
+    }
+    return null;
+  }
+
   consume(name) {
     if (this.buffer[name] > 0) {
       this.buffer[name] = 0;
@@ -396,6 +453,33 @@ class Fighter {
     const rating = (this.char.ratings && this.char.ratings.shot) || 2;
     const k = RATING[rating];
     return { ...def, rating, damage: Math.round(def.damage * k.damage), radius: def.radius * k.shotSize, push: def.push * k.push };
+  }
+
+  // Gripped by the Force choke: no blocking it, a few points of damage, and
+  // held up clawing at the throat for a moment.
+  takeChoke(def, attacker, game) {
+    const damage = Math.round(def.damage * attacker.char.stats.power);
+    this.hp = Math.max(game.training ? 1 : 0, this.hp - damage);
+    this.move = null;
+    this.flash = 6;
+    this.vx = 0;
+    game.shake = 4;
+    Sfx.choke();
+    if (this.hp <= 0) {
+      this.state = 'ko';
+      this.vy = 6;
+      this.y = Math.max(this.y, 0.01);
+      this.vx = (attacker.x < this.x ? 1 : -1) * 4;
+      this.hitstun = 0;
+      this.choked = 0;
+      game.onKO(this);
+      return 'hit';
+    }
+    this.hitstun = def.hitstun;
+    this.choked = def.hitstun;
+    this.blockstun = 0;
+    this.state = 'hit';
+    return 'hit';
   }
 
   // Thrown by the Force: lifted off the feet and flung across the screen in
@@ -441,6 +525,7 @@ class Fighter {
     const d = m.def;
     m.frame++;
     if (d.projectile && m.frame === d.startup) game.spawnProjectile(this);
+    if (d.choke && m.frame === d.startup) game.forceChoke(this, d);
     if (d.air && this.grounded) {
       // Landing cancels the air attack.
       this.move = null;
@@ -456,7 +541,7 @@ class Fighter {
   get attackActive() {
     if (!this.move || this.move.hasHit) return false;
     const d = this.move.def;
-    return !d.projectile && this.move.frame >= d.startup && this.move.frame < d.startup + d.active;
+    return !d.projectile && !d.choke && this.move.frame >= d.startup && this.move.frame < d.startup + d.active;
   }
 
   faceOpponent(opp) {
@@ -489,6 +574,7 @@ class Fighter {
 
   // Whether an incoming attack of the given height is blocked.
   canBlock(height) {
+    if (height === 'unblockable') return false;
     if (!this.grounded || !this.holdBack) return false;
     if (!(this.isFree || this.blockstun > 0)) return false;
     if (height === 'low') return this.holdDown;
@@ -500,6 +586,9 @@ class Fighter {
   takeHit(def, attacker, game, hitPoint) {
     if (this.invuln > 0 || this.downTime > 0 || this.state === 'ko') return null;
     const dir = attacker.x < this.x ? 1 : -1;
+
+    // The Force choke ignores force fields.
+    if (def.choke) return this.takeChoke(def, attacker, game);
 
     // Vader's Force field turns any punch or kick that reaches it into a Force
     // push that throws the attacker across the screen.
@@ -531,6 +620,7 @@ class Fighter {
     this.hp = Math.max(game.training ? 1 : 0, this.hp - damage);
     this.move = null;
     this.flash = 6;
+    this.choked = 0; // a real hit breaks the Force's grip
     this.vx = dir * def.push * pushScale(attacker);
     // Strong moves (rating 3) hit with a bigger burst, a longer freeze and more shake.
     const rating = def.rating || 2;
@@ -577,7 +667,7 @@ class Fighter {
   basePose() {
     if (this.state === 'ko' || this.state === 'down') return POSES.lying;
     if (this.won) return POSES[this.char.victoryPose] || POSES.victory;
-    if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : POSES.hit;
+    if (this.hitstun > 0) return this.knockedAirborne ? POSES.lying : this.choked > 0 ? POSES.choked : POSES.hit;
     if (this.blockstun > 0 || (this.state !== 'attack' && this.isFree && this.grounded && this.holdBack && this.nearThreat)) {
       return this.holdDown ? POSES.crouchBlock : POSES.block;
     }

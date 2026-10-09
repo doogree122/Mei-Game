@@ -661,6 +661,16 @@ class Game {
     this.effects.update();
   }
 
+  // Force choke: grips the opponent if they are in front of the attacker and
+  // on their feet (not already down, flying, or knocked out).
+  forceChoke(att, def) {
+    const target = this.fighters.find((f) => f !== att);
+    const inFront = Math.sign(target.x - att.x) === att.facing;
+    if (!inFront || target.isKO || target.downTime > 0 || target.knockedAirborne || target.invuln > 0) return;
+    const hb = target.hurtbox();
+    target.takeHit(def, att, this, { x: target.x, y: hb.y + hb.h * 0.2 });
+  }
+
   // Vader's Force field shoves the opponent away while it is up: anyone
   // inside it is thrown back out, and their attack is cut off.
   resolveRepel(f, opp) {
@@ -841,6 +851,7 @@ class Game {
       fx.setTransform(1 / PIXEL, 0, 0, 1 / PIXEL, -camPix, 0);
       for (const f of order) drawAttackTrail(fx, f);
       for (const f of this.fighters) drawShield(fx, f, this.frame);
+      for (const f of this.fighters) drawChokeGrip(fx, f, this.frame);
       for (const p of this.projectiles) drawProjectile(fx, p, this.frame);
       this.effects.draw(fx);
       if (this.showBoxes) for (const f of this.fighters) drawFighterBoxes(fx, f);
