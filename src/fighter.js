@@ -18,6 +18,8 @@ const SHIELD_COOLDOWN = 90;
 // opponent back while up. `style` picks its look in render.js.
 const DEFAULT_FIELD = { color: '#6fd8ff', style: 'bubble', frames: SHIELD_FRAMES, cooldown: SHIELD_COOLDOWN, blocks: ['shots'], repel: false, size: 1 };
 const PUNCHES = ['punch', 'lowPunch', 'uppercut'];
+// Vader's Force push: launch speed sideways and up.
+const FORCE_PUSH = { vx: 19, vy: 12 };
 
 // Move strength ratings (characters.js `ratings`, 1 weak, 2 normal, 3 strong).
 const RATING = {
@@ -396,6 +398,24 @@ class Fighter {
     return { ...def, rating, damage: Math.round(def.damage * k.damage), radius: def.radius * k.shotSize, push: def.push * k.push };
   }
 
+  // Thrown by the Force: lifted off the feet and flung across the screen in
+  // direction `dir`, landing in a skid. No damage.
+  forcePush(dir, game) {
+    if (this.isKO || this.downTime > 0 || this.knockedAirborne) return;
+    this.move = null;
+    this.blockstun = 0;
+    this.vx = dir * FORCE_PUSH.vx;
+    this.vy = FORCE_PUSH.vy;
+    this.y = Math.max(this.y, 0.01);
+    this.knockedAirborne = true;
+    this.hitstun = 30;
+    this.state = 'hit';
+    this.flash = 4;
+    game.shake = 9;
+    game.hitstop = 4;
+    Sfx.shieldHit();
+  }
+
   // Whether this fighter's force field stops an attack: a shot (has a speed)
   // or a punch or kick (by move name).
   fieldBlocks(def) {
@@ -481,16 +501,11 @@ class Fighter {
     if (this.invuln > 0 || this.downTime > 0 || this.state === 'ko') return null;
     const dir = attacker.x < this.x ? 1 : -1;
 
-    // Vader's Force field turns any punch or kick that reaches it into a shove
-    // that throws the attacker back.
+    // Vader's Force field turns any punch or kick that reaches it into a Force
+    // push that throws the attacker across the screen.
     if (this.shield > 0 && this.field.repel && !def.speed) {
-      attacker.vx = -dir * 11;
-      attacker.move = null;
-      attacker.blockstun = Math.max(attacker.blockstun, 14);
-      attacker.state = 'block';
+      attacker.forcePush(-dir, game);
       game.effects.spark(hitPoint.x, hitPoint.y, this.field.color, 22, 8, 50);
-      game.shake = 6;
-      Sfx.shieldHit();
       return 'block';
     }
     // A force field that blocks this kind of attack stops it cold.

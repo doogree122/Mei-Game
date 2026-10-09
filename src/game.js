@@ -668,16 +668,9 @@ class Game {
     const e = f.shieldEllipse();
     if (Math.abs(opp.x - f.x) > e.rx + 18 * opp.scale || opp.y > e.ry * 2) return;
     const dir = opp.x >= f.x ? 1 : -1;
-    opp.vx = dir * 11;
-    opp.move = null;
-    opp.blockstun = Math.max(opp.blockstun, 14);
-    opp.state = 'block';
-    if (!f.repelled) {
-      f.repelled = true;
-      this.effects.spark(opp.x - dir * 20 * opp.scale, GROUND - 90 * opp.scale, f.field.color, 22, 8, 50);
-      this.shake = 6;
-      Sfx.shieldHit();
-    }
+    if (opp.knockedAirborne) return;
+    this.effects.spark(opp.x - dir * 20 * opp.scale, GROUND - 90 * opp.scale, f.field.color, 26, 9, 60);
+    opp.forcePush(dir, this);
   }
 
   resolveHits(att, def) {
