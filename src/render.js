@@ -1586,24 +1586,20 @@ function drawProjectileShape(ctx, p, time) {
     return;
   }
   if (p.owner.char.projectile === 'pulse') {
-    // Hand-blaster pulse: a short oval of energy with a white-hot core.
+    // Hand-phaser beam: a long, thin red streak back toward the emitter (it
+    // grows out of the phaser as it leaves), with a soft glow, a white-hot
+    // core and a slight flicker.
     const dir = Math.sign(p.vx);
-    for (let i = 3; i >= 1; i--) {
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.ellipse(p.x - dir * i * 10, p.y, 10, 7 - i, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.ellipse(p.x, p.y, 16, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fffbe6';
-    ctx.beginPath();
-    ctx.ellipse(p.x + dir * 2, p.y, 9, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
+    const len = Math.min(190, Math.abs(p.x - (p.x0 === undefined ? p.x : p.x0)) + 24);
+    const tail = { x: p.x - dir * len, y: p.y };
+    const head = { x: p.x + dir * 4, y: p.y };
+    const flicker = 0.85 + 0.15 * Math.sin(time * 1.7);
+    ctx.lineCap = 'round';
+    drawLimb(ctx, tail, head, 18 * flicker, 'rgba(255,40,24,0.25)');
+    drawLimb(ctx, tail, head, 8, '#ff2a1a');
+    drawLimb(ctx, { x: tail.x + dir * 6, y: p.y }, head, 3, '#ffe2d8');
+    fillCircle(ctx, head.x, head.y, 7 * flicker, 'rgba(255,90,70,0.6)');
+    fillCircle(ctx, head.x, head.y, 3.5, '#fff4f0');
     return;
   }
   const pulse = 1 + Math.sin(time * 0.5) * 0.12;
