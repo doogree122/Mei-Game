@@ -73,7 +73,8 @@ the other sees that game in the list (with the host's fighter) and joins. Severa
 The host's browser runs the fight, and the other player's controls and the fight travel about 30 times a second:
 through the Firebase Realtime Database on the Firebase site (`src/firebase-room.js`), or through the artifact's live room on claude.ai (both people need access to the artifact; use its Share menu).
 Expect a little input delay for the joining player. Esc (or ☰ on phones) leaves the match.
-Opened from disk, GitHub Pages or another website, the game has no ONLINE option.
+On GitHub Pages or any other website, ONLINE uses **room codes** instead (`src/p2p-room.js`): one player picks **Host a game** and gets a four-letter code and a **Copy invite link** button; the other types the code and presses **Join**, or just opens the invite link (`?join=CODE`), picks ONLINE and a fighter, and joins automatically. No account is needed. The two browsers connect directly (WebRTC through PeerJS, loaded from jsDelivr); PeerJS's free public server only introduces them, so it occasionally may be down, and some strict networks (certain school or office Wi-Fi, some mobile carriers) can't make the direct connection.
+Opened from disk, the game has no ONLINE option.
 
 ### Firebase
 
@@ -144,6 +145,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/touch.js` | Phone controls: joystick, buttons, menu taps, fullscreen |
 | `src/online.js` | Online play: lobby, host/guest roles, controls and fight snapshots over the room |
 | `src/firebase-room.js` | The room on Firebase Hosting, backed by the Realtime Database |
+| `src/p2p-room.js` | The room anywhere else: a direct browser-to-browser link found by a room code (PeerJS) |
 | `src/music.js` | Music: menu track, alternating fight tracks, start on first input, pause ducking, on/off |
 | `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
 | `tools/build_single.py` | Bundles everything (music included) into one HTML page for the claude.ai artifact |

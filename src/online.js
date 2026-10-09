@@ -1,8 +1,9 @@
 // Online play between two people who have the game open at the same time.
 //
 // Runs where the page is a claude.ai artifact that declares the `room`
-// capability, or on Firebase Hosting (src/firebase-room.js provides the same
-// room interface there). Elsewhere the ONLINE menu item never appears.
+// capability, on Firebase Hosting (src/firebase-room.js), or on any other
+// website through a direct link found by a room code (src/p2p-room.js). Those
+// give the same room interface. Opened from disk, there is no ONLINE option.
 // Everything travels as room *presence* (about 30 updates a second):
 //   - lobby:  a host advertises { host: code, open: true, char }
 //   - guest:  { join: code, char, in: { l, r, u, d, c: [punches, kicks, specials, shields] } }
@@ -21,18 +22,40 @@ const Online = {
   remoteIn: null, // host: the guest's latest controls
   snap: null, // guest: the host's latest snapshot
   message: '',
+  joinCode: '', // room-code play: the code typed in, or from an invite link
+  autoJoin: null, // room-code play: join this game as soon as it is found
 };
+
+// An invite link (?join=CODE) fills in the code and joins once the player
+// picks ONLINE and a fighter.
+try {
+  const code = new URLSearchParams(location.search).get('join');
+  if (code && /^[a-z0-9]{3,8}$/i.test(code)) {
+    Online.joinCode = code.toLowerCase();
+    Online.fromLink = true;
+  }
+} catch (err) {
+  // No URL to read.
+}
 
 async function initOnline(game) {
   let room = null;
   try {
     if (window.claude && typeof window.claude.use === 'function') room = await window.claude.use('room');
     else if (typeof firebaseRoom === 'function') room = await firebaseRoom();
+    if (!room && typeof p2pRoom === 'function') room = p2pRoom();
   } catch (err) {
     room = null;
   }
   if (!room) return;
   Online.room = room;
+  if (room.onStatus) room.onStatus(() => renderLobby(game));
+  // Invited by link: start on ONLINE in the menu.
+  if (Online.fromLink && room.p2p) {
+    game.refreshMenu();
+    const i = game.menu.findIndex((m) => m.kind === 'lobby');
+    if (i >= 0) game.menuIndex = i;
+  }
   room.onPeers(
     (change) => onRoomPeers(game, change.peers),
     () => {
@@ -89,11 +112,21 @@ function onRoomPeers(game, peers) {
       return;
     }
     if (host.presence.guest === Online.me && host.presence.s) {
+      Online.autoJoin = null;
       Online.snap = host.presence.s;
       if (game.mode === 'lobby') {
         hideLobby();
         game.beginGuest();
       }
+    }
+  }
+  // Room-code play: join the game we connected to as soon as it shows up.
+  if (!Online.role && Online.autoJoin && game.mode === 'lobby') {
+    const g = openGames().find((p) => p.presence.host === Online.autoJoin);
+    if (g) {
+      Online.autoJoin = null;
+      joinGame(game, g.peer);
+      return;
     }
   }
   if (game.mode === 'lobby') renderLobby(game);
@@ -126,6 +159,8 @@ function joinGame(game, hostPeer) {
 // Stop hosting or playing and go back to the lobby (or the title).
 function leaveOnline(game, message, toTitle = false) {
   setPresence({ host: null, open: null, guest: null, s: null, join: null, in: null });
+  Online.autoJoin = null;
+  if (Online.room && Online.room.disconnect) Online.room.disconnect();
   Online.role = null;
   Online.code = null;
   Online.opponent = null;
@@ -339,21 +374,58 @@ function renderLobby(game) {
   el.querySelector('#online-back').textContent = Online.role ? 'Cancel' : 'Back';
   list.replaceChildren();
 
+  const p2p = !!(Online.room && Online.room.p2p);
+  // Invited by link: connect to that game as soon as the lobby opens.
+  if (p2p && Online.fromLink && !Online.role) {
+    Online.fromLink = false;
+    joinByCode(game, Online.joinCode);
+    return;
+  }
+  const codeBox = el.querySelector('#online-code');
+  codeBox.hidden = !p2p || !!Online.role;
+  el.querySelector('.online-note').textContent = p2p
+    ? 'Host a game and send your friend the code or invite link, or type a friend\'s code to join theirs.'
+    : 'Both players open this same page. The other player joins your game from this list.';
+
   if (!Online.room) {
     status.textContent = 'Online play isn\'t available here.';
     hostBtn.hidden = true;
     return;
   }
   if (Online.role === 'host') {
-    status.textContent = `Hosting game ${Online.code.toUpperCase()} as ${CHARACTERS[game.lobbyChar].name}. Waiting for someone to join…`;
+    const code = Online.code.toUpperCase();
+    status.textContent = p2p
+      ? (Online.room.status || `Your game code is ${code}. Send it (or the invite link) to a friend. Waiting for them to join as you play ${CHARACTERS[game.lobbyChar].name}…`)
+      : `Hosting game ${code} as ${CHARACTERS[game.lobbyChar].name}. Waiting for someone to join…`;
     hostBtn.hidden = true;
+    if (p2p) {
+      const big = document.createElement('div');
+      big.className = 'online-bigcode';
+      big.textContent = code;
+      const copy = document.createElement('button');
+      copy.className = 'online-join';
+      const link = `${location.origin}${location.pathname}?join=${Online.code}`;
+      copy.textContent = 'Copy invite link';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(link);
+          copy.textContent = 'Link copied!';
+        } catch (err) {
+          copy.textContent = link;
+        }
+      });
+      list.append(big, copy);
+    }
   } else if (Online.role === 'guest') {
     status.textContent = `Joining game ${Online.code.toUpperCase()} as ${CHARACTERS[game.lobbyChar].name}…`;
     hostBtn.hidden = true;
   } else {
     const games = openGames();
-    status.textContent = Online.message
-      || (games.length ? 'Join a game below, or host your own.' : 'No open games yet. Host one and have a friend open this page.');
+    status.textContent = (p2p && Online.room.status) || Online.message
+      || (p2p ? 'Host a game, or enter a friend\'s game code.'
+        : games.length ? 'Join a game below, or host your own.' : 'No open games yet. Host one and have a friend open this page.');
+    const input = el.querySelector('#online-code-input');
+    if (p2p && Online.joinCode && !input.value) input.value = Online.joinCode.toUpperCase();
     hostBtn.hidden = false;
     for (const g of games) {
       const btn = document.createElement('button');
@@ -366,10 +438,28 @@ function renderLobby(game) {
   }
 }
 
+// Room-code play: connect to the game with this code and join it.
+function joinByCode(game, code) {
+  code = String(code || '').trim().toLowerCase();
+  if (!/^[a-z0-9]{3,8}$/.test(code) || !Online.room || !Online.room.connect) return;
+  Online.joinCode = code;
+  Online.autoJoin = code;
+  Online.message = '';
+  Online.room.connect(code);
+  renderLobby(game);
+}
+
 function setupLobbyPanel(game) {
   const el = lobbyEl();
   if (!el) return;
   el.querySelector('#online-host').addEventListener('click', () => hostGame(game));
+  const input = el.querySelector('#online-code-input');
+  el.querySelector('#online-code-join').addEventListener('click', () => joinByCode(game, input.value));
+  input.addEventListener('keydown', (e) => {
+    // Typing a code mustn't move the fighters.
+    e.stopPropagation();
+    if (e.key === 'Enter') joinByCode(game, input.value);
+  });
   el.querySelector('#online-back').addEventListener('click', () => lobbyBack(game));
 }
 
@@ -378,6 +468,8 @@ function lobbyBack(game) {
   if (Online.role) {
     leaveOnline(game, '');
   } else {
+    Online.autoJoin = null;
+    if (Online.room && Online.room.disconnect) Online.room.disconnect();
     hideLobby();
     game.mode = 'title';
   }

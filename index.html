@@ -22,6 +22,10 @@
   <section id="online" hidden aria-label="Online play">
     <h2>Online</h2>
     <p id="online-status"></p>
+    <div id="online-code" hidden>
+      <input id="online-code-input" maxlength="8" placeholder="GAME CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Game code" />
+      <button id="online-code-join">Join</button>
+    </div>
     <div id="online-games"></div>
     <div class="online-actions">
       <button id="online-host">Host a game</button>
@@ -61,6 +65,7 @@
   <script src="src/ai.js"></script>
   <script src="src/touch.js"></script>
   <script src="src/firebase-room.js"></script>
+  <script src="src/p2p-room.js"></script>
   <script src="src/online.js"></script>
   <script src="src/music.js"></script>
   <script src="src/game.js"></script>

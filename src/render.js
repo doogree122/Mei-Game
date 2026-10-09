@@ -1571,6 +1571,8 @@ function drawHealthBar(ctx, f, x, y, w, flip, you) {
 }
 
 function drawHUD(ctx, game) {
+  // No health bars or timer behind the online lobby: no match is running.
+  if (game.mode === 'lobby') return;
   const [a, b] = game.fighters;
   // In an online match, mark which fighter is this player's.
   const you = game.online === 'host' ? 0 : game.online === 'guest' ? 1 : -1;
