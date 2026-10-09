@@ -157,6 +157,43 @@ function drawArmoredLeg(ctx, sk, side, c, back) {
   ctx.restore();
 }
 
+// A muzzle flash at `tip` pointing along (ux, uy), `age` frames after the
+// shot left the gun: a bright star that shrinks away over a few frames.
+const MUZZLE_FRAMES = 7;
+function drawMuzzleFlash(ctx, tip, ux, uy, age, color) {
+  const k = 1 - age / MUZZLE_FRAMES;
+  if (k <= 0) return;
+  ctx.save();
+  ctx.translate(tip.x, tip.y);
+  ctx.rotate(Math.atan2(uy, ux));
+  ctx.globalAlpha = Math.min(1, k * 1.4);
+  const r = 9 + 14 * k;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.35, color);
+  g.addColorStop(1, 'rgba(255,120,40,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  // A star stretched forward along the barrel.
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const long = Math.abs(Math.cos(a)) > 0.95 && Math.cos(a) > 0 ? 1.9 : 1;
+    const rr = (i % 2 ? r * 0.45 : r) * long;
+    ctx.lineTo(Math.cos(a) * rr + r * 0.3, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Frames since this fighter's shot left the gun (or -1 when not just fired).
+function muzzleAge(f) {
+  const m = f.move;
+  if (!m || !m.def.projectile) return -1;
+  const age = m.frame - m.def.startup;
+  return age >= 0 && age < MUZZLE_FRAMES ? age : -1;
+}
+
 function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   const elbow = sk['elbow' + side];
   const hand = sk['hand' + side];
@@ -175,16 +212,26 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
     const len = Math.hypot(dx, dy) || 1;
     const ux = dx / len;
     const uy = dy / len;
-    // Carbine: stock behind the hand, body, scope on top, long barrel.
+    // Carbine: stock behind the hand, a chunky body with a scope on top, a
+    // long barrel with a flash hider, outlined so it reads against the armor.
     const at = (along, side) => ({ x: hand.x + ux * along - uy * side, y: hand.y + uy * along + ux * side });
-    drawLimb(ctx, at(-14, 1), at(-2, 0), 7, c.metalLight);
-    drawLimb(ctx, at(-4, 0), at(16, 0), 9, c.metal);
-    drawLimb(ctx, at(16, -1), at(34, -1), 4, c.metal);
-    drawLimb(ctx, at(2, -7), at(12, -7), 4, c.metal);
-    drawLimb(ctx, at(4, -8), at(10, -8), 1.5, c.metalLight);
-    drawLimb(ctx, at(6, 3), at(6, 9), 4, c.metal);
-    drawLimb(ctx, at(18, 2), at(30, 2), 1.5, c.metalLight);
-    fillCircle(ctx, at(35, -1).x, at(35, -1).y, 2.2, c.energy);
+    const gun = [
+      [at(-20, 2), at(-2, 0), 10, '#3a3c44', '#6c707a'], // stock
+      [at(-6, 0), at(22, 0), 13, '#2a2c33', '#7c808a'], // body
+      [at(20, -1), at(42, -1), 6, '#2a2c33', '#8e929c'], // barrel
+      [at(40, -1), at(48, -1), 9, '#1c1d22', '#5a5d66'], // flash hider
+      [at(2, -10), at(18, -10), 6, '#1c1d22', '#5a5d66'], // scope
+      [at(7, 5), at(5, 15), 6, '#2a2c33', '#5a5d66'], // grip
+    ];
+    // Dark outline first, then the metal, then a lit top edge.
+    for (const [a, b, w] of gun) drawLimb(ctx, a, b, w + 3, '#0b0b0e');
+    for (const [a, b, w, , mid] of gun) drawLimb(ctx, a, b, w, mid);
+    for (const [a, b, w] of gun) drawLimb(ctx, { x: a.x + uy * w * 0.22, y: a.y - ux * w * 0.22 }, { x: b.x + uy * w * 0.22, y: b.y - ux * w * 0.22 }, w * 0.3, '#d6d9e0');
+    drawLimb(ctx, at(3, -10), at(17, -10), 2, '#e8eaf0');
+    fillCircle(ctx, at(17, -10).x, at(17, -10).y, 2.4, '#7fd6ff'); // scope lens
+    drawLimb(ctx, at(24, 3), at(38, 3), 1.6, '#b9bbc2'); // gas tube
+    fillCircle(ctx, at(12, 3).x, at(12, 3).y, 2, c.energy); // power cell light
+    if (holdingBlaster.flash >= 0) drawMuzzleFlash(ctx, at(50, -1), ux, uy, holdingBlaster.flash, c.energy);
   }
 
   // Shoulder pauldron: rim, plate, highlight, rivet.
@@ -381,7 +428,7 @@ function drawHelmet(ctx, sk, c) {
 
 function drawArmoredBody(ctx, sk, f) {
   const c = f.char.colors;
-  const blaster = !!(f.move && f.move.def.projectile);
+  const blaster = f.move && f.move.def.projectile ? { flash: muzzleAge(f) } : null;
   drawArmoredArm(ctx, sk, 'B', c, true, false);
   drawArmoredLeg(ctx, sk, 'B', c, true);
   drawJetpack(ctx, sk, f, c);
@@ -1131,7 +1178,9 @@ function renderSprite(f) {
     x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y);
     x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y);
   }
-  const pad = Math.ceil((48 * f.scale) / FIGHTER_PIXEL);
+  // More room while shooting, for the gun barrel and muzzle flash.
+  const reach = f.move && f.move.def.projectile ? 100 : 48;
+  const pad = Math.ceil((reach * f.scale) / FIGHTER_PIXEL);
   x0 = Math.max(0, Math.floor(x0) - pad);
   y0 = Math.max(0, Math.floor(y0) - pad);
   x1 = Math.min(SPR_W, Math.ceil(x1) + pad);

@@ -506,7 +506,7 @@ function paintKlingonFace(ctx, sk, paint) {
 
 // A gloved fist at the wrist, pointing along the forearm (`dir`); with
 // `blaster` it grips a pistol pointing forward along the arm.
-function paintGlove(ctx, paint, wrist, dir, blaster) {
+function paintGlove(ctx, paint, wrist, dir, blaster, flash = -1) {
   const len = Math.hypot(dir.x, dir.y) || 1;
   const k = paint.gloveSize || 1;
   const d = { x: (dir.x / len) * k, y: (dir.y / len) * k };
@@ -514,22 +514,44 @@ function paintGlove(ctx, paint, wrist, dir, blaster) {
   const at = ([u, v]) => ({ x: wrist.x + d.x * u + n.x * v, y: wrist.y + d.y * u + n.y * v });
   const [gd, gm, gl] = paint.glove;
   if (blaster) {
-    // Pistol: barrel ahead of the fist, grip in the hand, a scope on top.
+    // Blaster pistol held in the fist: a chunky body over the knuckles, a long
+    // barrel with a muzzle, a scope on top, all outlined so it reads at a glance.
     const [md, mm, ml] = paint.gun;
+    const shape = (pts, fill) => {
+      ctx.beginPath();
+      pts.forEach((pt, i) => (i ? ctx.lineTo(at(pt).x, at(pt).y) : ctx.moveTo(at(pt).x, at(pt).y)));
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = 'rgb(6,6,8)';
+      ctx.stroke();
+    };
+    const shade = (v0, v1) => {
+      const g = ctx.createLinearGradient(at([0, v0]).x, at([0, v0]).y, at([0, v1]).x, at([0, v1]).y);
+      g.addColorStop(0, rgb(md));
+      g.addColorStop(0.55, rgb(mm));
+      g.addColorStop(1, rgb(ml));
+      return g;
+    };
+    shape([[-3, 1.0], [10, 1.0], [10, 5.4], [-2.4, 5.4], [-3.6, 3.6]], shade(1.0, 5.4)); // body
+    shape([[9.5, 2.0], [22, 2.2], [22, 4.4], [9.5, 4.6]], shade(2.0, 4.6)); // barrel
+    shape([[21.5, 1.4], [25, 1.5], [25, 5.0], [21.5, 5.1]], rgb(md)); // muzzle
+    shape([[0.5, 5.4], [8, 5.4], [8, 7.4], [0.5, 7.4]], shade(5.4, 7.4)); // scope
+    // Lit top edges and a scope lens.
+    ctx.strokeStyle = 'rgba(235,238,245,0.85)';
+    ctx.lineWidth = 0.6;
+    for (const [a, b] of [[[-2.4, 5.0], [9.6, 5.0]], [[10, 4.1], [21.6, 4.0]], [[1, 7.0], [7.6, 7.0]]]) {
+      ctx.beginPath();
+      ctx.moveTo(at(a).x, at(a).y);
+      ctx.lineTo(at(b).x, at(b).y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgb(120,210,255)';
     ctx.beginPath();
-    [[0.5, 1.2], [11, 1.4], [11.4, 3.2], [1.0, 3.6]].forEach((pt, i) => (i ? ctx.lineTo(at(pt).x, at(pt).y) : ctx.moveTo(at(pt).x, at(pt).y)));
-    ctx.closePath();
-    const g = ctx.createLinearGradient(at([5, 1.2]).x, at([5, 1.2]).y, at([5, 3.6]).x, at([5, 3.6]).y);
-    g.addColorStop(0, rgb(md));
-    g.addColorStop(0.6, rgb(mm));
-    g.addColorStop(1, rgb(ml));
-    ctx.fillStyle = g;
+    ctx.arc(at([8, 6.4]).x, at([8, 6.4]).y, 0.9 * k, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = rgb(md);
-    ctx.beginPath();
-    [[3, 3.6], [6.5, 3.6], [6.2, 4.6], [3.4, 4.6]].forEach((pt, i) => (i ? ctx.lineTo(at(pt).x, at(pt).y) : ctx.moveTo(at(pt).x, at(pt).y)));
-    ctx.closePath();
-    ctx.fill();
+    if (flash >= 0) drawMuzzleFlash(ctx, at([26, 3.2]), d.x / k, d.y / k, flash, '#ff7a2a');
   }
   ctx.beginPath();
   curveThrough(ctx, [[-0.6, -2.1], [2.6, -2.5], [4.6, -1.6], [5.0, 0.4], [4.4, 2.2], [2.0, 2.4], [-0.6, 2.0], [-0.6, -2.1]].map(at), true);
@@ -834,7 +856,7 @@ function paintedBody(ctx, sk, f, art) {
     armor('upperArm', sk.shoulder, elbow, W.shoulder, W.elbow, k);
     if (k < 1) ctx.filter = `${base} brightness(${k})`;
     if (art.pieces[hand]) drawPiece(ctx, art.pieces[hand], wrist, sub(elbow, wrist), p.pieceScale);
-    else if (hand === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true);
+    else if (hand === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
     else paintGlove(ctx, p, wrist, sub(elbow, wrist), false);
     ctx.filter = base || 'none';
   };

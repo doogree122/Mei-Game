@@ -523,14 +523,18 @@ class Fighter {
     this.move = { name, def, frame: 0, hasHit: false };
     this.state = 'attack';
     if (!def.air) this.vx = (def.lunge || 0) * this.facing;
-    Sfx[def.sfx || (def.projectile ? 'special' : 'whiff')]();
+    // A shot's sound plays as it leaves the gun (updateMove).
+    if (!def.projectile) Sfx[def.sfx || 'whiff']();
   }
 
   updateMove(game) {
     const m = this.move;
     const d = m.def;
     m.frame++;
-    if (d.projectile && m.frame === d.startup) game.spawnProjectile(this);
+    if (d.projectile && m.frame === d.startup) {
+      game.spawnProjectile(this);
+      Sfx[d.sfx || 'special']();
+    }
     if (d.choke && m.frame === d.startup) game.forceChoke(this, d);
     if (d.air && this.grounded) {
       // Landing cancels the air attack.
