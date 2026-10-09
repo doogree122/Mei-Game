@@ -370,7 +370,7 @@ CHARACTERS.mando = {
     parts: true,
     // Slim build: narrower torso, arms and legs than the shapes they replace;
     // bigger fists (tucked into the sleeve) and boots.
-    partFit: { torsoDepth: 22, upperArm: 1.18, forearm: 1.05, thigh: 1.02, shin: 1.12, gloveLength: 12.5, gloveTuck: 2.5 },
+    partFit: { torsoDepth: 22, upperArm: 1.18, forearm: 1.05, thigh: 1.02, shin: 1.12, gloveLength: 12.5, gloveTuck: 3.5, gloveTilt: 0.35 },
   },
   // Drawn fallback (the armored style), until the painted art is ready.
   colors: {

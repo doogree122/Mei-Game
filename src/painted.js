@@ -1027,8 +1027,12 @@ function paintedParts(ctx, sk, f, P) {
     // forearm's cuff overlaps the wrist.
     const shooting = f.move && f.move.def.projectile && side === 'F';
     if (shooting) paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
+    // The fist is cocked up from the forearm's line by `gloveTilt` (radians),
+    // knuckles raised, the way a fist is held in a guard.
     const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
-    drawPart(ctx, P.glove, cuff, toward(cuff, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.gloveLength || 14), null, k);
+    const fa = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - (fit.gloveTilt || 0);
+    const len = fit.gloveLength || 14;
+    drawPart(ctx, P.glove, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
     drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
     drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
   };
