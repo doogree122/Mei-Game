@@ -1084,6 +1084,16 @@ function paintedParts(ctx, sk, f, P) {
   }
   if (p.backWeapon) paintBackWeapon(ctx, p, sk);
   leg('B', FAR);
+  // The head and neck, its neck base below the neck joint (so the collar
+  // covers it) and the crown toward the head.
+  const up = sub(sk.neck, sk.head);
+  const ul = Math.hypot(up.x, up.y) || 1;
+  const head = () => {
+    const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1), y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) };
+    const top = { x: base.x + (up.x / ul) * (fit.helmetHeight || 26), y: base.y + (up.y / ul) * (fit.helmetHeight || 26) };
+    drawPart(ctx, P.helmet, base, top, null);
+  };
+  if (fit.headUnderTorso) head();
   if (fit.thighUnderTorso) {
     // The near leg's lower part first (its knee goes under the thigh), then
     // the thigh, then the torso over the hip.
@@ -1094,12 +1104,7 @@ function paintedParts(ctx, sk, f, P) {
     drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
     leg('F', 1);
   }
-  // The helmet, its neck opening on the neck and dome toward the head.
-  const up = sub(sk.neck, sk.head);
-  const ul = Math.hypot(up.x, up.y) || 1;
-  const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1), y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) };
-  const top = { x: base.x + (up.x / ul) * (fit.helmetHeight || 26), y: base.y + (up.y / ul) * (fit.helmetHeight || 26) };
-  drawPart(ctx, P.helmet, base, top, null);
+  if (!fit.headUnderTorso) head();
   if (f.move && f.move.name === 'batleth') paintBatleth(ctx, sk);
   arm('F', 1);
 }
