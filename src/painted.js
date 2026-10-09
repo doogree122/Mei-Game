@@ -1058,7 +1058,17 @@ function paintedParts(ctx, sk, f, P) {
   const leg = (side, k, part = 'all') => {
     const knee = sk['knee' + side];
     const foot = sk['foot' + side];
-    const down = toward(foot, { x: foot.x * 2 - knee.x, y: foot.y * 2 - knee.y }, 4);
+    // The boot follows the shin, but stays flat on the floor when the shin is
+    // near upright (blending smoothly to the shin's line in kicks).
+    const sx = foot.x - knee.x;
+    const sy = foot.y - knee.y;
+    const sl = Math.hypot(sx, sy) || 1;
+    const lean = Math.abs(Math.atan2(sx, sy));
+    const w = fit.flatBoots ? Math.min(1, Math.max(0, (lean - 0.55) / 0.5)) : 1;
+    const dx = (sx / sl) * w;
+    const dy = (sy / sl) * w + (1 - w);
+    const dl = Math.hypot(dx, dy) || 1;
+    const down = { x: foot.x + (dx / dl) * 4, y: foot.y + (dy / dl) * 4 };
     const thigh = () => drawPart(ctx, P.thigh, sk.hip, knee, (W.hip + W.knee) * (fit.thigh || 1.25), k);
     const shin = () => drawPart(ctx, P.shin, knee, foot, (W.knee + W.ankle) * (fit.shin || 1.3), k);
     const boot = () => drawPart(ctx, P.foot, foot, down, null, k);

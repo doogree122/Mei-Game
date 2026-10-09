@@ -826,7 +826,7 @@ class Fighter {
     }
     if (this.move) return this.movePose();
     switch (this.state) {
-      case 'crouch': return POSES.crouch;
+      case 'crouch': return this.char.crouch ? { ...POSES.crouch, ...this.char.crouch } : POSES.crouch;
       case 'jump': return this.thrusting ? POSES.fly : POSES.jump;
       case 'walk': return this.walkPose();
       default: return this.idlePose();
@@ -854,7 +854,8 @@ class Fighter {
 
   idlePose() {
     const b = Math.sin(this.time * 0.08);
-    const p = { ...POSES.idle };
+    // A character can set its own leg stance (char.stance).
+    const p = { ...POSES.idle, ...(this.char.stance || {}) };
     p.torso += b * 0.02;
     p.uaF += b * 0.05;
     p.uaB += b * 0.05;
