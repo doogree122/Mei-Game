@@ -1,7 +1,11 @@
 # Publishes the game to Firebase Hosting (and the database rules) on every push
-# to the main game branch. Needs two repository settings on GitHub:
-#   secret   FIREBASE_SERVICE_ACCOUNT  the JSON key of a Firebase service account
-#   variable FIREBASE_PROJECT_ID       the Firebase project ID
+# to the main game branch.
+#
+# Signs in to Google with Workload Identity Federation: GitHub's own token for
+# this repository is exchanged for the Firebase service account's access, so no
+# key file is stored anywhere. Set up once with gcloud (pool "github", provider
+# "mei-game", limited to this repository). WIF_PROVIDER needs the project
+# number; it can also come from the repository variable FIREBASE_WIF_PROVIDER.
 name: Deploy to Firebase
 
 on:
@@ -9,23 +13,37 @@ on:
     branches: [claude/fighting-game-prototype]
   workflow_dispatch:
 
+env:
+  PROJECT_ID: wars-v-trek
+  SERVICE_ACCOUNT: firebase-adminsdk-fbsvc@wars-v-trek.iam.gserviceaccount.com
+  WIF_PROVIDER: ${{ vars.FIREBASE_WIF_PROVIDER || '' }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # lets the job ask GitHub for the token Google checks
     steps:
       - uses: actions/checkout@v4
+      - name: Check setup
+        id: setup
+        run: |
+          if [ -z "$WIF_PROVIDER" ]; then
+            echo "::notice::The Workload Identity provider isn't set yet; skipping the deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: google-github-actions/auth@v2
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
       - uses: actions/setup-node@v4
+        if: steps.setup.outputs.ready == 'true'
         with:
           node-version: 22
       - name: Deploy
-        env:
-          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
-        run: |
-          if [ -z "$SERVICE_ACCOUNT" ] || [ -z "$PROJECT_ID" ]; then
-            echo "::notice::Firebase isn't set up for this repository yet; skipping the deploy."
-            exit 0
-          fi
-          echo "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          npx --yes firebase-tools@13 deploy --only hosting,database --project "$PROJECT_ID" --non-interactive
+        if: steps.setup.outputs.ready == 'true'
+        run: npx --yes firebase-tools@13 deploy --only hosting,database --project "$PROJECT_ID" --non-interactive

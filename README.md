@@ -82,15 +82,13 @@ Opened from disk, the game has no ONLINE option.
 (each signed-in player can write only their own entries). Players sign in anonymously in the background.
 The page reads the project's settings from Firebase Hosting itself (`/__/firebase/init.json`), so no keys are in the code.
 
-One-time setup in the [Firebase console](https://console.firebase.google.com/):
+The project is `wars-v-trek`. One-time setup:
 
-1. Create a project.
-2. **Build → Realtime Database → Create database**, location **United States (us-central1)**, start in locked mode (the deploy installs the real rules).
-3. **Build → Authentication → Get started → Sign-in method → Anonymous → Enable**.
-4. **Project settings → Service accounts → Generate new private key** (downloads a JSON file).
-5. In this GitHub repository, **Settings → Secrets and variables → Actions**: add the secret `FIREBASE_SERVICE_ACCOUNT` (paste the whole JSON file) and, under **Variables**, `FIREBASE_PROJECT_ID` (the project ID).
+1. In the [Firebase console](https://console.firebase.google.com/): **Build → Realtime Database → Create database** (United States, locked mode; the deploy installs the real rules) and **Build → Authentication → Sign-in method → Anonymous → Enable**.
+2. Keyless deploys from GitHub (Workload Identity Federation), run once in Cloud Shell: a pool `github` with an OIDC provider `mei-game` limited to this repository, the Firebase service account granted `roles/iam.workloadIdentityUser` for it, plus `roles/firebase.admin` and `roles/serviceusage.serviceUsageConsumer`.
+3. `.github/workflows/firebase-deploy.yml` holds the project, service account and provider (`projects/<project number>/locations/global/workloadIdentityPools/github/providers/mei-game`).
 
-After that, every push to `claude/fighting-game-prototype` deploys automatically (`.github/workflows/firebase-deploy.yml`), and the site is at `https://<project-id>.web.app`.
+After that, every push to `claude/fighting-game-prototype` deploys automatically, and the site is at `https://wars-v-trek.web.app`.
 To deploy by hand instead: `npx firebase-tools login` then `npx firebase-tools deploy --project <project-id>`.
 
 ### Updating the public website

@@ -1,7 +1,7 @@
 {
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "database.rules.json", "**/.*", "**/node_modules/**", "tools/**", "README.md"],
+    "ignore": ["firebase.json", ".firebaserc", "database.rules.json", "previews/**", "**/.*", "**/node_modules/**", "tools/**", "README.md"],
     "headers": [
       { "source": "assets/music/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] }
     ]
