@@ -392,10 +392,11 @@ class Game {
     const def = owner.shotDef;
     // Shots leave from the muzzle of a held gun (char.muzzle, in body units ahead of the hand).
     const x = hand.x + owner.facing * (owner.char.muzzle ? owner.char.muzzle * owner.scale : 12);
+    const y = hand.y + (owner.char.muzzleY || 0) * owner.scale; // the barrel sits above the fist
     this.projectiles.push({
-      owner, def, x, y: hand.y, vx: def.speed * owner.facing, dead: false,
+      owner, def, x, y, vx: def.speed * owner.facing, dead: false,
     });
-    this.effects.spark(x, hand.y, owner.char.colors.energy, 6, 3);
+    this.effects.spark(x, y, owner.char.colors.energy, 6, 3);
   }
 
   updateProjectiles() {

@@ -38,9 +38,15 @@ class AIController {
       return;
     }
 
-    // Airborne: drift and kick near the top of the jump.
+    // Airborne: drift and kick near the top of the jump. A jetpack flyer
+    // sometimes keeps jump held to fly over toward the opponent.
     if (!self.grounded) {
-      if (this.queuedAfterJump && self.vy < 3) {
+      if (this.flyFor > 0) {
+        this.flyFor -= 2;
+        plan.up = true;
+        plan[toward] = true;
+      }
+      if (this.queuedAfterJump && self.vy < 3 && !(this.flyFor > 0)) {
         this.queued = 'kick';
         this.queuedAfterJump = false;
       }
@@ -49,6 +55,7 @@ class AIController {
       return;
     }
 
+    this.flyFor = 0;
     const incoming = game.projectiles.find((p) => p.owner !== self
       && Math.sign(self.x - p.x) === Math.sign(p.vx) && Math.abs(self.x - p.x) < 260);
 
@@ -92,6 +99,7 @@ class AIController {
         plan[toward] = true;
         this.queuedAfterJump = true;
         this.planTimer = 3;
+        if (self.char.flight && Math.random() < 0.5) this.flyFor = 50 + Math.random() * 110;
       } else if (r < 0.2 && !game.hasProjectile(self)) {
         this.queued = 'special';
       } else if (r < 0.3) {

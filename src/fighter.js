@@ -116,6 +116,8 @@ const POSES = {
   crouchBlock: { torso: 0.3, head: -0.1, uaF: 0.35, faF: 2.95, uaB: 0.25, faB: 2.85, ...CROUCH_LEGS },
   hit: { torso: -0.45, head: -0.4, uaF: 0.2, faF: 1.3, uaB: -0.5, faB: 0.5, thF: 0.3, shF: 0.1, thB: -0.2, shB: 0 },
   lying: { torso: 0, head: 0.1, uaF: 0.25, faF: 0.4, uaB: -0.2, faB: -0.1, thF: 0.06, shF: 0.04, thB: -0.06, shB: -0.04 },
+  // Jetpack flight: body upright, knees bent with the feet swept back, arms ready.
+  fly: { torso: 0.22, head: -0.1, uaF: 0.9, faF: 2.3, uaB: 0.5, faB: 1.9, thF: 0.75, shF: -0.7, thB: 0.25, shB: -1.25 },
   victory: { torso: -0.05, head: -0.25, uaF: 2.7, faF: 3.05, uaB: 0.3, faB: 1.9, ...STANCE },
   armsCrossed: { torso: -0.06, head: -0.12, uaF: 0.2, faF: 1.75, uaB: 0.12, faB: 1.85, ...STANCE },
 
@@ -254,6 +256,7 @@ class Fighter {
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
+    this.fuel = this.char.flight ? this.char.flight.frames : 0; // jetpack flight frames left
     this.time = 0;
     this.walkPhase = 0;
     this.flash = 0;
@@ -277,6 +280,7 @@ class Fighter {
 
   update(input, opp, game) {
     this.time++;
+    this.thrusting = false;
     if (this.flash > 0) this.flash--;
     if (this.invuln > 0) this.invuln--;
     for (const k of Object.keys(this.buffer)) {
@@ -346,6 +350,8 @@ class Fighter {
     if (this.grounded) {
       this.faceOpponent(opp);
       this.airAttackUsed = false;
+      // The tank refills on the ground once jump is let go (holding it through a landing jumps without fuel).
+      if (this.char.flight && !input.up) this.fuel = this.char.flight.frames;
       const s = this.char.stats;
 
       if (input.up) {
@@ -403,6 +409,7 @@ class Fighter {
       }
     } else {
       this.state = 'jump';
+      this.fly(input, fwd, back, opp);
       // Hidden moves that end in mid-air (a sequence with a jump in it).
       const secret = this.shield === 0 && !this.airAttackUsed && this.secretMove(true);
       if (secret) {
@@ -414,6 +421,24 @@ class Fighter {
         this.startMove('airKick');
       }
     }
+  }
+
+  // Jetpack flight (char.flight): while jump is held and there is fuel, the
+  // jetpack lifts toward the ceiling and holds there; left and right steer.
+  // Flying over the opponent turns to face them.
+  fly(input, fwd, back, opp) {
+    const fl = this.char.flight;
+    if (!fl || !input.up || !(this.fuel > 0) || this.shield > 0) return;
+    this.fuel--;
+    this.thrusting = true;
+    const g = GRAVITY * (this.char.stats.gravity || 1);
+    // Climb, then hover with a gentle bob near the ceiling.
+    const target = this.y < fl.ceiling ? fl.climb : Math.sin(this.time * 0.15) * 0.6 - (this.y - fl.ceiling) * 0.2;
+    this.vy += (target - this.vy) * 0.18 + g; // physics() takes gravity back off
+    const steer = fwd ? 1 : back ? -1 : 0;
+    this.vx += (steer * fl.speed * this.facing - this.vx) * 0.1;
+    if (Math.abs(opp.x - this.x) > 30) this.facing = opp.x > this.x ? 1 : -1;
+    if (this.time % 9 === 0) Sfx.thrust();
   }
 
   // Remember when back, forward, down and up (jump) are first pressed, for hidden moves.
@@ -717,7 +742,7 @@ class Fighter {
     if (this.move) return this.movePose();
     switch (this.state) {
       case 'crouch': return POSES.crouch;
-      case 'jump': return POSES.jump;
+      case 'jump': return this.thrusting ? POSES.fly : POSES.jump;
       case 'walk': return this.walkPose();
       default: return this.idlePose();
     }

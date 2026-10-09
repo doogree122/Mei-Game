@@ -213,6 +213,11 @@ const Sfx = (() => {
       src.connect(bp).connect(wg).connect(ac.destination);
       src.start(t);
     },
+    // Jetpack thrust: a short rushing roar, repeated while flying.
+    thrust: () => {
+      noise(0.2, 700, 0.12);
+      noise(0.12, 2600, 0.04);
+    },
     // Bat'leth swing: a heavy, low whoosh of a big blade cutting the air,
     // then a bright metal ring.
     batleth: () => {
