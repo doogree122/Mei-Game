@@ -644,8 +644,10 @@ function paintJetpack(ctx, paint, sk, f) {
     if (!f.grounded) {
       // Exhaust flame while in the air.
       const q = at(0.18, x);
-      const flick = 0.8 + Math.sin(f.time * 0.9 + x) * 0.2;
-      for (const [dy, r] of [[3, 6], [8, 8], [14, 6]]) {
+      const flick = (0.8 + Math.sin(f.time * 0.9 + x) * 0.2) * (f.thrusting ? 1.5 : 1);
+      // Thrusting: a longer plume.
+      const plume = f.thrusting ? [[3, 6], [9, 8], [17, 7], [26, 5]] : [[3, 6], [8, 8], [14, 6]];
+      for (const [dy, r] of plume) {
         const g = ctx.createRadialGradient(q.x, q.y + dy, 0, q.x, q.y + dy, r * flick);
         g.addColorStop(0, 'rgba(255,250,220,0.9)');
         g.addColorStop(0.35, 'rgba(255,170,60,0.75)');

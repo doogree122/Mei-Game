@@ -194,6 +194,37 @@ function muzzleAge(f) {
   return age >= 0 && age < MUZZLE_FRAMES ? age : -1;
 }
 
+// Fett's carbine, held with the fist around its grip: the body sits just
+// above the hand, the stock runs back along the forearm and the barrel points
+// on along the arm, outlined so it reads against the armor.
+function drawCarbine(ctx, elbow, hand, c, flash) {
+  const dx = hand.x - elbow.x;
+  const dy = hand.y - elbow.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  // `along` the forearm's line, `side` across it (negative is above the hand).
+  const at = (along, side) => ({ x: hand.x + ux * along - uy * side, y: hand.y + uy * along + ux * side });
+  const B = -8; // the body's center line, above the knuckles
+  const gun = [
+    [at(-22, B + 2), at(-6, B), 10, '#6c707a'], // stock, along the forearm
+    [at(-8, B), at(18, B), 12, '#7c808a'], // body
+    [at(16, B - 1), at(38, B - 1), 6, '#8e929c'], // barrel
+    [at(36, B - 1), at(44, B - 1), 9, '#5a5d66'], // flash hider
+    [at(-2, B - 10), at(14, B - 10), 6, '#5a5d66'], // scope
+    [at(0, B + 4), at(1, 3), 6, '#5a5d66'], // grip, down into the fist
+    [at(7, B + 5), at(8, 0), 4, '#5a5d66'], // trigger guard
+  ];
+  for (const [a, b, w] of gun) drawLimb(ctx, a, b, w + 3, '#0b0b0e');
+  for (const [a, b, w, mid] of gun) drawLimb(ctx, a, b, w, mid);
+  for (const [a, b, w] of gun.slice(0, 5)) drawLimb(ctx, { x: a.x + uy * w * 0.22, y: a.y - ux * w * 0.22 }, { x: b.x + uy * w * 0.22, y: b.y - ux * w * 0.22 }, w * 0.3, '#d6d9e0');
+  drawLimb(ctx, at(-1, B - 10), at(13, B - 10), 2, '#e8eaf0');
+  fillCircle(ctx, at(13, B - 10).x, at(13, B - 10).y, 2.4, '#7fd6ff'); // scope lens
+  drawLimb(ctx, at(20, B + 3), at(34, B + 3), 1.6, '#b9bbc2'); // gas tube
+  fillCircle(ctx, at(10, B + 2).x, at(10, B + 2).y, 2, c.energy); // power cell light
+  if (flash >= 0) drawMuzzleFlash(ctx, at(46, B - 1), ux, uy, flash, c.energy);
+}
+
 function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   const elbow = sk['elbow' + side];
   const hand = sk['hand' + side];
@@ -203,36 +234,10 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   drawLimb(ctx, elbow, hand, 12, back ? c.armorShade : c.armor);
   if (!back) edgeLine(ctx, elbow, hand, 3, 3, c.armorLight, 0.15, 0.6);
   drawLimb(ctx, lerpPt(elbow, hand, 0.68), lerpPt(elbow, hand, 0.8), 13, back ? c.accentShade : c.accent);
+  // The carbine goes under the fist, so the glove wraps its grip.
+  if (holdingBlaster) drawCarbine(ctx, elbow, hand, c, holdingBlaster.flash);
   if (back) drawFist(ctx, elbow, hand, 7, c.gloveShade, c.metal, c.glove);
   else drawFist(ctx, elbow, hand, 7.5, c.glove, c.suitShade, '#ffffff');
-
-  if (holdingBlaster) {
-    const dx = hand.x - elbow.x;
-    const dy = hand.y - elbow.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const ux = dx / len;
-    const uy = dy / len;
-    // Carbine: stock behind the hand, a chunky body with a scope on top, a
-    // long barrel with a flash hider, outlined so it reads against the armor.
-    const at = (along, side) => ({ x: hand.x + ux * along - uy * side, y: hand.y + uy * along + ux * side });
-    const gun = [
-      [at(-20, 2), at(-2, 0), 10, '#3a3c44', '#6c707a'], // stock
-      [at(-6, 0), at(22, 0), 13, '#2a2c33', '#7c808a'], // body
-      [at(20, -1), at(42, -1), 6, '#2a2c33', '#8e929c'], // barrel
-      [at(40, -1), at(48, -1), 9, '#1c1d22', '#5a5d66'], // flash hider
-      [at(2, -10), at(18, -10), 6, '#1c1d22', '#5a5d66'], // scope
-      [at(7, 5), at(5, 15), 6, '#2a2c33', '#5a5d66'], // grip
-    ];
-    // Dark outline first, then the metal, then a lit top edge.
-    for (const [a, b, w] of gun) drawLimb(ctx, a, b, w + 3, '#0b0b0e');
-    for (const [a, b, w, , mid] of gun) drawLimb(ctx, a, b, w, mid);
-    for (const [a, b, w] of gun) drawLimb(ctx, { x: a.x + uy * w * 0.22, y: a.y - ux * w * 0.22 }, { x: b.x + uy * w * 0.22, y: b.y - ux * w * 0.22 }, w * 0.3, '#d6d9e0');
-    drawLimb(ctx, at(3, -10), at(17, -10), 2, '#e8eaf0');
-    fillCircle(ctx, at(17, -10).x, at(17, -10).y, 2.4, '#7fd6ff'); // scope lens
-    drawLimb(ctx, at(24, 3), at(38, 3), 1.6, '#b9bbc2'); // gas tube
-    fillCircle(ctx, at(12, 3).x, at(12, 3).y, 2, c.energy); // power cell light
-    if (holdingBlaster.flash >= 0) drawMuzzleFlash(ctx, at(50, -1), ux, uy, holdingBlaster.flash, c.energy);
-  }
 
   // Shoulder pauldron: rim, plate, highlight, rivet.
   const ang = Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x);
@@ -299,9 +304,11 @@ function drawJetpack(ctx, sk, f, c) {
   // Thruster flame while airborne.
   if (f.y > 0 && f.state !== 'ko' && f.hitstun === 0) {
     const flick = (f.time % 4) * 3;
+    // Long, wide flames while the jetpack is thrusting.
+    const k = f.thrusting ? 1.8 : 1;
     for (const nx of [-27, -16]) {
-      fillPoly(ctx, [{ x: nx - 4, y: 29 }, { x: nx + 4, y: 29 }, { x: nx, y: 46 + flick }], '#ff8a2a');
-      fillPoly(ctx, [{ x: nx - 2, y: 29 }, { x: nx + 2, y: 29 }, { x: nx, y: 37 + flick / 2 }], '#ffe27a');
+      fillPoly(ctx, [{ x: nx - 4 * k, y: 29 }, { x: nx + 4 * k, y: 29 }, { x: nx, y: 29 + (17 + flick) * k }], '#ff8a2a');
+      fillPoly(ctx, [{ x: nx - 2 * k, y: 29 }, { x: nx + 2 * k, y: 29 }, { x: nx, y: 29 + (8 + flick / 2) * k }], '#ffe27a');
     }
   }
   ctx.restore();

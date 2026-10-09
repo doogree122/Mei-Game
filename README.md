@@ -36,6 +36,10 @@ The standing kick is a high kick that lands at chest height.
 
 **Uppercut hits** launch the opponent up and back: they fly across the floor, land and skid along it.
 
+### Jetpack flight
+
+**B. FETT** and **MANDO** fly: keep jump held after taking off and the jetpack roars, the flames grow long, and they climb to a hover high enough to pass over the opponent. Left and right steer, and they turn to face the opponent as they cross over. Flight lasts as long as jump is held, up to 3 seconds per jump; let go (or run out) and they fall. The tank refills on the ground once jump is released. They can still jump-kick in the air. Tuning is `flight` in `src/characters.js` (`frames`, `ceiling`, `climb`, `speed`).
+
 ### Hidden moves
 
 Entered as a quick sequence (within about ¾ of a second), where *back* means away from your opponent:
@@ -57,8 +61,8 @@ Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0
 | **WORF** | 2 | 2 | 1 | 3 | Phaser 1 | Blue bubble: stops shots only | Heavy and steady |
 | **SEVEN** | 1 | 3 | 2 | 3 | Phaser 2 | Green Borg honeycomb: stops shots only | Fastest, highest jump |
 | **VADER** | 1 | 1 | 1 | 3 | Lightning 3 | Force lines: a Force push that throws anyone who comes in close or attacks across the screen; not a hit: no damage, no knockdown, they land on their feet; shots go through | Slowest, low jump |
-| **B. FETT** | 1 | 2 | 3 | 1 | Blaster 2 | Purple bubble: stops shots and punches | Jetpack: floaty jumps |
-| **MANDO** | 2 | 2 | 1 | 3 | Blaster 2 | Brown armor plates: stop shots and kicks | Jetpack: floaty jumps |
+| **B. FETT** | 1 | 2 | 3 | 1 | Blaster 2 | Purple bubble: stops shots and punches | Jetpack flight (hold jump, up to 3 s) |
+| **MANDO** | 2 | 2 | 1 | 3 | Blaster 2 | Brown armor plates: stop shots and kicks | Jetpack flight (hold jump, up to 3 s) |
 
 Punches are the punch, low punch and uppercut; kicks are the kick, sweep (low kick) and jump kick. The CPU raises its field when it would help: against shots, or against a close attack its field stops (Vader against any close attack).
 

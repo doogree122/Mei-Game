@@ -8,7 +8,8 @@ const CHARACTERS = {
     look: 'armored', // jetpack bounty hunter
     scale: 1.9,
     projectile: 'bolt', // special fires a blaster bolt
-    muzzle: 46, // from his carbine's barrel
+    muzzle: 42, // from his carbine's barrel
+    muzzleY: -9,
     colors: {
       suit: '#a2a4ac', // gray flight suit
       suitShade: '#74767f',
@@ -45,6 +46,9 @@ const CHARACTERS = {
     field: { color: '#b46cff', style: 'bubble', blocks: ['shots', 'punches'] },
     // Jetpack: floaty jumps that hang in the air.
     stats: { walk: 5.0, backWalk: 3.8, jumpV: 14.6, jumpVX: 6.4, gravity: 0.8, power: 1 },
+    // Jetpack flight: hold jump in the air to keep climbing to `ceiling`, then
+    // hover there, steering left and right, for up to `frames` (3 seconds) per jump.
+    flight: { frames: 180, ceiling: 150, climb: 4.5, speed: 5.5 },
   },
 };
 
@@ -300,6 +304,7 @@ CHARACTERS.mando = {
   scale: 2.12, // as tall as Seven (her hair rises above his helmet's top), shorter than Worf
   projectile: 'bolt',
   muzzle: 30, // from his pistol's barrel
+  muzzleY: -4,
   shot: { speed: 9, damage: 12 },
   paint: {
     suit: [[30, 22, 18], [64, 50, 42], [106, 86, 72]], // dark brown flight suit
@@ -372,6 +377,9 @@ CHARACTERS.mando = {
   field: { color: '#a8774a', style: 'plate', blocks: ['shots', 'kicks'] },
   // Jetpack: floaty jumps.
   stats: { walk: 4.8, backWalk: 3.6, jumpV: 14.4, jumpVX: 6.0, gravity: 0.82, power: 1 },
+  // Jetpack flight: hold jump in the air to keep climbing to `ceiling`, then
+  // hover there, steering left and right, for up to `frames` (3 seconds) per jump.
+  flight: { frames: 180, ceiling: 150, climb: 4.5, speed: 5.5 },
 };
 
 // Shot sounds: the blaster-carrying bounty hunters fire a "pew"; the
