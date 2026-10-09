@@ -32,12 +32,12 @@ ANCHORS = {
         'helmet': {'pivot': (140, 286), 'tip': (126, 4)},  # where the neck enters, top of the dome
     },
     'worf': {
-        'upperArm': {'pivot': (60, 72), 'tip': (72, 330)},  # shoulder joint set low in the cap, so the solid cap covers the torso's shoulder
+        'upperArm': {'pivot': (80, 73), 'tip': (90, 347)},  # hand-edited arm (previews/worf-arm), cut at the elbow
         'forearm': {'pivot': (56, 40), 'tip': (56, 340)},
         'glove': {'pivot': (66, 6), 'tip': (74, 194), 'file': 'fist'},  # bare fist
         'thigh': {'pivot': (72, 40), 'tip': (74, 378)},  # the knee: the rounded bottom runs on past it, over the lower leg
         'shin': {'pivot': (46, 30), 'tip': (52, 410)},  # one piece, knee to ankle
-        'armStraight': {'pivot': (68, 62), 'tip': (100, 545)},  # the whole arm, shoulder to wrist, used when it's straight
+        'armStraight': {'pivot': (80, 73), 'tip': (130, 548)},  # hand-edited arm, shoulder to wrist  # the whole arm, shoulder to wrist, used when it's straight
         'foot': {'pivot': (62, 100), 'tip': (62, 138)},
         'torso': {'pivot': (140, 412), 'tip': (120, 28)},  # ends at the seat (rounded), over the tops of the thighs
         'helmet': {'pivot': (165, 372), 'tip': (150, 16), 'file': 'head'},  # head and neck: the base of the neck to the top of the head
