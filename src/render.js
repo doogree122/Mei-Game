@@ -203,25 +203,30 @@ function drawCarbine(ctx, elbow, hand, c, flash) {
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
-  // `along` the forearm's line, `side` across it (negative is above the hand).
-  const at = (along, side) => ({ x: hand.x + ux * along - uy * side, y: hand.y + uy * along + ux * side });
+  // `along` the forearm's line, `side` across it (negative is above the hand),
+  // both shrunk by K to size the gun.
+  const K = 0.78;
+  const at = (along, side) => ({ x: hand.x + (ux * along - uy * side) * K, y: hand.y + (uy * along + ux * side) * K });
   const B = -8; // the body's center line, above the knuckles
+  // Olive-painted metal like his armor, darker toward the ends.
   const gun = [
-    [at(-22, B + 2), at(-6, B), 10, '#6c707a'], // stock, along the forearm
-    [at(-8, B), at(18, B), 12, '#7c808a'], // body
-    [at(16, B - 1), at(38, B - 1), 6, '#8e929c'], // barrel
-    [at(36, B - 1), at(44, B - 1), 9, '#5a5d66'], // flash hider
-    [at(-2, B - 10), at(14, B - 10), 6, '#5a5d66'], // scope
-    [at(0, B + 4), at(1, 3), 6, '#5a5d66'], // grip, down into the fist
-    [at(7, B + 5), at(8, 0), 4, '#5a5d66'], // trigger guard
+    [at(-22, B + 2), at(-6, B), 10, '#2e432c'], // stock, along the forearm
+    [at(-8, B), at(18, B), 12, '#3e5a3b'], // body
+    [at(16, B - 1), at(38, B - 1), 6, '#4a6646'], // barrel
+    [at(36, B - 1), at(44, B - 1), 9, '#243323'], // flash hider
+    [at(-2, B - 10), at(14, B - 10), 6, '#243323'], // scope
+    [at(0, B + 4), at(1, 3), 6, '#243323'], // grip, down into the fist
+    [at(7, B + 5), at(8, 0), 4, '#243323'], // trigger guard
   ];
-  for (const [a, b, w] of gun) drawLimb(ctx, a, b, w + 3, '#0b0b0e');
-  for (const [a, b, w, mid] of gun) drawLimb(ctx, a, b, w, mid);
-  for (const [a, b, w] of gun.slice(0, 5)) drawLimb(ctx, { x: a.x + uy * w * 0.22, y: a.y - ux * w * 0.22 }, { x: b.x + uy * w * 0.22, y: b.y - ux * w * 0.22 }, w * 0.3, '#d6d9e0');
-  drawLimb(ctx, at(-1, B - 10), at(13, B - 10), 2, '#e8eaf0');
-  fillCircle(ctx, at(13, B - 10).x, at(13, B - 10).y, 2.4, '#7fd6ff'); // scope lens
-  drawLimb(ctx, at(20, B + 3), at(34, B + 3), 1.6, '#b9bbc2'); // gas tube
-  fillCircle(ctx, at(10, B + 2).x, at(10, B + 2).y, 2, c.energy); // power cell light
+  for (const [p, q, w] of gun) drawLimb(ctx, p, q, (w + 3) * K, '#07120a');
+  for (const [p, q, w, mid] of gun) drawLimb(ctx, p, q, w * K, mid);
+  for (const [p, q, w] of gun.slice(0, 5)) {
+    const o = w * 0.22 * K;
+    drawLimb(ctx, { x: p.x + uy * o, y: p.y - ux * o }, { x: q.x + uy * o, y: q.y - ux * o }, w * 0.3 * K, '#8aa080');
+  }
+  fillCircle(ctx, at(13, B - 10).x, at(13, B - 10).y, 2 * K, '#7fd6ff'); // scope lens
+  drawLimb(ctx, at(20, B + 3), at(34, B + 3), 1.4, '#7d9274'); // gas tube
+  fillCircle(ctx, at(10, B + 2).x, at(10, B + 2).y, 1.7, c.energy); // power cell light
   if (flash >= 0) drawMuzzleFlash(ctx, at(46, B - 1), ux, uy, flash, c.energy);
 }
 
@@ -231,9 +236,13 @@ function drawArmoredArm(ctx, sk, side, c, back, holdingBlaster) {
   drawLimb(ctx, sk.shoulder, elbow, 12, back ? c.suitShade : c.suit);
   if (!back) edgeLine(ctx, sk.shoulder, elbow, 3.5, 2.5, c.suitLight, 0.3, 0.9);
   // Gauntlet with a lit ridge and an orange bracer at the wrist.
-  drawLimb(ctx, elbow, hand, 12, back ? c.armorShade : c.armor);
-  if (!back) edgeLine(ctx, elbow, hand, 3, 3, c.armorLight, 0.15, 0.6);
-  drawLimb(ctx, lerpPt(elbow, hand, 0.68), lerpPt(elbow, hand, 0.8), 13, back ? c.accentShade : c.accent);
+  // (Gauntlets in their own color when the character has one, else the armor's,
+  // with a darker cuff in place of the bracer.)
+  const g = c.gauntlet ? [c.gauntlet, c.gauntletShade, c.gauntletLight] : [c.armor, c.armorShade, c.armorLight];
+  drawLimb(ctx, elbow, hand, 12, back ? g[1] : g[0]);
+  if (!back) edgeLine(ctx, elbow, hand, 3, 3, g[2], 0.15, 0.6);
+  const cuff = c.gauntlet ? [c.gauntletShade, '#2a1210'] : [c.accent, c.accentShade];
+  drawLimb(ctx, lerpPt(elbow, hand, 0.68), lerpPt(elbow, hand, 0.8), 13, back ? cuff[1] : cuff[0]);
   // The carbine goes under the fist, so the glove wraps its grip.
   if (holdingBlaster) drawCarbine(ctx, elbow, hand, c, holdingBlaster.flash);
   if (back) drawFist(ctx, elbow, hand, 7, c.gloveShade, c.metal, c.glove);

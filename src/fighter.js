@@ -7,7 +7,9 @@ const WORLD_W = 1800; // stage width; the camera scrolls across it
 const STAGE_LEFT = 90;
 const STAGE_RIGHT = WORLD_W - 90;
 const GRAVITY = 0.75;
-const MAX_HP = 100;
+// How high anyone can go before rising is damped (screen top).
+const AIR_CEILING = 200;
+const MAX_HP = 120; // 120 rather than 100 makes every hit count for a sixth less, for longer matches
 const BUFFER_FRAMES = 6;
 // Force field: stops blaster shots (not punches or kicks) for a moment, then recharges.
 const SHIELD_FRAMES = 45;
@@ -635,6 +637,9 @@ class Fighter {
   physics(game) {
     if (this.y > 0 || this.vy > 0) {
       this.vy -= GRAVITY * (this.char.stats.gravity || 1);
+      // A soft ceiling keeps anyone launched from high up (a hovering jetpack
+      // flyer knocked upward) on screen.
+      if (this.y > AIR_CEILING && this.vy > 0) this.vy *= 0.5;
       this.y += this.vy;
       if (this.y <= 0) {
         this.y = 0;
