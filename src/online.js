@@ -222,7 +222,7 @@ function snapshotGame(game) {
       th: f.thrusting ? 1 : 0, tl: Math.round((f.tilt || 0) * 100) / 100, hs: f.hitstun, bs: f.blockstun, dt: f.downTime, fl: f.flash, ck: f.choked, pn: f.pained,
       w: f.wins, won: f.won ? 1 : 0, ka: f.knockedAirborne ? 1 : 0,
       hb: f.holdBack ? 1 : 0, hd: f.holdDown ? 1 : 0, nt: f.nearThreat ? 1 : 0,
-      wp: r1(f.walkPhase), sh: f.shield, sc: f.shieldCooldown,
+      wp: r1(f.walkPhase), sh: f.shield, sc: f.shieldCooldown, am: f.ammo, at: f.ammoTimer,
     })),
     p: game.projectiles.map((p) => [r1(p.x), r1(p.y), p.vx, game.fighters.indexOf(p.owner), r1(p.x0)]),
   };
@@ -337,6 +337,10 @@ function applySnapshot(game) {
     if (shield > f.shield + 1) Sfx.shield();
     f.shield = shield;
     f.shieldCooldown = Number(sf.sc) || 0;
+    if (sf.am !== undefined) {
+      f.ammo = Number(sf.am);
+      f.ammoTimer = Number(sf.at) || 0;
+    }
   });
 
   // The round's winner is announced: play this player's win or lose jingle once.

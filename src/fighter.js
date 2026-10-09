@@ -14,6 +14,10 @@ const BUFFER_FRAMES = 6;
 // Force field: stops blaster shots (not punches or kicks) for a moment, then recharges.
 const SHIELD_FRAMES = 45;
 const SHIELD_COOLDOWN = 90;
+// Shots: each fighter carries SHOT_MAX, and one comes back every SHOT_RECHARGE
+// frames until the charge is full again.
+const SHOT_MAX = 4;
+const SHOT_RECHARGE = 150;
 // A character's force field: `field` in characters.js over these defaults.
 // `blocks` lists what it stops: 'shots', 'punches' (punch, low punch,
 // uppercut), 'kicks' (kick, sweep, jump kick). With `repel` it shoves the
@@ -264,6 +268,8 @@ class Fighter {
     this.buffer = { punch: 0, kick: 0, special: 0, shield: 0 };
     this.shield = 0; // frames of force field left
     this.shieldCooldown = 0; // frames until it can be used again
+    this.ammo = SHOT_MAX; // shots left
+    this.ammoTimer = 0; // frames toward the next shot coming back
     this.fuel = this.char.flight ? this.char.flight.frames : 0; // jetpack flight frames left
     this.tilt = 0; // whole-body lean in flight, radians (positive = forward)
     this.time = 0;
@@ -302,6 +308,14 @@ class Fighter {
       if (this.shield === 0) this.shieldCooldown = this.field.cooldown;
     } else if (this.shieldCooldown > 0) {
       this.shieldCooldown--;
+    }
+    if (this.ammo < SHOT_MAX) {
+      if (++this.ammoTimer >= SHOT_RECHARGE) {
+        this.ammo++;
+        this.ammoTimer = 0;
+      }
+    } else {
+      this.ammoTimer = 0;
     }
     if (this.isFree && this.shield === 0 && this.shieldCooldown === 0 && this.consume('shield')) {
       this.shield = this.field.frames;
@@ -402,7 +416,15 @@ class Fighter {
           this.uppercutWindow = 0;
           return this.startMove('uppercut');
         }
-        if (this.consume('special') && !game.hasProjectile(this)) return this.startMove('special');
+        if (this.consume('special') && !game.hasProjectile(this)) {
+          // Out of shots: just a dry click until one recharges.
+          if (this.ammo <= 0) {
+            Sfx.empty();
+          } else {
+            this.ammo--;
+            return this.startMove('special');
+          }
+        }
         if (this.consume('kick')) return this.startMove('kick');
         if (this.consume('punch')) return this.startMove('punch');
       }
