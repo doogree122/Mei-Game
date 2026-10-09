@@ -31,6 +31,16 @@ ANCHORS = {
         'jetpack': {'pivot': (232, 280), 'tip': (232, 44), 'nozzle': (206, 418)},  # lower and upper mount on its back face
         'helmet': {'pivot': (140, 286), 'tip': (126, 4)},  # where the neck enters, top of the dome
     },
+    'worf': {
+        'upperArm': {'pivot': (60, 52), 'tip': (72, 330)},
+        'forearm': {'pivot': (56, 40), 'tip': (56, 340)},
+        'glove': {'pivot': (66, 6), 'tip': (74, 194), 'file': 'fist'},  # bare fist
+        'thigh': {'pivot': (70, 60), 'tip': (76, 390)},
+        'shin': {'pivot': (72, 50), 'tip': (66, 400)},
+        'foot': {'pivot': (62, 100), 'tip': (62, 138)},
+        'torso': {'pivot': (140, 476), 'tip': (120, 28)},
+        'helmet': {'pivot': (180, 266), 'tip': (140, 8), 'file': 'head'},  # head and mane, from the neck to the top
+    },
 }
 
 
@@ -52,12 +62,12 @@ def mid_width(im, pivot, tip):
 def main(cid, folder, out):
     parts = {}
     for name, anchor in ANCHORS[cid].items():
-        im = Image.open(f'{folder}/{name}.png').convert('RGBA')
+        im = Image.open(f"{folder}/{anchor.get('file', name)}.png").convert('RGBA')
         buf = io.BytesIO()
         im.save(buf, 'WEBP', quality=90)
         parts[name] = {
             'src': 'data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode(),
-            **{k: list(v) for k, v in anchor.items()},
+            **{k: list(v) for k, v in anchor.items() if k != 'file'},
             'mid': mid_width(im, anchor['pivot'], anchor['tip']),
         }
         print(name, im.size, len(buf.getvalue()) // 1024, 'KB', 'mid', parts[name]['mid'])

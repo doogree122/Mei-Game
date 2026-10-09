@@ -91,7 +91,7 @@ CHARACTERS.worf = {
     foot: 'shoe',
     hands: { front: 'fist', back: 'fist', shot: 'phaser' },
     // The TNG hand phaser he fires: picture scale, and how far ahead of the wrist the fist grips it.
-    phaser: { scale: 0.12, grip: 6, lift: 3.5 },
+    phaser: { scale: 0.12, grip: 5, lift: 1.5 },
     // A black stand-up collar with a gold edge.
     collarFabric: ['black', 'cloth'],
     collarTrim: [164, 120, 44],
@@ -100,6 +100,9 @@ CHARACTERS.worf = {
     grain: 0.3,
     pieceScale: 0.2, // hands
     neckLift: 3,
+    // Painted parts generated with Nano Banana (src/parts-worf.js), used once loaded.
+    parts: true,
+    partFit: { torsoDepth: 23.5, upperArm: 1.1, forearm: 1.0, thigh: 0.82, shin: 0.86, gloveLength: 12, gloveTuck: 3, gloveTilt: 0.3, helmetHeight: 27, helmetLift: -1 },
     face: {
       style: 'klingon',
       size: 1.9,

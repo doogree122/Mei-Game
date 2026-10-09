@@ -1026,7 +1026,16 @@ function paintedParts(ctx, sk, f, P) {
     // The fist goes on first, starting a little up inside the sleeve, so the
     // forearm's cuff overlaps the wrist.
     const shooting = f.move && f.move.def.projectile && side === 'F';
-    if (shooting) paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
+    const phaser = shooting && p.hands.shot === 'phaser' && propPiece('phaser');
+    if (phaser) {
+      // A hand phaser held in the fist (as paintHeldPhaser does).
+      const d = sub(elbow, wrist);
+      const len = Math.hypot(d.x, d.y) || 1;
+      const ux = d.x / len;
+      const uy = d.y / len;
+      const { grip: g, lift } = p.phaser;
+      drawPiece(ctx, phaser, { x: wrist.x + ux * g + uy * lift, y: wrist.y + uy * g - ux * lift }, d, p.phaser.scale);
+    } else if (shooting && p.hands.shot === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
     // The fist is cocked up from the forearm's line by `gloveTilt` (radians),
     // knuckles raised, the way a fist is held in a guard.
     const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
@@ -1047,11 +1056,13 @@ function paintedParts(ctx, sk, f, P) {
   };
   const at = torsoFrame(sk);
   arm('B', FAR);
-  // Jetpack on the back, its mounting face against the spine.
-  const lo = at(0.4, -10.5);
-  const hi = at(0.93, -9.6);
-  drawPart(ctx, P.jetpack, lo, hi, null);
-  if (!f.grounded && f.state !== 'ko') paintExhaust(ctx, partPoint(P.jetpack, lo, hi, P.jetpack.nozzle), f, 1.1);
+  if (P.jetpack) {
+    // Jetpack on the back, its mounting face against the spine.
+    const lo = at(0.4, -10.5);
+    const hi = at(0.93, -9.6);
+    drawPart(ctx, P.jetpack, lo, hi, null);
+    if (!f.grounded && f.state !== 'ko') paintExhaust(ctx, partPoint(P.jetpack, lo, hi, P.jetpack.nozzle), f, 1.1);
+  }
   if (p.backWeapon) paintBackWeapon(ctx, p, sk);
   leg('B', FAR);
   drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
@@ -1062,6 +1073,7 @@ function paintedParts(ctx, sk, f, P) {
   const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1), y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) };
   const top = { x: base.x + (up.x / ul) * (fit.helmetHeight || 26), y: base.y + (up.y / ul) * (fit.helmetHeight || 26) };
   drawPart(ctx, P.helmet, base, top, null);
+  if (f.move && f.move.name === 'batleth') paintBatleth(ctx, sk);
   arm('F', 1);
 }
 

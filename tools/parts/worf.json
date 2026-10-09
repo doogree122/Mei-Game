@@ -1,0 +1,39 @@
+{
+ "style": "Game art asset for a 2D side-view fighting game. The attached picture shows the character this part belongs to: a tall, powerfully built alien warrior officer in a uniform with a mustard-gold tunic, black shoulders, a black stand-up collar, a wide silver chain-mail sash, black trousers with a thin gold side stripe, and black shoes. Match its colors and proportions, but paint with rich texture and substance: semi-realistic painterly style; mustard wool-blend fabric with visible weave, soft folds and seams; matte black fabric with subtle sheen; heavy interlocking silver chain links; polished black leather. Paint ONE isolated component only, in strict side view (the character faces to the RIGHT of the image). A single key light from the upper right, soft fill from the left. Pure flat white background (#FFFFFF). No cast shadow, no floor, no other body parts, no text, no border.",
+ "ref": "refs/worf.webp",
+ "parts": {
+  "torso": {
+   "aspect": "9:16",
+   "prompt": "The component: the TORSO only, in STRICT SIDE VIEW (exact profile) with the chest facing RIGHT: no head, no neck, no arms, no legs, no arm holes. Upright, centered, filling about 85% of the image height, about 45% as wide as tall; broad and barrel-chested. Top: a black stand-up collar at the base of the neck. Mustard-gold tunic on the chest and belly; the shoulder and upper back are black (a black yoke); a black panel runs down the side under the arm. A wide silver chain-mail sash crosses diagonally from the top of the shoulder down to the front of the waist. A small gold arrowhead badge on the upper chest. A wide black belt at the waist; the torso ends just below the hips in black trousers with a smooth rounded bottom edge."
+  },
+  "upperArm": {
+   "aspect": "9:16",
+   "prompt": "The component: the UPPER ARM, drawn straight and vertical, centered, filling about 85% of the image height. Top end: the rounded shoulder; bottom end: the rounded elbow. About 38% as wide as tall, muscular. Mustard-gold sleeve, with the top quarter black (the shoulder yoke)."
+  },
+  "forearm": {
+   "aspect": "9:16",
+   "prompt": "The component: the FOREARM, drawn straight and vertical, centered, filling about 85% of the image height. Top end: the rounded elbow; bottom end: the wrist, ending in a plain sleeve cuff (no hand). About 30% as wide as tall, tapering slightly to the wrist. Mustard-gold sleeve with soft folds."
+  },
+  "fist": {
+   "aspect": "1:1",
+   "prompt": "The component: a bare CLENCHED FIST ONLY (no sleeve, no forearm): a large, strong hand with dark brown skin, seen from the side, the wrist at the TOP of the image and the knuckles pointing DOWN. Visible knuckles and tendons. Centered, filling about 60% of the image."
+  },
+  "thigh": {
+   "aspect": "9:16",
+   "prompt": "The component: the THIGH, drawn straight and vertical, centered, filling about 85% of the image height. Top end: the wide rounded hip; bottom end: the narrower rounded knee. About 42% as wide as tall at the top. Black trousers with soft folds and a thin gold stripe running down the outer side."
+  },
+  "shin": {
+   "aspect": "9:16",
+   "prompt": "The component: the LOWER LEG from knee to ankle, drawn straight and vertical, centered, filling about 85% of the image height. Top end: the rounded knee; bottom end: the ankle (no foot). About 32% as wide as tall. Black trousers with folds, a thin gold stripe down the side, and at the hem a small gold-edged V-shaped notch."
+  },
+  "foot": {
+   "aspect": "4:3",
+   "prompt": "The component: a polished BLACK LEATHER DRESS SHOE / ankle boot in side view, from the ankle down, the sole flat along the bottom, the toe pointing to the RIGHT. Glossy highlights, stitched welt. Centered, filling about 70% of the width."
+  },
+  "head": {
+   "aspect": "1:1",
+   "prompt": "The component: the HEAD in exact profile, facing RIGHT, centered, filling about 75% of the image: an alien warrior with a prominent ridged bony forehead crest running from the brow back over the top of the head, deep-set dark eyes under a heavy brow, a broad nose, dark brown skin, a short dark goatee and mustache, and long thick dark brown hair swept back and falling behind the neck to the shoulders. Include the top of the neck. Stern expression."
+  }
+ },
+ "notes": "Torso: a second pass edited the first result to close the arm hole. Head generated with the same reference. Fist: wrist trimmed and tapered so it tucks into the sleeve."
+}
