@@ -52,7 +52,7 @@ Characters list their hidden moves in `secrets` in `src/characters.js` (directio
 
 ### Fighters compared
 
-**Shot sounds and guns:** B. Fett and Mando fire a classic blaster "pew"; Worf and Seven fire a whining phaser beam; Vader's Force lightning crackles and buzzes; his lightsaber swings with a humming swoosh that bends in pitch as the blade passes. Each shot sounds the moment it leaves the gun. Fett's carbine and Mando's blaster pistol are drawn large and outlined, with a muzzle flash, and the bolt leaves from the end of the barrel.
+**Shot sounds and guns:** B. Fett and Mando fire a classic blaster "pew"; Worf and Seven fire the recorded TNG phaser (`assets/sfx/phaser.mp3`, embedded in the single-file build); Vader's Force lightning crackles and buzzes; his lightsaber swings with a humming swoosh that bends in pitch as the blade passes. Each shot sounds the moment it leaves the gun. Fett's carbine and Mando's blaster pistol are drawn large and outlined, with a muzzle flash, and the bolt leaves from the end of the barrel.
 
 Every move has a strength from 1 (weak) to 3 (strong). Strength sets damage (×0.75, ×1, ×1.35), knockback and hitstun, and how the hit looks and sounds: weak moves leave a thin, short swish; strong ones a wide glowing arc with an echo, a bigger burst, a longer hit-freeze and more screen shake. Shots are drawn smaller or bigger to match.
 
@@ -162,7 +162,7 @@ who can't walk off screen. The view of space through the windows scrolls slower 
 | `src/firebase-room.js` | The room on Firebase Hosting, backed by the Realtime Database |
 | `src/p2p-room.js` | The room anywhere else: a direct browser-to-browser link found by a room code (PeerJS) |
 | `src/music.js` | Music: menu track, alternating fight tracks, start on first input, pause ducking, on/off |
-| `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX, particles |
+| `src/input.js`, `src/audio.js`, `src/effects.js` | Keyboard, synthesized SFX (plus recorded ones from `assets/sfx/`), particles |
 | `tools/build_single.py` | Bundles everything (music included) into one HTML page for the claude.ai artifact |
 
 ## Adding sprite art (optional)
