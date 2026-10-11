@@ -1131,9 +1131,8 @@ function paintedParts(ctx, sk, f, P) {
       ctx.translate(c.x, c.y);
       ctx.rotate(ang);
       const g = ctx.createRadialGradient(-fit.seat.rx * 0.25, -fit.seat.ry * 0.3, 1, 0, 0, Math.max(fit.seat.rx, fit.seat.ry));
-      g.addColorStop(0, 'rgb(40,39,42)');
-      g.addColorStop(0.7, 'rgb(28,27,30)');
-      g.addColorStop(1, 'rgb(22,21,24)');
+      g.addColorStop(0, 'rgb(29,29,31)');
+      g.addColorStop(1, 'rgb(22,22,24)');
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.ellipse(0, 0, fit.seat.ry, fit.seat.rx, 0, 0, Math.PI * 2);

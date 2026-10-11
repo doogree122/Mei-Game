@@ -39,7 +39,7 @@ ANCHORS = {
         'shin': {'pivot': (46, 30), 'tip': (52, 410)},  # one piece, knee to ankle
         'armStraight': {'pivot': (80, 73), 'tip': (130, 548)},  # hand-edited arm, shoulder to wrist  # the whole arm, shoulder to wrist, used when it's straight
         'foot': {'pivot': (62, 100), 'tip': (62, 138)},
-        'boot': {'pivot': (52, 258), 'tip': (46, 5)},  # tall boot: ankle, top of the shaft (it follows the shin)
+        'boot': {'pivot': (52, 263), 'tip': (46, 5)},  # tall boot: ankle, top of the shaft (it follows the shin)
         'torso': {'pivot': (140, 412), 'tip': (120, 28)},  # ends at the seat (rounded), over the tops of the thighs
         'helmet': {'pivot': (165, 372), 'tip': (150, 16), 'file': 'head'},  # head and neck: the base of the neck to the top of the head
     },
