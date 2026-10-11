@@ -1023,6 +1023,11 @@ function paintedParts(ctx, sk, f, P) {
   const arm = (side, k) => {
     const elbow = sk['elbow' + side];
     const wrist = sk['hand' + side];
+    // `shoulderBack` sets the arm's shoulder pivot back along the torso, so the
+    // cap sits over the top of the torso.
+    const sb = fit.shoulderBack || 0;
+    const tl = Math.hypot(sk.neck.x - sk.hip.x, sk.neck.y - sk.hip.y) || 1;
+    const shoulder = { x: sk.shoulder.x + ((sk.neck.y - sk.hip.y) / tl) * sb, y: sk.shoulder.y - ((sk.neck.x - sk.hip.x) / tl) * sb };
     // The fist goes on first, starting a little up inside the sleeve, so the
     // forearm's cuff overlaps the wrist.
     const md = f.move && f.move.def;
@@ -1060,13 +1065,13 @@ function paintedParts(ctx, sk, f, P) {
       drawPart(ctx, fist, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
     }
     // A nearly straight arm uses the one-piece straight-arm picture.
-    const bend = Math.abs(Math.atan2(Math.sin(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x)), Math.cos(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x))));
+    const bend = Math.abs(Math.atan2(Math.sin(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - shoulder.y, elbow.x - shoulder.x)), Math.cos(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - shoulder.y, elbow.x - shoulder.x))));
     if (P.armStraight && bend < (fit.straightBelow || 0.5)) {
-      drawPart(ctx, P.armStraight, sk.shoulder, wrist, (W.shoulder + W.wrist) * (fit.armStraight || 1.1), k);
+      drawPart(ctx, P.armStraight, shoulder, wrist, (W.shoulder + W.wrist) * (fit.armStraight || 1.1), k);
       return;
     }
     drawPart(ctx, P.forearm, elbow, wrist, (W.elbow + W.wrist) * (fit.forearm || 1.2), k);
-    drawPart(ctx, P.upperArm, sk.shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
+    drawPart(ctx, P.upperArm, shoulder, elbow, (W.shoulder + W.elbow) * (fit.upperArm || 1.35), k);
   };
   // A leg in two passes so the front thigh can go under the torso (a
   // seamless seat): `upper` draws the thigh, `lower` the one-piece lower leg
@@ -1124,10 +1129,8 @@ function paintedParts(ctx, sk, f, P) {
   const stowing = !!(bm && bm.holster && after > 0);
   const batleth = bm && !(stowing && after > bm.holster.frames);
   arm('B', FAR);
-  if (stowing) {
-    if (batleth) paintBatleth(ctx, sk);
-    arm('F', FAR);
-  }
+  // While stowing, the bat'leth goes behind the body (the arm stays in front).
+  if (stowing && batleth) paintBatleth(ctx, sk);
   if (P.jetpack) {
     // Jetpack on the back, its mounting face against the spine.
     const lo = at(0.4, -10.5);
@@ -1177,10 +1180,8 @@ function paintedParts(ctx, sk, f, P) {
     leg('F', 1);
   }
   if (!fit.headUnderTorso) head();
-  if (!stowing) {
-    if (batleth) paintBatleth(ctx, sk);
-    arm('F', 1);
-  }
+  if (!stowing && batleth) paintBatleth(ctx, sk);
+  arm('F', 1);
 }
 
 // Worf's bat'leth, gripped in his front hand with the blades pointing out

@@ -106,7 +106,7 @@ CHARACTERS.worf = {
     neckLift: 3,
     // Painted parts generated with Nano Banana (src/parts-worf.js), used once loaded.
     parts: true,
-    partFit: { torsoDepth: 23.5, upperArm: 1.42, forearm: 1.0, armStraight: 1.25, thigh: 0.92, shin: 0.78, gloveLength: 16, phaserHandLength: 25, phaserHandTuck: 7, phaserHandLift: 2.2, gloveTuck: 3.5, gloveTilt: 0.3, helmetHeight: 37, helmetLift: -9, headUnderTorso: true, headForward: 1.8, bootLast: true, flatBoots: true, bootHeight: 30.8, farShade: 0.92, seat: { t: 0.05, x: -4.4, rx: 6.8, ry: 4.6 }, thighUnderTorso: true },
+    partFit: { torsoDepth: 23.5, upperArm: 1.42, forearm: 1.0, armStraight: 1.25, thigh: 0.92, shin: 0.78, gloveLength: 16, phaserHandLength: 25, phaserHandTuck: 7, phaserHandLift: 2.2, gloveTuck: 3.5, gloveTilt: 0.3, helmetHeight: 37, helmetLift: -9, headUnderTorso: true, shoulderBack: 2.2, headForward: 1.8, bootLast: true, flatBoots: true, bootHeight: 30.8, farShade: 0.92, seat: { t: 0.05, x: -4.4, rx: 6.8, ry: 4.6 }, thighUnderTorso: true },
     face: {
       style: 'klingon',
       size: 1.9,

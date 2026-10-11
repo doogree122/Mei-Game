@@ -162,7 +162,7 @@ const POSES = {
   airHighKick_windup: { torso: -0.1, head: 0.05, ...GUARD, thF: 1.6, shF: 0.2, thB: 0.6, shB: -1.2 },
   airHighKick: { torso: -0.45, head: 0.3, uaF: 0.7, faF: 2.3, uaB: -0.4, faB: 0.5, thF: 2.25, shF: 2.3, thB: 0.3, shB: -1.4 },
   // After the bat'leth swing: the arm sweeps back and up behind the back to stow it.
-  batlethStow: { torso: 0.1, head: -0.05, uaF: -0.75, faF: 3.98, uaB: 0.45, faB: 2.35, ...STANCE },
+  batlethStow: { torso: 0.1, head: -0.05, uaF: -0.25, faF: 3.4, uaB: 0.45, faB: 2.35, ...STANCE },
   // After a hand-phaser shot: the arm drops to the hip, holstering it.
   holster: { torso: 0.12, head: -0.05, uaF: 0.18, faF: 0.35, uaB: 0.45, faB: 2.35, ...STANCE },
   // Troi's empathic strike: both hands to her temples, eyes on the opponent.
