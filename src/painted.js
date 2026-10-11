@@ -1013,7 +1013,7 @@ function paintedParts(ctx, sk, f, P) {
   const p = f.char.paint;
   const W = p.widths;
   const fit = p.partFit || {};
-  const FAR = 0.62;
+  const FAR = fit.farShade || 0.62;
   const sub = (a, b) => ({ x: b.x - a.x, y: b.y - a.y });
   const toward = (a, b, len) => {
     const d = sub(a, b);
@@ -1121,6 +1121,24 @@ function paintedParts(ctx, sk, f, P) {
   if (fit.thighUnderTorso) {
     // The near leg's lower part first (its knee goes under the thigh), then
     // the thigh, then the torso over the hip.
+    if (fit.seat) {
+      // A rounded seat in the trousers' black, bridging the thighs and the
+      // belt so the hips read as one smooth shape.
+      const c = at(fit.seat.t, fit.seat.x);
+      const ang = Math.atan2(sk.neck.y - sk.hip.y, sk.neck.x - sk.hip.x) + Math.PI / 2;
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(ang);
+      const g = ctx.createRadialGradient(-fit.seat.rx * 0.25, -fit.seat.ry * 0.3, 1, 0, 0, Math.max(fit.seat.rx, fit.seat.ry));
+      g.addColorStop(0, 'rgb(40,39,42)');
+      g.addColorStop(0.7, 'rgb(28,27,30)');
+      g.addColorStop(1, 'rgb(22,21,24)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, fit.seat.ry, fit.seat.rx, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     leg('F', 1, 'lower');
     leg('F', 1, 'upper');
     drawPart(ctx, P.torso, at(-0.08, 0), at(1.04, 0), (fit.torsoDepth || 24));
