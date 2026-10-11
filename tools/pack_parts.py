@@ -32,6 +32,21 @@ ANCHORS = {
         'jetpack': {'pivot': (116, 280), 'tip': (116, 44), 'nozzle': (52, 418)},  # lower and upper mount on its back face
         'helmet': {'pivot': (140, 286), 'tip': (126, 4)},  # where the neck enters, top of the dome
     },
+    'seven': {
+        # Arm and leg pieces sliced from one straight arm / leg picture
+        # (rounded ends overlapping at the joint, in the same paint).
+        'upperArm': {'pivot': (58, 39), 'tip': (42, 298)},
+        'forearm': {'pivot': (46, 27), 'tip': (32, 284)},
+        'armStraight': {'pivot': (58, 39), 'tip': (32, 554)},
+        'glove': {'pivot': (65, 4), 'tip': (73, 207)},
+        'fistInside': {'pivot': (108, 4), 'tip': (90, 227)},  # her Borg hand
+        'thigh': {'pivot': (68, 48), 'tip': (70, 303)},
+        'shin': {'pivot': (70, 27), 'tip': (58, 280)},
+        'foot': {'pivot': (70, 100), 'tip': (70, 147)},  # ankle boot: ankle, a little above the sole (sets the boot's size)
+        'rifle': {'pivot': (2, 65), 'tip': (518, 65)},  # phaser rifle: back of the stock, emitter tip (along the barrel line)
+        'torso': {'pivot': (93, 470), 'tip': (93, 30)},  # (mirrored: generated facing left)
+        'helmet': {'pivot': (100, 317), 'tip': (110, 4), 'file': 'head'},  # placeholder head and neck
+    },
     'worf': {
         'upperArm': {'pivot': (80, 73), 'tip': (90, 347)},  # hand-edited arm (previews/worf-arm), cut at the elbow
         'forearm': {'pivot': (56, 40), 'tip': (56, 340)},

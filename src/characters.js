@@ -240,6 +240,9 @@ CHARACTERS.seven = {
     pieceScale: 0.19, // fists
     headScale: 0.19,
     neckLift: 3.5, // how far up the neck the head piece sits
+    // Painted parts generated with Nano Banana (src/parts-seven.js), used once loaded.
+    parts: true,
+    partFit: { torsoDepth: 19, upperArm: 1.15, forearm: 1.1, armStraight: 1.1, thigh: 1.0, shin: 1.05, gloveLength: 10, gloveTuck: 3.5, gloveTilt: 0.3, helmetHeight: 30, helmetLift: -6, headUnderTorso: true, headForward: 0.5, bootOver: true, flatBoots: true, farShade: 0.88 },
     // Painted profile head (src/painted.js paintFace), colors from her photo.
     face: {
       size: 1.72, // skeleton units per head-frame unit

@@ -1115,6 +1115,13 @@ function paintedParts(ctx, sk, f, P) {
       if (part !== 'lower') thigh();
       return;
     }
+    if (fit.bootOver) {
+      // An ankle boot pulled over the leg (the leg goes down into it).
+      if (part !== 'upper') shin();
+      if (part !== 'upper') boot();
+      if (part !== 'lower') thigh();
+      return;
+    }
     // The trouser hem falls over the shoe (shoe first, then the lower leg).
     if (part !== 'upper') boot();
     if (part !== 'upper') shin();
@@ -1128,7 +1135,17 @@ function paintedParts(ctx, sk, f, P) {
   const after = bm ? f.move.frame - bm.startup - bm.active : -1;
   const stowing = !!(bm && bm.holster && after > 0);
   const batleth = bm && !(stowing && after > bm.holster.frames);
+  if (P.cape) {
+    // A cape hung from the back of the shoulders, falling to just above the
+    // floor behind the legs, swaying with the walk and trailing when moving.
+    const top = at(0.97, -5);
+    const sway = Math.sin(f.time * 0.08) * 2 - Math.max(-8, Math.min(8, f.vx * f.facing)) * 0.9;
+    const len = Math.max(20, sk.base - 2 - top.y);
+    drawPart(ctx, P.cape, top, { x: top.x - 6 - sway, y: top.y + len }, (fit.capeWidth || 30));
+  }
+  const rifle = f.char.armPose ? rifleMode(f) : null;
   arm('B', FAR);
+  if (rifle === 'rest') paintRifle(ctx, sk, f, P);
   // While stowing, the bat'leth goes behind the body (the arm stays in front).
   if (stowing && batleth) paintBatleth(ctx, sk);
   if (P.jetpack) {
@@ -1214,7 +1231,39 @@ function paintedParts(ctx, sk, f, P) {
   }
   if (!fit.headUnderTorso) head();
   if (!stowing && batleth) paintBatleth(ctx, sk);
+  if (rifle && rifle !== 'rest') paintRifle(ctx, sk, f, P);
+  // A lightsaber: the hilt goes under the fist.
+  if (p.saber) drawSaber(ctx, sk, f.char.colors);
   arm('F', 1);
+}
+
+// The phaser rifle as a painted part, held the way drawPhaserRifle holds the
+// drawn one (resting on the shoulder, thrust, or aimed level), else the drawn one.
+function paintRifle(ctx, sk, f, P) {
+  if (!P.rifle) return drawPhaserRifle(ctx, sk, f, f.char.colors);
+  const h = sk.handF;
+  const mode = rifleMode(f);
+  const a = mode === 'thrust' ? Math.atan2(h.y - sk.elbowF.y, h.x - sk.elbowF.x) : mode === 'aim' ? -0.12 : -2.6;
+  const ux = Math.cos(a);
+  const uy = Math.sin(a);
+  const k = 1.15;
+  const shift = mode === 'rest' ? 14 : 0;
+  const at = (along, side) => ({ x: h.x + (ux * (along + shift) - uy * side) * k, y: h.y + (uy * (along + shift) + ux * side) * k });
+  // The stock's back to the emitter, with the pistol grip at the hand. Its
+  // picture is right side up when aimed forward; resting over the shoulder
+  // (pointing back) it's flipped so the grip stays below the barrel.
+  const back = mode === 'rest';
+  ctx.save();
+  if (back) {
+    const o = at(0, 0);
+    ctx.translate(o.x, o.y);
+    ctx.rotate(a);
+    ctx.scale(1, -1);
+    ctx.rotate(-a);
+    ctx.translate(-o.x, -o.y);
+  }
+  drawPart(ctx, P.rifle, at(-27, back ? 2 : -2), at(52, back ? 2 : -2), null);
+  ctx.restore();
 }
 
 // Worf's bat'leth, gripped in his front hand with the blades pointing out

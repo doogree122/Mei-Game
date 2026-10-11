@@ -1310,7 +1310,8 @@ function drawFighter(ctx, f) {
   const art = spriteFor(f.char);
   if (art) return drawArtSprite(ctx, f, art);
   if (f.char.look === 'cutout' && cutoutParts(f.char.id)) return drawCutoutFighter(ctx, f);
-  if (f.char.look === 'painted') {
+  // A character drawn only from generated parts waits for them (drawn style meanwhile).
+  if (f.char.look === 'painted' && !(f.char.paint.partsOnly && !partSet(f.char.id))) {
     const painted = paintedArt(f.char.id);
     if (painted) return drawPaintedFighter(ctx, f, painted);
   }
