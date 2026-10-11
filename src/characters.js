@@ -64,7 +64,7 @@ CHARACTERS.worf = {
   fallbackLook: 'warrior', // drawn version, until the picture pieces load
   scale: 2.14, // the tallest of Worf, Seven and Mando
   // Fighting stance: front knee soft, back knee bent with the foot under him.
-  stance: { thF: 0.34, shF: -0.04, thB: -0.12, shB: -0.44 },
+  stance: { thF: 0.34, shF: -0.04, thB: -0.12, shB: -0.44, uaF: 0.6, uaB: 0.32 },
   // A more upright crouch (his seat doesn't swing out behind).
   crouch: { torso: 0.2, head: -0.1 },
   paint: {
@@ -494,6 +494,8 @@ for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'ph
   const c = CHARACTERS[id];
   c.moves = { ...(c.moves || {}), special: { ...((c.moves || {}).special || {}), sfx } };
 }
+// Worf's jump kick is a high kick, the foot up at head height.
+CHARACTERS.worf.moves.airKick = { pose: 'airHighKick', radius: 22 };
 // Worf holsters his hand phaser right after the shot: the arm drops to the hip.
 CHARACTERS.worf.moves.special.holster = { pose: 'holster', frames: 9 };
 

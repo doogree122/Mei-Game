@@ -158,6 +158,9 @@ const POSES = {
   // Force choke: the free hand reaches out and pinches; the saber hangs low.
   forceChoke_windup: { torso: -0.05, head: 0, uaF: 0.35, faF: 0.5, uaB: 1.0, faB: 1.4, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
   forceChoke: { torso: 0.1, head: -0.1, uaF: 0.3, faF: 0.55, uaB: 1.85, faB: 2.05, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  // A high jump kick: the leg snaps up to head height.
+  airHighKick_windup: { torso: -0.1, head: 0.05, ...GUARD, thF: 1.6, shF: 0.2, thB: 0.6, shB: -1.2 },
+  airHighKick: { torso: -0.45, head: 0.3, uaF: 0.7, faF: 2.3, uaB: -0.4, faB: 0.5, thF: 2.25, shF: 2.3, thB: 0.3, shB: -1.4 },
   // After the bat'leth swing: the arm sweeps back and up behind the back to stow it.
   batlethStow: { torso: 0.1, head: -0.05, uaF: -0.75, faF: 3.98, uaB: 0.45, faB: 2.35, ...STANCE },
   // After a hand-phaser shot: the arm drops to the hip, holstering it.
