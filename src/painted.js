@@ -1030,7 +1030,11 @@ function paintedParts(ctx, sk, f, P) {
     const holstered = md && md.holster && f.move.frame > md.startup + md.active + md.holster.frames * 0.7;
     const shooting = md && md.projectile && side === 'F' && !holstered;
     const phaser = shooting && p.hands.shot === 'phaser' && propPiece('phaser');
-    if (phaser) {
+    if (shooting && P.phaserHand) {
+      // A hand gripping the phaser (one picture), wrist tucked into the cuff.
+      const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
+      drawPart(ctx, P.phaserHand, cuff, toward(cuff, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.phaserHandLength || 13), null, k);
+    } else if (phaser) {
       // A hand phaser held in the fist (as paintHeldPhaser does).
       const d = sub(elbow, wrist);
       const len = Math.hypot(d.x, d.y) || 1;
@@ -1041,10 +1045,12 @@ function paintedParts(ctx, sk, f, P) {
     } else if (shooting && p.hands.shot === 'blaster') paintGlove(ctx, p, wrist, sub(elbow, wrist), true, muzzleAge(f));
     // The fist is cocked up from the forearm's line by `gloveTilt` (radians),
     // knuckles raised, the way a fist is held in a guard.
-    const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
-    const fa = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - (fit.gloveTilt || 0);
-    const len = fit.gloveLength || 14;
-    drawPart(ctx, P.glove, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
+    if (!(shooting && P.phaserHand)) {
+      const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
+      const fa = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - (fit.gloveTilt || 0);
+      const len = fit.gloveLength || 14;
+      drawPart(ctx, P.glove, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
+    }
     // A nearly straight arm uses the one-piece straight-arm picture.
     const bend = Math.abs(Math.atan2(Math.sin(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x)), Math.cos(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x))));
     if (P.armStraight && bend < (fit.straightBelow || 0.5)) {

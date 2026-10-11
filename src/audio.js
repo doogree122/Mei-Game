@@ -105,7 +105,8 @@ const Sfx = (() => {
         .catch(() => { /* keep the synthesized sound */ });
     }
   }
-  function playSample(name, gain = 1) {
+  // `length` (seconds) cuts the sample short with a quick fade at the end.
+  function playSample(name, gain = 1, length = 0) {
     const ac = ensure();
     if (!ac || !samples[name]) return false;
     const src = ac.createBufferSource();
@@ -114,6 +115,12 @@ const Sfx = (() => {
     g.gain.value = gain;
     src.connect(g).connect(ac.destination);
     src.start();
+    if (length) {
+      const t = ac.currentTime;
+      g.gain.setValueAtTime(gain, t + length * 0.7);
+      g.gain.linearRampToValueAtTime(0.0001, t + length);
+      src.stop(t + length + 0.02);
+    }
     return true;
   }
 
@@ -392,7 +399,7 @@ const Sfx = (() => {
     // Phaser: the recorded TNG phaser (assets/sfx/phaser.mp3). Until it has
     // loaded, a synthesized whining beam with a fast warble.
     phaser: () => {
-      if (playSample('phaser', 0.9)) return;
+      if (playSample('phaser', 0.5, 1.0)) return;
       const ac = ensure();
       if (!ac) return;
       const t = ac.currentTime;
