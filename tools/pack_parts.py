@@ -40,7 +40,7 @@ ANCHORS = {
         'armStraight': {'pivot': (80, 73), 'tip': (130, 548)},  # hand-edited arm, shoulder to wrist  # the whole arm, shoulder to wrist, used when it's straight
         'foot': {'pivot': (62, 100), 'tip': (62, 138)},
         'boot': {'pivot': (52, 263), 'tip': (46, 5)},
-        'fistInside': {'pivot': (75, 6), 'tip': (52, 194)},  # far fist, seen from the palm side
+        'fistInside': {'pivot': (53, 6), 'tip': (76, 194)},  # far fist, seen from the palm side
         'phaserHand': {'pivot': (14, 81), 'tip': (202, 81), 'emitter': (298, 40)},  # hand gripping the phaser: wrist, knuckles (along the forearm)  # tall boot: ankle, top of the shaft (it follows the shin)
         'torso': {'pivot': (140, 412), 'tip': (120, 28)},  # ends at the seat (rounded), over the tops of the thighs
         'helmet': {'pivot': (165, 372), 'tip': (150, 16), 'file': 'head'},  # head and neck: the base of the neck to the top of the head
