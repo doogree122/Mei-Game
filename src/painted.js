@@ -1116,7 +1116,18 @@ function paintedParts(ctx, sk, f, P) {
     if (part !== 'lower') thigh();
   };
   const at = torsoFrame(sk);
+  // The bat'leth: in the hand during the swing; after it, while the move's
+  // `holster` runs, the arm sweeps it behind the back (drawn behind the body)
+  // and it's gone once stowed.
+  const bm = f.move && f.move.name === 'batleth' && f.move.def;
+  const after = bm ? f.move.frame - bm.startup - bm.active : -1;
+  const stowing = !!(bm && bm.holster && after > 0);
+  const batleth = bm && !(stowing && after > bm.holster.frames);
   arm('B', FAR);
+  if (stowing) {
+    if (batleth) paintBatleth(ctx, sk);
+    arm('F', FAR);
+  }
   if (P.jetpack) {
     // Jetpack on the back, its mounting face against the spine.
     const lo = at(0.4, -10.5);
@@ -1166,8 +1177,10 @@ function paintedParts(ctx, sk, f, P) {
     leg('F', 1);
   }
   if (!fit.headUnderTorso) head();
-  if (f.move && f.move.name === 'batleth') paintBatleth(ctx, sk);
-  arm('F', 1);
+  if (!stowing) {
+    if (batleth) paintBatleth(ctx, sk);
+    arm('F', 1);
+  }
 }
 
 // Worf's bat'leth, gripped in his front hand with the blades pointing out

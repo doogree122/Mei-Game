@@ -99,6 +99,7 @@ const MOVES = {
     pose: 'batleth', startup: 10, active: 8, recovery: 16, air: true, landFinish: true, hop: 7, lunge: 4.5,
     damage: 4, hitstun: 22, blockstun: 12, push: 9,
     limb: 'batleth', radius: 34, height: 'high', sound: 'heavy', sfx: 'batleth', trail: 'overhead',
+    holster: { pose: 'batlethStow', frames: 9 }, // stowed behind the back right after
   },
 };
 
@@ -157,6 +158,8 @@ const POSES = {
   // Force choke: the free hand reaches out and pinches; the saber hangs low.
   forceChoke_windup: { torso: -0.05, head: 0, uaF: 0.35, faF: 0.5, uaB: 1.0, faB: 1.4, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
   forceChoke: { torso: 0.1, head: -0.1, uaF: 0.3, faF: 0.55, uaB: 1.85, faB: 2.05, thF: 0.5, shF: -0.05, thB: -0.4, shB: -0.1 },
+  // After the bat'leth swing: the arm sweeps back and up behind the back to stow it.
+  batlethStow: { torso: 0.1, head: -0.05, uaF: -0.75, faF: 3.98, uaB: 0.45, faB: 2.35, ...STANCE },
   // After a hand-phaser shot: the arm drops to the hip, holstering it.
   holster: { torso: 0.12, head: -0.05, uaF: 0.18, faF: 0.35, uaB: 0.45, faB: 2.35, ...STANCE },
   // Troi's empathic strike: both hands to her temples, eyes on the opponent.
