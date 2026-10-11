@@ -1049,7 +1049,9 @@ function paintedParts(ctx, sk, f, P) {
       const cuff = toward(wrist, elbow, fit.gloveTuck || 3);
       const fa = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - (fit.gloveTilt || 0);
       const len = fit.gloveLength || 14;
-      drawPart(ctx, P.glove, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
+      // The far hand shows the inside of the fist (fingers toward us).
+      const fist = side === 'B' && P.fistInside ? P.fistInside : P.glove;
+      drawPart(ctx, fist, cuff, { x: cuff.x + Math.cos(fa) * len, y: cuff.y + Math.sin(fa) * len }, null, k);
     }
     // A nearly straight arm uses the one-piece straight-arm picture.
     const bend = Math.abs(Math.atan2(Math.sin(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x)), Math.cos(Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x) - Math.atan2(elbow.y - sk.shoulder.y, elbow.x - sk.shoulder.x))));
