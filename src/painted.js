@@ -1082,6 +1082,16 @@ function paintedParts(ctx, sk, f, P) {
       if (part !== 'upper') shin();
       return;
     }
+    if (P.boot) {
+      // A tall boot: the trousers tuck into it, its shaft runs up the shin.
+      const sl2 = Math.hypot(knee.x - foot.x, knee.y - foot.y) || 1;
+      const L = fit.bootHeight || 16.5;
+      const top = { x: foot.x + ((knee.x - foot.x) / sl2) * L, y: foot.y + ((knee.y - foot.y) / sl2) * L };
+      if (part !== 'upper') shin();
+      if (part !== 'upper') drawPart(ctx, P.boot, foot, top, null, k);
+      if (part !== 'lower') thigh();
+      return;
+    }
     // The trouser hem falls over the shoe (shoe first, then the lower leg).
     if (part !== 'upper') boot();
     if (part !== 'upper') shin();
