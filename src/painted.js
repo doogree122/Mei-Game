@@ -1152,6 +1152,39 @@ function paintedParts(ctx, sk, f, P) {
     drawPart(ctx, P.helmet, base, top, null);
   };
   if (fit.headUnderTorso) head();
+  if (fit.neck) {
+    // A gray fabric-wrapped neck under the torso's collar and the helmet:
+    // `back` and `front` reach either side of the neck joint, `h` up into the
+    // helmet, `low` down under the collar.
+    const N = fit.neck;
+    const tl = Math.hypot(sk.neck.x - sk.hip.x, sk.neck.y - sk.hip.y) || 1;
+    const u = { x: (sk.neck.x - sk.hip.x) / tl, y: (sk.neck.y - sk.hip.y) / tl };
+    ctx.save();
+    ctx.translate(sk.neck.x, sk.neck.y);
+    ctx.transform(-u.y, u.x, u.x, u.y, 0, 0);
+    const g = ctx.createLinearGradient(-N.back, 0, N.front, 0);
+    g.addColorStop(0, 'rgb(46,47,50)');
+    g.addColorStop(0.65, 'rgb(92,93,96)');
+    g.addColorStop(1, 'rgb(62,63,66)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-N.back, -N.low);
+    ctx.quadraticCurveTo(-N.back - 0.8, N.h * 0.5, -N.back * 0.8, N.h);
+    ctx.lineTo(N.front, N.h);
+    ctx.quadraticCurveTo(N.front + 0.6, N.h * 0.3, N.front, -N.low);
+    ctx.closePath();
+    ctx.fill();
+    ctx.clip();
+    // The wraps: slanted folds with a light edge above a dark crease.
+    ctx.lineWidth = 0.7;
+    for (let y = -N.low + 1.5; y < N.h + 2; y += 2.4) {
+      ctx.strokeStyle = 'rgba(20,20,22,0.55)';
+      ctx.beginPath(); ctx.moveTo(-N.back - 1, y); ctx.quadraticCurveTo(0, y - 1.1, N.front + 1, y - 1.6); ctx.stroke();
+      ctx.strokeStyle = 'rgba(160,161,164,0.35)';
+      ctx.beginPath(); ctx.moveTo(-N.back - 1, y + 0.6); ctx.quadraticCurveTo(0, y - 0.5, N.front + 1, y - 1.0); ctx.stroke();
+    }
+    ctx.restore();
+  }
   if (fit.thighUnderTorso) {
     // The near leg's lower part first (its knee goes under the thigh), then
     // the thigh, then the torso over the hip.
