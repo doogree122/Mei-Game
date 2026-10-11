@@ -29,7 +29,7 @@ ANCHORS = {
         'shin': {'pivot': (84, 58), 'tip': (66, 392)},  # knee, ankle
         'foot': {'pivot': (62, 120), 'tip': (62, 166)},  # ankle bone (toward the heel), the sole below it (sets the boot's size)
         'torso': {'pivot': (118, 468), 'tip': (108, 22)},  # hip, base of the neck
-        'jetpack': {'pivot': (232, 280), 'tip': (232, 44), 'nozzle': (206, 418)},  # lower and upper mount on its back face
+        'jetpack': {'pivot': (116, 280), 'tip': (116, 44), 'nozzle': (52, 418)},  # lower and upper mount on its back face
         'helmet': {'pivot': (140, 286), 'tip': (126, 4)},  # where the neck enters, top of the dome
     },
     'worf': {
