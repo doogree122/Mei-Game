@@ -1025,7 +1025,10 @@ function paintedParts(ctx, sk, f, P) {
     const wrist = sk['hand' + side];
     // The fist goes on first, starting a little up inside the sleeve, so the
     // forearm's cuff overlaps the wrist.
-    const shooting = f.move && f.move.def.projectile && side === 'F';
+    const md = f.move && f.move.def;
+    // A holstered weapon is gone once the arm has dropped (holster.frames after firing).
+    const holstered = md && md.holster && f.move.frame > md.startup + md.active + md.holster.frames * 0.7;
+    const shooting = md && md.projectile && side === 'F' && !holstered;
     const phaser = shooting && p.hands.shot === 'phaser' && propPiece('phaser');
     if (phaser) {
       // A hand phaser held in the fist (as paintHeldPhaser does).

@@ -95,7 +95,7 @@ CHARACTERS.worf = {
     foot: 'shoe',
     hands: { front: 'fist', back: 'fist', shot: 'phaser' },
     // The TNG hand phaser he fires: picture scale, and how far ahead of the wrist the fist grips it.
-    phaser: { scale: 0.12, grip: 5, lift: 1.5 },
+    phaser: { scale: 0.105, grip: 5, lift: 1.5 },
     // A black stand-up collar with a gold edge.
     collarFabric: ['black', 'cloth'],
     collarTrim: [164, 120, 44],
@@ -118,7 +118,7 @@ CHARACTERS.worf = {
     },
   },
   projectile: 'pulse', // special fires a hand-phaser pulse
-  muzzle: 33, // from the phaser's emitter
+  muzzle: 30, // from the phaser's emitter
   muzzleY: -3,
   victoryPose: 'armsCrossed',
   colors: {
@@ -494,6 +494,8 @@ for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'ph
   const c = CHARACTERS[id];
   c.moves = { ...(c.moves || {}), special: { ...((c.moves || {}).special || {}), sfx } };
 }
+// Worf holsters his hand phaser right after the shot: the arm drops to the hip.
+CHARACTERS.worf.moves.special.holster = { pose: 'holster', frames: 9 };
 
 // Order on the character select screen.
 const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando', 'troi'];
