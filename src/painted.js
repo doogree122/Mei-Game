@@ -1114,7 +1114,9 @@ function paintedParts(ctx, sk, f, P) {
   const up = sub(sk.neck, sk.head);
   const ul = Math.hypot(up.x, up.y) || 1;
   const head = () => {
-    const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1), y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) };
+    // `headForward` moves the head ahead along the body's forward direction.
+    const hf = fit.headForward || 0;
+    const base = { x: sk.neck.x + (up.x / ul) * (fit.helmetLift || 1) - (up.y / ul) * hf, y: sk.neck.y + (up.y / ul) * (fit.helmetLift || 1) + (up.x / ul) * hf };
     const top = { x: base.x + (up.x / ul) * (fit.helmetHeight || 26), y: base.y + (up.y / ul) * (fit.helmetHeight || 26) };
     drawPart(ctx, P.helmet, base, top, null);
   };
