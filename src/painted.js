@@ -1032,8 +1032,14 @@ function paintedParts(ctx, sk, f, P) {
     const phaser = shooting && p.hands.shot === 'phaser' && propPiece('phaser');
     if (shooting && P.phaserHand) {
       // A hand gripping the phaser (one picture), wrist tucked into the cuff.
-      const cuff = toward(wrist, elbow, fit.phaserHandTuck || fit.gloveTuck || 3);
-      drawPart(ctx, P.phaserHand, cuff, toward(cuff, { x: wrist.x * 2 - elbow.x, y: wrist.y * 2 - elbow.y }, fit.phaserHandLength || 13), null, k);
+      // Raised by `phaserHandLift` above the forearm's line so the wrist sits
+      // inside the cuff, not below it.
+      const c0 = toward(wrist, elbow, fit.phaserHandTuck || fit.gloveTuck || 3);
+      const dl = Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y) || 1;
+      const lift = fit.phaserHandLift || 0;
+      const cuff = { x: c0.x + ((wrist.y - elbow.y) / dl) * lift, y: c0.y - ((wrist.x - elbow.x) / dl) * lift };
+      const len = fit.phaserHandLength || 13;
+      drawPart(ctx, P.phaserHand, cuff, { x: cuff.x + ((wrist.x - elbow.x) / dl) * len, y: cuff.y + ((wrist.y - elbow.y) / dl) * len }, null, k);
     } else if (phaser) {
       // A hand phaser held in the fist (as paintHeldPhaser does).
       const d = sub(elbow, wrist);
