@@ -23,7 +23,8 @@ ANCHORS = {
     'mando': {
         'upperArm': {'pivot': (68, 60), 'tip': (78, 300)},  # shoulder, elbow
         'forearm': {'pivot': (74, 62), 'tip': (98, 336)},  # elbow, wrist
-        'glove': {'pivot': (77, 8), 'tip': (80, 160)},  # wrist (tapered to slip into the sleeve), knuckles
+        'glove': {'pivot': (77, 8), 'tip': (80, 160)},
+        'fistInside': {'pivot': (63, 6), 'tip': (94, 166)},  # far fist, seen from the palm side  # wrist (tapered to slip into the sleeve), knuckles
         'thigh': {'pivot': (76, 70), 'tip': (92, 372)},  # hip, knee
         'shin': {'pivot': (84, 58), 'tip': (66, 392)},  # knee, ankle
         'foot': {'pivot': (62, 120), 'tip': (62, 166)},  # ankle bone (toward the heel), the sole below it (sets the boot's size)

@@ -498,6 +498,8 @@ for (const [id, sfx] of [['fett', 'blaster'], ['mando', 'blaster'], ['worf', 'ph
 CHARACTERS.worf.moves.airKick = { pose: 'airHighKick', radius: 22 };
 // Worf holsters his hand phaser right after the shot: the arm drops to the hip.
 CHARACTERS.worf.moves.special.holster = { pose: 'holster', frames: 9 };
+// Mando holsters his blaster the same way.
+CHARACTERS.mando.moves.special.holster = { pose: 'holster', frames: 9 };
 
 // Order on the character select screen.
 const ROSTER = ['fett', 'worf', 'vader', 'seven', 'mando', 'troi'];
